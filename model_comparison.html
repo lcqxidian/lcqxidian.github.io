@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大语言模型参数对比</title>
+    <style>
+        @font-face {
+            font-family: '优设标题黑';
+            src: url('/Users/lcq/Library/Fonts/优设标题黑.ttf') format('truetype');
+        }
+        
+        :root {
+            --neon-blue: #0ff;
+            --neon-purple: #f0f;
+            --dark-bg: #0a0a12;
+        }
+        
+        * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            font-family: '优设标题黑';
+        }
+        
+        body {
+            background: var(--dark-bg);
+            color: #e0e0ff;
+            line-height: 1.6;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+            padding-bottom: 1rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            letter-spacing: 1px;
+        }
+        
+        .last-update {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        
+        .model-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+            background: rgba(20, 20, 40, 0.7);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+        }
+        
+        .model-table th {
+            background: rgba(0, 30, 60, 0.8);
+            color: var(--neon-blue);
+            padding: 1rem;
+            text-align: left;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid var(--neon-purple);
+        }
+        
+        .model-table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(100, 100, 255, 0.2);
+        }
+        
+        .model-table tr:hover {
+            background: rgba(50, 50, 100, 0.4);
+        }
+        
+        .model-name {
+            font-weight: bold;
+            color: var(--neon-blue);
+        }
+        
+        .param-value {
+            font-family: '优设标题黑';
+        }
+        
+        .tech-element {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+            animation: pulse 4s infinite alternate;
+        }
+        
+        .tech-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+        }
+        
+        .light-beam {
+            position: absolute;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
+            opacity: 0.3;
+            animation: scan 8s linear infinite;
+            z-index: -1;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: var(--neon-blue);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--neon-blue);
+            z-index: -1;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 5px rgba(0, 255, 255, 0.3); }
+            100% { box-shadow: 0 0 20px rgba(0, 255, 255, 0.7); }
+        }
+        
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: #888;
+            font-size: 0.9rem;
+        }
+        
+        .note {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #aaa;
+            text-align: center;
+        }
+        
+        /* 模型链接样式 */
+        .model-link {
+            color: var(--neon-blue);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 0 0.2rem;
+        }
+        
+        .model-link:hover {
+            color: var(--neon-purple);
+            text-shadow: 0 0 10px rgba(255, 0, 255, 0.7);
+        }
+        
+        .model-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--neon-blue);
+            transition: width 0.3s ease;
+        }
+        
+        .model-link:hover::after {
+            width: 100%;
+        }
+        
+        @media (max-width: 768px) {
+            .model-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="tech-grid"></div>
+    <div class="light-beam" style="top: 20%;"></div>
+    <div class="light-beam" style="top: 60%; animation-delay: -4s;"></div>
+    
+    <div class="container">
+        <header>
+            <h1>大语言模型参数对比分析</h1>
+            <div class="last-update">最后更新: 2023年11月</div>
+        </header>
+        
+        <main>
+            <table class="model-table">
+                <thead>
+                    <tr>
+                        <th>模型名称</th>
+                        <th>参数规模</th>
+                        <th>上下文长度</th>
+                        <th>发布时间</th>
+                        <th>训练数据量</th>
+                        <th>开源状态</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="model-name">
+                            <a href="https://openai.com/gpt-4" target="_blank" class="model-link">GPT-4</a>
+                        </td>
+                        <td class="param-value">≈1.8T*</td>
+                        <td class="param-value">32K tokens</td>
+                        <td>2023年3月</td>
+                        <td class="param-value">13T tokens</td>
+                        <td>闭源</td>
+                    </tr>
+                    <tr>
+                        <td class="model-name">
+                            <a href="https://www.anthropic.com/index/claude-2" target="_blank" class="model-link">Claude 2</a>
+                        </td>
+                        <td class="param-value">未知</td>
+                        <td class="param-value">100K tokens</td>
+                        <td>2023年7月</td>
+                        <td class="param-value">未知</td>
+                        <td>闭源</td>
+                    </tr>
+                    <tr>
+                        <td class="model-name">
+                            <a href="https://ai.meta.com/llama/" target="_blank" class="model-link">LLaMA 2</a>
+                        </td>
+                        <td class="param-value">7B-70B</td>
+                        <td class="param-value">4K tokens</td>
+                        <td>2023年7月</td>
+                        <td class="param-value">2T tokens</td>
+                        <td>开源</td>
+                    </tr>
+                    <tr>
+                        <td class="model-name">
+                            <a href="https://falconllm.tii.ae/" target="_blank" class="model-link">Falcon 180B</a>
+                        </td>
+                        <td class="param-value">180B</td>
+                        <td class="param-value">2K tokens</td>
+                        <td>2023年9月</td>
+                        <td class="param-value">3.5T tokens</td>
+                        <td>开源</td>
+                    </tr>
+                    <tr>
+                        <td class="model-name">
+                            <a href="https://ai.google/discover/palm2/" target="_blank" class="model-link">PaLM 2</a>
+                        </td>
+                        <td class="param-value">340B</td>
+                        <td class="param-value">32K tokens</td>
+                        <td>2023年5月</td>
+                        <td class="param-value">3.6T tokens</td>
+                        <td>闭源</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="note">*注：GPT-4参数规模为行业推测，未经OpenAI官方确认</div>
+        </main>
+        
+        <footer>
+            <p>数据来源：行业报告与研究论文 | 设计：未来科技风格</p>
+        </footer>
+    </div>
+
+    <div class="tech-element" style="top: 10%; left: 5%;"></div>
+    <div class="tech-element" style="top: 30%; right: 8%;"></div>
+    <div class="tech-element" style="bottom: 20%; left: 12%;"></div>
+    <div class="tech-element" style="bottom: 40%; right: 15%;"></div>
+    
+    <script>
+        function createParticles() {
+            const count = 30;
+            const container = document.body;
+            
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                const left = Math.random() * 100;
+                const top = Math.random() * 100;
+                particle.style.left = `${left}%`;
+                particle.style.top = `${top}%`;
+                
+                const duration = 2 + Math.random() * 4;
+                const delay = Math.random() * 5;
+                particle.style.animation = `pulse ${duration}s infinite ${delay}s alternate`;
+                
+                container.appendChild(particle);
+            }
+        }
+        
+        window.addEventListener('load', createParticles);
+    </script>
+</body>
+</html>
