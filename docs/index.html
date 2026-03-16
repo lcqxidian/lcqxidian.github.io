@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>LCQ 的知识库笔记</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <!-- 引入 Docsify 官方的 Vue 清新主题 -->
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+  <style>
+    /* 稍微调整一下侧边栏和字体，让它更好看 */
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+    .sidebar { background-color: #f8f9fa; }
+  </style>
+</head>
+<body>
+  <div id="app">正在加载 LCQ 的知识宇宙...</div>
+  <script>
+    window.$docsify = {
+      name: 'LCQ.Space 笔记库',
+      repo: '[https://github.com/lcqxidian/lcqxidian.github.io](https://github.com/lcqxidian/lcqxidian.github.io)', // 右上角的 GitHub 挂件
+      loadSidebar: true, // 开启侧边栏
+      subMaxLevel: 3,    // 自动提取 Markdown 里的 1~3 级标题作为子目录
+      auto2top: true     // 点击侧边栏切换文章时自动回到顶部
+    }
+  </script>
+  <!-- Docsify 核心脚本 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
+  
+  <!-- C++、CMake、Bash 等代码高亮插件 -->
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-c.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-cpp.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-cmake.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+</body>
+</html>
