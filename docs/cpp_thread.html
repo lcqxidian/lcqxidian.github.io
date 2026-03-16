@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C++多线程现代开发指南 | 交互式知识舱</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Chosen Palette: Warm Neutrals (Stone/Sand) with Soft Blue & Amber accents -->
+    <!-- Application Structure Plan: The SPA uses a "Learning Dashboard" architecture. It deviates from a linear document to a module-based exploration interface. A persistent left sidebar provides navigation. The content area switches between three core modules: "Environment & Setup", "Lifecycle Explorer", and "Industrial Pools & Safety". This structure allows users to focus on specific tasks (like configuring CMake) without being distracted by theoretical lifecycle details, while the interactive elements (like the Data Race Simulator) provide immediate visual feedback for complex concepts, significantly enhancing usability over a static Markdown file. -->
+    <!-- Visualization & Content Choices: 
+         1. Code Snippets -> Goal: Organize/Inform -> Viz: Custom Tabbed Code Viewer with Copy function -> Interaction: Tab switching and copy-to-clipboard -> Justification: Condenses long compilation steps and CMake code into a compact, task-oriented UI.
+         2. Thread Lifecycle -> Goal: Organize/Relationships -> Viz: Interactive Matrix/Grid -> Interaction: Clickable command cards that update a central detailed explanation panel -> Justification: Transforms a static table into an exploratory learning tool, linking code directly to its "Plain English" explanation.
+         3. Data Race Warning -> Goal: Compare/Change -> Viz: Dynamic Chart.js Line Chart -> Interaction: Buttons to simulate threads running with and without Mutex -> Justification: Visually proves the invisible danger of data races, making the abstract warning concrete and memorable. NO SVG/Mermaid used.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body { background-color: #faf9f6; color: #292524; }
+        
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 40vh;
+            max-height: 400px;
+            min-height: 300px;
+        }
+
+        .code-block {
+            background-color: #1c1917;
+            color: #e7e5e4;
+            font-family: monospace;
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            overflow-x: auto;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .tab-btn {
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+        
+        .tab-btn.active {
+            border-bottom-color: #3b82f6;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+
+        .nav-item {
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-item.active {
+            background-color: #f5f5f4;
+            border-left-color: #3b82f6;
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        .cmd-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .cmd-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-color: #93c5fd;
+        }
+        
+        .cmd-card.active {
+            background-color: #eff6ff;
+            border-color: #3b82f6;
+        }
+
+        .section-view { display: none; animation: fadeIn 0.4s ease-out; }
+        .section-view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+    </style>
+</head>
+<body class="h-screen flex flex-col md:flex-row overflow-hidden font-sans">
+
+    <nav class="w-full md:w-64 bg-white border-r border-stone-200 flex-shrink-0 flex flex-col h-auto md:h-full z-10 shadow-sm">
+        <div class="p-6 border-b border-stone-100">
+            <h1 class="text-xl font-bold text-stone-800 tracking-tight flex items-center gap-2">
+                <span class="text-2xl">⚙️</span> C++ 现代并发
+            </h1>
+            <p class="text-xs text-stone-500 mt-2 leading-relaxed">从 pthread 迁移到现代 C++ 多线程开发的核心知识体系。</p>
+        </div>
+        <div class="flex-1 overflow-y-auto py-4 flex md:flex-col flex-row overflow-x-auto">
+            <button class="nav-item active text-left px-6 py-3 text-sm text-stone-600 hover:bg-stone-50 whitespace-nowrap md:whitespace-normal" data-target="sec-env">
+                1. 编译环境与头文件
+            </button>
+            <button class="nav-item text-left px-6 py-3 text-sm text-stone-600 hover:bg-stone-50 whitespace-nowrap md:whitespace-normal" data-target="sec-life">
+                2. 线程生命周期指令
+            </button>
+            <button class="nav-item text-left px-6 py-3 text-sm text-stone-600 hover:bg-stone-50 whitespace-nowrap md:whitespace-normal" data-target="sec-pool">
+                3. 工业模板与数据竞争
+            </button>
+        </div>
+    </nav>
+
+    <main class="flex-1 overflow-y-auto relative scroll-smooth bg-[#faf9f6]">
+        <div class="max-w-5xl mx-auto p-6 md:p-12">
+
+            <section id="sec-env" class="section-view active">
+                <header class="mb-10">
+                    <h2 class="text-3xl font-extrabold text-stone-800 mb-4">编译环境与头文件</h2>
+                    <p class="text-stone-600 leading-relaxed text-lg">
+                        本模块介绍了如何在现代 C++ 项目中正确引入和链接线程库。脱离了直接调用 GCC 的命令行方式，使用 CMake 管理多线程项目是工业级开发的标准起手式。点击下方标签卡浏览不同的配置步骤。
+                    </p>
+                </header>
+
+                <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden mb-8">
+                    <div class="flex border-b border-stone-200 bg-stone-50 px-2 pt-2 overflow-x-auto">
+                        <button class="tab-btn active px-4 py-3 text-sm font-medium text-stone-600 hover:text-stone-900 whitespace-nowrap" data-tab="tab-cmake">CMakeLists.txt</button>
+                        <button class="tab-btn px-4 py-3 text-sm font-medium text-stone-600 hover:text-stone-900 whitespace-nowrap" data-tab="tab-compile">编译三步曲</button>
+                        <button class="tab-btn px-4 py-3 text-sm font-medium text-stone-600 hover:text-stone-900 whitespace-nowrap" data-tab="tab-headers">C++ 标准头文件</button>
+                    </div>
+
+                    <div class="p-6">
+                        <div id="tab-cmake" class="tab-content block">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-semibold text-stone-800">核心 CMakeLists.txt 写法</h3>
+                                <button class="copy-btn text-xs bg-stone-100 hover:bg-blue-50 hover:text-blue-600 text-stone-500 px-3 py-1.5 rounded transition-colors" data-copy="code-cmake">复制代码</button>
+                            </div>
+                            <p class="text-sm text-stone-500 mb-4">寻找系统线程库的最专业、最稳妥的写法，替代写死的 -lpthread。</p>
+                            <pre id="code-cmake" class="code-block"># 1. 声明 CMake 的最低版本要求
+cmake_minimum_required(VERSION 3.10)
+
+# 2. 设置项目名称
+project(ThreadTest)
+
+# 3. 寻找系统线程库 
+find_package(Threads REQUIRED)
+
+# 4. 指定生成的可执行文件名和源代码文件 
+# ⚠️ 注意后缀一定是 .cpp，写成 .c 会报错！
+add_executable(create_test create_test.cpp)
+
+# 5. 将线程库链接到你的可执行文件
+target_link_libraries(create_test PRIVATE Threads::Threads)</pre>
+                        </div>
+
+                        <div id="tab-compile" class="tab-content hidden">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-semibold text-stone-800">标准编译执行流程</h3>
+                                <button class="copy-btn text-xs bg-stone-100 hover:bg-blue-50 hover:text-blue-600 text-stone-500 px-3 py-1.5 rounded transition-colors" data-copy="code-compile">复制代码</button>
+                            </div>
+                            <p class="text-sm text-stone-500 mb-4">在终端中（通常是在项目内新建的 build 文件夹里）执行以下指令：</p>
+                            <pre id="code-compile" class="code-block"># 第一步：生成配置 (检查环境并生成 Makefile)
+cmake ..
+
+# 第二步：正式编译 (调用编译器生成二进制文件)
+make
+
+# 第三步：运行程序
+./create_test</pre>
+                        </div>
+
+                        <div id="tab-headers" class="tab-content hidden">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-semibold text-stone-800">抛弃 pthread.h，拥抱现代 C++</h3>
+                                <button class="copy-btn text-xs bg-stone-100 hover:bg-blue-50 hover:text-blue-600 text-stone-500 px-3 py-1.5 rounded transition-colors" data-copy="code-headers">复制代码</button>
+                            </div>
+                            <p class="text-sm text-stone-500 mb-4">在源文件中引入必要的标准库支持并发操作。</p>
+                            <pre id="code-headers" class="code-block">#include &lt;thread&gt;  // 核心：提供 std::thread
+#include &lt;chrono&gt;  // 辅助：提供时间休眠功能
+#include &lt;vector&gt;  // 辅助：用来批量管理线程</pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="sec-life" class="section-view">
+                <header class="mb-10">
+                    <h2 class="text-3xl font-extrabold text-stone-800 mb-4">线程的生命周期探索</h2>
+                    <p class="text-stone-600 leading-relaxed text-lg">
+                        本模块重构了多线程核心指令的交互体验。点击左侧的“操作卡片”，右侧面板会动态显示该指令的白话解释、代码示例以及重要的避坑指南，助你深刻理解从创建到回收的全流程。
+                    </p>
+                </header>
+
+                <div class="flex flex-col lg:flex-row gap-6">
+                    <div class="w-full lg:w-1/3 flex flex-col gap-3">
+                        <div class="text-sm font-bold text-stone-400 uppercase tracking-wider mb-2">3.1 线程创建</div>
+                        <div class="cmd-card active bg-white border border-stone-200 rounded-lg p-4" data-detail="detail-create">
+                            <div class="font-bold text-stone-800">创建即启动</div>
+                            <div class="text-xs text-stone-500 mt-1 font-mono">std::thread t1(...)</div>
+                        </div>
+                        <div class="cmd-card bg-white border border-stone-200 rounded-lg p-4 relative overflow-hidden" data-detail="detail-ref">
+                            <div class="absolute top-0 right-0 bg-amber-100 text-amber-700 text-[10px] px-2 py-1 font-bold rounded-bl-lg">核心</div>
+                            <div class="font-bold text-stone-800">传引用创建</div>
+                            <div class="text-xs text-stone-500 mt-1 font-mono">std::ref(num)</div>
+                        </div>
+
+                        <div class="text-sm font-bold text-stone-400 uppercase tracking-wider mb-2 mt-4">3.2 终止与休眠</div>
+                        <div class="cmd-card bg-white border border-stone-200 rounded-lg p-4" data-detail="detail-join">
+                            <div class="font-bold text-stone-800">等待结束 (阻塞)</div>
+                            <div class="text-xs text-stone-500 mt-1 font-mono">t1.join()</div>
+                        </div>
+                        <div class="cmd-card bg-white border border-stone-200 rounded-lg p-4" data-detail="detail-detach">
+                            <div class="font-bold text-stone-800">分离后台 (放养)</div>
+                            <div class="text-xs text-stone-500 mt-1 font-mono">t1.detach()</div>
+                        </div>
+                        <div class="cmd-card bg-white border border-stone-200 rounded-lg p-4" data-detail="detail-joinable">
+                            <div class="font-bold text-stone-800">状态检查 (防爆)</div>
+                            <div class="text-xs text-stone-500 mt-1 font-mono">t1.joinable()</div>
+                        </div>
+                        <div class="cmd-card bg-white border border-stone-200 rounded-lg p-4" data-detail="detail-sleep">
+                            <div class="font-bold text-stone-800">跨平台休眠</div>
+                            <div class="text-xs text-stone-500 mt-1 font-mono">sleep_for(...)</div>
+                        </div>
+                    </div>
+
+                    <div class="w-full lg:w-2/3">
+                        <div class="bg-white rounded-xl shadow-sm border border-stone-200 h-full p-8 flex flex-col justify-center min-h-[400px]">
+                            
+                            <div id="detail-create" class="detail-content block">
+                                <span class="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold mb-4">🚀 创建即启动 / 带参数创建</span>
+                                <h3 class="text-2xl font-bold text-stone-800 mb-4">招募工人，立刻执行</h3>
+                                <p class="text-stone-600 mb-6 leading-relaxed">
+                                    实例化 <code>std::thread</code> 对象时，线程会立即被操作系统调度并开始执行指定的任务函数。你可以按顺序将参数传递给任务函数。
+                                </p>
+                                <div class="bg-stone-50 p-4 rounded-lg border border-stone-200 font-mono text-sm text-stone-700">
+                                    <div class="text-stone-400 mb-1">// 无参数</div>
+                                    <div class="mb-4">std::thread t1(func_name);</div>
+                                    <div class="text-stone-400 mb-1">// 带参数传递</div>
+                                    <div>std::thread t2(func, arg1, arg2);</div>
+                                </div>
+                            </div>
+
+                            <div id="detail-ref" class="detail-content hidden">
+                                <span class="inline-block px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-bold mb-4">⚠️ 传引用 (核心必考)</span>
+                                <h3 class="text-2xl font-bold text-stone-800 mb-4">修改外部变量的必须手段</h3>
+                                <p class="text-stone-600 mb-6 leading-relaxed">
+                                    默认情况下，线程参数是按值拷贝传递的。如果你想让线程修改外部的变量（例如累加一个计数器），你<strong>必须</strong>使用 <code>std::ref()</code> 将变量包裹起来传递引用。
+                                </p>
+                                <div class="bg-stone-50 p-4 rounded-lg border border-stone-200 font-mono text-sm text-stone-700">
+                                    std::thread t3(func, <span class="bg-amber-200 px-1 rounded text-amber-900 font-bold">std::ref(num)</span>);
+                                </div>
+                            </div>
+
+                            <div id="detail-join" class="detail-content hidden">
+                                <span class="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold mb-4">🛑 等待结束 (阻塞)</span>
+                                <h3 class="text-2xl font-bold text-stone-800 mb-4">绝对不能忘的 join()</h3>
+                                <p class="text-stone-600 mb-6 leading-relaxed">
+                                    主线程调用 <code>join()</code> 会被阻塞，死等子线程干完活再往下走。这能保证传给子线程的局部变量依然存活，直到子线程安全退出。负责回收系统资源，最常用！
+                                </p>
+                                <div class="bg-stone-50 p-4 rounded-lg border border-stone-200 font-mono text-sm text-stone-700 mb-4">
+                                    t1.join();
+                                </div>
+                                <div class="text-sm text-red-600 bg-red-50 p-3 rounded border border-red-100">
+                                    <strong>崩溃警告：</strong> 在 C++ 中，std::thread 对象在销毁前必须明确其归宿（join 或 detach），否则程序会触发 std::terminate 导致直接崩溃。
+                                </div>
+                            </div>
+
+                            <div id="detail-detach" class="detail-content hidden">
+                                <span class="inline-block px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold mb-4">👻 分离后台 (放养)</span>
+                                <h3 class="text-2xl font-bold text-stone-800 mb-4">致命的诱惑：detach()</h3>
+                                <p class="text-stone-600 mb-4 leading-relaxed">
+                                    让线程自己在后台跑，变成守护线程，脱离主线程管控。分离后线程会在后台自动释放资源。
+                                </p>
+                                <div class="bg-stone-50 p-4 rounded-lg border border-stone-200 font-mono text-sm text-stone-700 mb-4">
+                                    t1.detach();
+                                </div>
+                                <div class="text-sm text-amber-700 bg-amber-50 p-3 rounded border border-amber-200">
+                                    <strong>避坑指南：</strong> 强烈不建议在安防等高稳定性项目中使用！如果子线程使用了主线程局部变量的引用，而主线程先结束销毁了该变量，子线程再去读写就会产生野指针/内存越界，导致极难排查的随机崩溃（Segment Fault）。
+                                </div>
+                            </div>
+
+                            <div id="detail-joinable" class="detail-content hidden">
+                                <span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold mb-4">🛡️ 状态检查</span>
+                                <h3 class="text-2xl font-bold text-stone-800 mb-4">防爆金牌：joinable()</h3>
+                                <p class="text-stone-600 mb-6 leading-relaxed">
+                                    一个线程不能被重复 <code>join()</code>。工业级代码通常会先使用 <code>joinable()</code> 进行安全检查，返回 bool 值表示线程是否还可以被归宿处理。
+                                </p>
+                                <div class="bg-stone-50 p-4 rounded-lg border border-stone-200 font-mono text-sm text-stone-700">
+                                    if (t1.joinable()) {<br>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;t1.join();<br>
+                                    }
+                                </div>
+                            </div>
+
+                            <div id="detail-sleep" class="detail-content hidden">
+                                <span class="inline-block px-3 py-1 bg-stone-200 text-stone-700 rounded-full text-xs font-bold mb-4">⏱️ 跨平台休眠</span>
+                                <h3 class="text-2xl font-bold text-stone-800 mb-4">告别系统的 sleep</h3>
+                                <p class="text-stone-600 mb-6 leading-relaxed">
+                                    让当前线程休眠指定的时间，实现完美的跨平台兼容性。
+                                </p>
+                                <div class="bg-stone-50 p-4 rounded-lg border border-stone-200 font-mono text-sm text-stone-700">
+                                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="sec-pool" class="section-view">
+                <header class="mb-10">
+                    <h2 class="text-3xl font-extrabold text-stone-800 mb-4">工业模板与数据竞争验证</h2>
+                    <p class="text-stone-600 leading-relaxed text-lg">
+                        本模块展示了在实际项目中如何批量管理线程，并提供了一个交互式图表模拟器，可视化证明多线程并发时不加锁（Mutex）带来的数据竞争风险。
+                    </p>
+                </header>
+
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
+                    
+                    <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col">
+                        <div class="bg-stone-100 px-5 py-3 border-b border-stone-200">
+                            <h3 class="font-bold text-stone-700 text-sm">用 Vector 批量管理线程</h3>
+                        </div>
+                        <div class="p-6 flex-1">
+                            <p class="text-sm text-stone-600 mb-4">遇到需要开 10 个、100 个线程的场景，绝对不要用 C 语言的原生数组，直接套用这个 Vector 模板：</p>
+                            <pre class="code-block h-64 overflow-y-auto">void worker(int& id) { 
+    /* 干活逻辑 */ 
+}
+
+int main() {
+    std::vector&lt;std::thread&gt; pool;
+    int my_data = 100;
+
+    // 1. 批量创建并派发任务
+    for (int i = 0; i &lt; 10; ++i) {
+        pool.push_back(std::thread(worker, std::ref(my_data)));
+    }
+
+    // 2. 批量回收，等待所有工人下班
+    for (auto& t : pool) {
+        if (t.joinable()) { // 工业级安全检查
+            t.join();
+        }
+    }
+    return 0;
+}</pre>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-stone-200 p-6 flex flex-col">
+                        <div class="mb-4">
+                            <h3 class="text-xl font-bold text-stone-800 mb-2">数据竞争 (Data Race) 模拟器</h3>
+                            <p class="text-sm text-stone-600">
+                                模拟 5 个线程并发对全局变量累加，理论目标值：<span class="font-mono font-bold">500</span>。观察无锁状态下的数据丢失现象。
+                            </p>
+                        </div>
+                        
+                        <div class="flex gap-3 mb-6">
+                            <button id="btn-race" class="flex-1 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-semibold py-2 px-4 rounded transition-colors text-sm">
+                                执行无锁并发测试
+                            </button>
+                            <button id="btn-mutex" class="flex-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-semibold py-2 px-4 rounded transition-colors text-sm">
+                                启用 Mutex 保护执行
+                            </button>
+                        </div>
+
+                        <div class="chart-container flex-1">
+                            <canvas id="raceChart"></canvas>
+                        </div>
+
+                        <div class="mt-4 text-center p-3 bg-stone-50 rounded border border-stone-200">
+                            <span class="text-sm text-stone-500 font-medium mr-2">最终计数结果:</span>
+                            <span id="sim-result" class="text-xl font-bold font-mono text-stone-800">0</span>
+                            <span class="text-sm text-stone-400 font-mono ml-1">/ 500</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-amber-50 border-l-4 border-amber-500 p-6 rounded shadow-sm">
+                    <h4 class="text-amber-800 font-bold mb-2 text-lg">⚠️ 避坑警告与第五章预告</h4>
+                    <p class="text-amber-900 leading-relaxed text-sm">
+                        正如上方图表所示，多线程不加锁（Mutex）直接修改同一个变量，必然导致数据竞争。现象就是：代码没报错，但最终算出来的结果就是不对。在实际工程中，请务必学习 <code>std::mutex</code> 和 <code>std::lock_guard</code> 的用法以保护数据。
+                    </p>
+                </div>
+
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+        const navItems = document.querySelectorAll('.nav-item');
+        const sectionViews = document.querySelectorAll('.section-view');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                navItems.forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+                const target = item.getAttribute('data-target');
+                sectionViews.forEach(sec => {
+                    if (sec.id === target) {
+                        sec.classList.add('active');
+                    } else {
+                        sec.classList.remove('active');
+                    }
+                });
+            });
+        });
+
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const parent = btn.closest('.bg-white');
+                const localBtns = parent.querySelectorAll('.tab-btn');
+                const localContents = parent.querySelectorAll('.tab-content');
+                
+                localBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const target = btn.getAttribute('data-tab');
+                localContents.forEach(content => {
+                    if (content.id === target) {
+                        content.classList.remove('hidden');
+                        content.classList.add('block');
+                    } else {
+                        content.classList.remove('block');
+                        content.classList.add('hidden');
+                    }
+                });
+            });
+        });
+
+        const copyBtns = document.querySelectorAll('.copy-btn');
+        copyBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetId = btn.getAttribute('data-copy');
+                const textToCopy = document.getElementById(targetId).textContent;
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    const originalText = btn.textContent;
+                    btn.textContent = '已复制';
+                    btn.classList.add('bg-green-100', 'text-green-700');
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.classList.remove('bg-green-100', 'text-green-700');
+                    }, 2000);
+                });
+            });
+        });
+
+        const cmdCards = document.querySelectorAll('.cmd-card');
+        const detailContents = document.querySelectorAll('.detail-content');
+
+        cmdCards.forEach(card => {
+            card.addEventListener('click', () => {
+                cmdCards.forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+                const target = card.getAttribute('data-detail');
+                detailContents.forEach(detail => {
+                    if (detail.id === target) {
+                        detail.classList.remove('hidden');
+                        detail.classList.add('block');
+                    } else {
+                        detail.classList.remove('block');
+                        detail.classList.add('hidden');
+                    }
+                });
+            });
+        });
+
+        let simChart = null;
+        let simInterval = null;
+
+        function initChart() {
+            const ctx = document.getElementById('raceChart').getContext('2d');
+            Chart.defaults.font.family = "ui-sans-serif, system-ui, sans-serif";
+            
+            simChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '当前累加值',
+                        data: [],
+                        borderColor: '#292524',
+                        backgroundColor: 'rgba(41, 37, 36, 0.05)',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: true,
+                        tension: 0.2
+                    }, {
+                        label: '理论完美值',
+                        data: [],
+                        borderColor: '#a8a29e',
+                        borderWidth: 1,
+                        borderDash: [4, 4],
+                        pointRadius: 0,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 0 },
+                    scales: {
+                        x: { display: false },
+                        y: { 
+                            min: 0, 
+                            max: 520,
+                            grid: { color: '#f5f5f4' },
+                            border: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 6 } },
+                        tooltip: { enabled: false }
+                    }
+                }
+            });
+        }
+
+        function runSimulation(isSafe) {
+            const btnRace = document.getElementById('btn-race');
+            const btnMutex = document.getElementById('btn-mutex');
+            const resultLabel = document.getElementById('sim-result');
+            
+            if(simInterval) clearInterval(simInterval);
+            
+            btnRace.disabled = true;
+            btnMutex.disabled = true;
+            btnRace.classList.add('opacity-50');
+            btnMutex.classList.add('opacity-50');
+            
+            simChart.data.labels = [];
+            simChart.data.datasets[0].data = [];
+            simChart.data.datasets[1].data = [];
+            
+            if (isSafe) {
+                simChart.data.datasets[0].borderColor = '#10b981';
+                simChart.data.datasets[0].backgroundColor = 'rgba(16, 185, 129, 0.1)';
+            } else {
+                simChart.data.datasets[0].borderColor = '#ef4444';
+                simChart.data.datasets[0].backgroundColor = 'rgba(239, 68, 68, 0.1)';
+            }
+            
+            simChart.update();
+
+            let currentStep = 0;
+            const totalSteps = 100;
+            const threads = 5;
+            let actualCount = 0;
+
+            simInterval = setInterval(() => {
+                currentStep++;
+                
+                let increment = 0;
+                if (isSafe) {
+                    increment = threads;
+                } else {
+                    const randomLost = Math.floor(Math.random() * 3); 
+                    increment = threads - randomLost;
+                }
+                
+                actualCount += increment;
+                const theoreticalCount = currentStep * threads;
+
+                if (actualCount > 500) actualCount = 500;
+                
+                simChart.data.labels.push(currentStep);
+                simChart.data.datasets[0].data.push(actualCount);
+                simChart.data.datasets[1].data.push(theoreticalCount);
+                simChart.update();
+                
+                resultLabel.textContent = actualCount;
+
+                if (currentStep >= totalSteps) {
+                    clearInterval(simInterval);
+                    btnRace.disabled = false;
+                    btnMutex.disabled = false;
+                    btnRace.classList.remove('opacity-50');
+                    btnMutex.classList.remove('opacity-50');
+                    
+                    if(!isSafe) {
+                        resultLabel.classList.add('text-red-600');
+                        resultLabel.classList.remove('text-stone-800', 'text-emerald-600');
+                    } else {
+                        resultLabel.classList.add('text-emerald-600');
+                        resultLabel.classList.remove('text-stone-800', 'text-red-600');
+                    }
+                }
+            }, 30);
+        }
+
+        document.getElementById('btn-race').addEventListener('click', () => runSimulation(false));
+        document.getElementById('btn-mutex').addEventListener('click', () => runSimulation(true));
+
+        window.addEventListener('DOMContentLoaded', initChart);
+
+    </script>
+</body>
+</html>
