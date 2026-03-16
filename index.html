@@ -3,318 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>大语言模型参数对比</title>
+    <title>LCQ 的知识宇宙 | Lcq's Knowledge Base</title>
+    <!-- 引入 Tailwind CSS 进行快速现代排版 -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @font-face {
-            font-family: '优设标题黑';
-            src: url('优设标题黑.ttf') format('truetype');
+        /* 自定义霓虹高光效果，致敬你之前的风格 */
+        .neon-text {
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.5), 0 0 20px rgba(6, 182, 212, 0.3);
         }
-        
-        :root {
-            --neon-blue: #0ff;
-            --neon-purple: #f0f;
-            --dark-bg: #0a0a12;
-        }
-        
-        * {
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            font-family: '优设标题黑';
-        }
-        
-        body {
-            background: var(--dark-bg);
-            color: #e0e0ff;
-            line-height: 1.6;
-            padding: 2rem;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            position: relative;
-            z-index: 1;
-        }
-        
-        header {
-            text-align: center;
-            margin-bottom: 2rem;
-            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
-            padding-bottom: 1rem;
-        }
-        
-        h1 {
-            font-size: 2.5rem;
-            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
-            letter-spacing: 1px;
-        }
-        
-        .last-update {
-            color: #aaa;
-            font-size: 0.9rem;
-            margin-top: 0.5rem;
-        }
-        
-        .model-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1.5rem;
-            background: rgba(20, 20, 40, 0.7);
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
-        }
-        
-        .model-table th {
-            background: rgba(0, 30, 60, 0.8);
-            color: var(--neon-blue);
-            padding: 1rem;
-            text-align: left;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 2px solid var(--neon-purple);
-        }
-        
-        .model-table td {
-            padding: 1rem;
-            border-bottom: 1px solid rgba(100, 100, 255, 0.2);
-        }
-        
-        .model-table tr:hover {
-            background: rgba(50, 50, 100, 0.4);
-        }
-        
-        .model-name {
-            font-weight: bold;
-            color: var(--neon-blue);
-        }
-        
-        .param-value {
-            font-family: '优设标题黑';
-        }
-        
-        .tech-element {
-            position: absolute;
-            width: 100px;
-            height: 100px;
-            border: 1px solid rgba(0, 255, 255, 0.2);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: -1;
-            animation: pulse 4s infinite alternate;
-        }
-        
-        .tech-grid {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
-            background-size: 50px 50px;
-            z-index: -1;
-        }
-        
-        .light-beam {
-            position: absolute;
-            width: 100%;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
-            opacity: 0.3;
-            animation: scan 8s linear infinite;
-            z-index: -1;
-        }
-        
-        .particle {
-            position: absolute;
-            width: 3px;
-            height: 3px;
-            background: var(--neon-blue);
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--neon-blue);
-            z-index: -1;
-        }
-        
-        @keyframes pulse {
-            0% { box-shadow: 0 0 5px rgba(0, 255, 255, 0.3); }
-            100% { box-shadow: 0 0 20px rgba(0, 255, 255, 0.7); }
-        }
-        
-        @keyframes scan {
-            0% { top: 0; }
-            100% { top: 100%; }
-        }
-        
-        footer {
-            text-align: center;
-            margin-top: 3rem;
-            color: #888;
-            font-size: 0.9rem;
-        }
-        
-        .note {
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            color: #aaa;
-            text-align: center;
-        }
-        
-        /* 模型链接样式 */
-        .model-link {
-            color: var(--neon-blue);
-            text-decoration: none;
+        .card-hover {
             transition: all 0.3s ease;
-            position: relative;
-            padding: 0 0.2rem;
         }
-        
-        .model-link:hover {
-            color: var(--neon-purple);
-            text-shadow: 0 0 10px rgba(255, 0, 255, 0.7);
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(6, 182, 212, 0.2);
+            border-color: #06b6d4;
         }
-        
-        .model-link::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 0;
-            height: 1px;
-            background: var(--neon-blue);
-            transition: width 0.3s ease;
-        }
-        
-        .model-link:hover::after {
-            width: 100%;
-        }
-        
-        @media (max-width: 768px) {
-            .model-table {
-                display: block;
-                overflow-x: auto;
-            }
-        }
+        /* 隐藏滚动条但保留滚动功能 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
     </style>
 </head>
-<body>
-    <div class="tech-grid"></div>
-    <div class="light-beam" style="top: 20%;"></div>
-    <div class="light-beam" style="top: 60%; animation-delay: -4s;"></div>
-    
-    <div class="container">
-        <header>
-            <h1>大语言模型参数对比分析</h1>
-            <div class="last-update">最后更新: 2023年11月</div>
-        </header>
-        
-        <main>
-            <table class="model-table">
-                <thead>
-                    <tr>
-                        <th>模型名称</th>
-                        <th>参数规模</th>
-                        <th>上下文长度</th>
-                        <th>发布时间</th>
-                        <th>训练数据量</th>
-                        <th>开源状态</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td class="model-name">
-                            <a href="https://openai.com/gpt-4" target="_blank" class="model-link">GPT-4</a>
-                        </td>
-                        <td class="param-value">≈1.8T*</td>
-                        <td class="param-value">32K tokens</td>
-                        <td>2023年3月</td>
-                        <td class="param-value">13T tokens</td>
-                        <td>闭源</td>
-                    </tr>
-                    <tr>
-                        <td class="model-name">
-                            <a href="https://www.anthropic.com/index/claude-2" target="_blank" class="model-link">Claude 2</a>
-                        </td>
-                        <td class="param-value">未知</td>
-                        <td class="param-value">100K tokens</td>
-                        <td>2023年7月</td>
-                        <td class="param-value">未知</td>
-                        <td>闭源</td>
-                    </tr>
-                    <tr>
-                        <td class="model-name">
-                            <a href="https://ai.meta.com/llama/" target="_blank" class="model-link">LLaMA 2</a>
-                        </td>
-                        <td class="param-value">7B-70B</td>
-                        <td class="param-value">4K tokens</td>
-                        <td>2023年7月</td>
-                        <td class="param-value">2T tokens</td>
-                        <td>开源</td>
-                    </tr>
-                    <tr>
-                        <td class="model-name">
-                            <a href="https://falconllm.tii.ae/" target="_blank" class="model-link">Falcon 180B</a>
-                        </td>
-                        <td class="param-value">180B</td>
-                        <td class="param-value">2K tokens</td>
-                        <td>2023年9月</td>
-                        <td class="param-value">3.5T tokens</td>
-                        <td>开源</td>
-                    </tr>
-                    <tr>
-                        <td class="model-name">
-                            <a href="https://ai.google/discover/palm2/" target="_blank" class="model-link">PaLM 2</a>
-                        </td>
-                        <td class="param-value">340B</td>
-                        <td class="param-value">32K tokens</td>
-                        <td>2023年5月</td>
-                        <td class="param-value">3.6T tokens</td>
-                        <td>闭源</td>
-                    </tr>
-                </tbody>
-            </table>
-            <div class="note">*注：GPT-4参数规模为行业推测，未经OpenAI官方确认</div>
-        </main>
-        
-        <footer>
-            <p>数据来源：行业报告与研究论文 | 设计：未来科技风格</p>
-        </footer>
-    </div>
+<body class="bg-slate-950 text-slate-300 font-sans antialiased min-h-screen flex flex-col selection:bg-cyan-900 selection:text-cyan-100">
 
-    <div class="tech-element" style="top: 10%; left: 5%;"></div>
-    <div class="tech-element" style="top: 30%; right: 8%;"></div>
-    <div class="tech-element" style="bottom: 20%; left: 12%;"></div>
-    <div class="tech-element" style="bottom: 40%; right: 15%;"></div>
-    
-    <script>
-        function createParticles() {
-            const count = 30;
-            const container = document.body;
-            
-            for (let i = 0; i < count; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
+    <!-- 顶部导航栏 -->
+    <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-cyan-500/30">
+                    L
+                </div>
+                <h1 class="text-xl font-bold text-slate-100 tracking-wide">LCQ<span class="text-cyan-400">.Space</span></h1>
+            </div>
+            <nav class="hidden md:flex gap-6 text-sm font-medium">
+                <a href="#" class="hover:text-cyan-400 transition-colors">首页</a>
+                <a href="#categories" class="hover:text-cyan-400 transition-colors">知识图谱</a>
+                <a href="https://github.com/lcqxidian" target="_blank" class="hover:text-cyan-400 transition-colors flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path></svg>
+                    GitHub
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 欢迎区块 (Hero Section) -->
+    <section class="max-w-6xl mx-auto px-6 py-16 md:py-24">
+        <div class="max-w-3xl">
+            <h2 class="text-4xl md:text-6xl font-extrabold text-slate-100 mb-6 leading-tight">
+                探索代码的本质，<br>
+                构建 <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 neon-text">坚实的知识体系</span>。
+            </h2>
+            <p class="text-lg text-slate-400 mb-8 leading-relaxed">
+                欢迎来到我的个人知识库。这里记录了我从底层 C/C++ 到系统架构、从日常八股到项目实战（如安防网关）的完整学习轨迹。不积跬步，无以至千里。
+            </p>
+            <div class="flex gap-4">
+                <a href="#categories" class="px-6 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg shadow-lg shadow-cyan-500/30 transition-all">
+                    开始阅读
+                </a>
+                <a href="#" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-lg border border-slate-700 transition-all">
+                    关于我
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 核心分类模块 (Categories) -->
+    <section id="categories" class="bg-slate-900 border-t border-slate-800 flex-1 py-16">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="flex items-center gap-3 mb-10">
+                <div class="w-2 h-8 bg-cyan-500 rounded-full"></div>
+                <h3 class="text-2xl font-bold text-slate-100">知识图谱领域</h3>
+            </div>
+
+            <!-- 响应式网格布局，方便未来无限拓展卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 
-                const left = Math.random() * 100;
-                const top = Math.random() * 100;
-                particle.style.left = `${left}%`;
-                particle.style.top = `${top}%`;
+                <!-- 卡片 1: C++ 底层 -->
+                <a href="./docs/cpp_thread.md" class="card-hover bg-slate-800 border border-slate-700 rounded-xl p-6 block group">
+                    <div class="w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center text-2xl mb-4 group-hover:bg-cyan-900/50 group-hover:text-cyan-400 transition-colors">
+                        💻
+                    </div>
+                    <h4 class="text-xl font-bold text-slate-100 mb-2">C / C++ 进阶指北</h4>
+                    <p class="text-sm text-slate-400 mb-4 line-clamp-2">现代 C++ 特性、多线程并发编程 (std::thread)、内存管理、CMake 构建系统详解。</p>
+                    <div class="flex items-center text-xs font-semibold text-cyan-500">
+                        查看笔记 <span class="ml-1 group-hover:translate-x-1 transition-transform">→</span>
+                    </div>
+                </a>
+
+                <!-- 卡片 2: 面试八股 -->
+                <a href="#" class="card-hover bg-slate-800 border border-slate-700 rounded-xl p-6 block group">
+                    <div class="w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center text-2xl mb-4 group-hover:bg-purple-900/50 group-hover:text-purple-400 transition-colors">
+                        🚀
+                    </div>
+                    <h4 class="text-xl font-bold text-slate-100 mb-2">硬核面试八股文</h4>
+                    <p class="text-sm text-slate-400 mb-4 line-clamp-2">操作系统 (进程/线程/锁)、计算机网络 (TCP/IP)、数据库底层原理及高频面试题总结。</p>
+                    <div class="flex items-center text-xs font-semibold text-purple-500">
+                        开始刷题 <span class="ml-1 group-hover:translate-x-1 transition-transform">→</span>
+                    </div>
+                </a>
+
+                <!-- 卡片 3: 项目实战 -->
+                <a href="#" class="card-hover bg-slate-800 border border-slate-700 rounded-xl p-6 block group">
+                    <div class="w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center text-2xl mb-4 group-hover:bg-emerald-900/50 group-hover:text-emerald-400 transition-colors">
+                        🛡️
+                    </div>
+                    <h4 class="text-xl font-bold text-slate-100 mb-2">项目实战复盘</h4>
+                    <p class="text-sm text-slate-400 mb-4 line-clamp-2">Jetson Nano 安防网关项目架构、流媒体处理、性能调优及踩坑实录。</p>
+                    <div class="flex items-center text-xs font-semibold text-emerald-500">
+                        进入专栏 <span class="ml-1 group-hover:translate-x-1 transition-transform">→</span>
+                    </div>
+                </a>
+
+                <!-- 卡片 4: 算法与数据结构 -->
+                <a href="#" class="card-hover bg-slate-800 border border-slate-700 rounded-xl p-6 block group">
+                    <div class="w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center text-2xl mb-4 group-hover:bg-orange-900/50 group-hover:text-orange-400 transition-colors">
+                        🧠
+                    </div>
+                    <h4 class="text-xl font-bold text-slate-100 mb-2">LeetCode 算法笔记</h4>
+                    <p class="text-sm text-slate-400 mb-4 line-clamp-2">经典算法题型分类整理、双指针、动态规划、回溯算法的模板与解题思路。</p>
+                    <div class="flex items-center text-xs font-semibold text-orange-500">
+                        攻克算法 <span class="ml-1 group-hover:translate-x-1 transition-transform">→</span>
+                    </div>
+                </a>
                 
-                const duration = 2 + Math.random() * 4;
-                const delay = Math.random() * 5;
-                particle.style.animation = `pulse ${duration}s infinite ${delay}s alternate`;
-                
-                container.appendChild(particle);
-            }
-        }
-        
-        window.addEventListener('load', createParticles);
-    </script>
+                <!-- 卡片 5: Linux 环境 -->
+                <a href="#" class="card-hover bg-slate-800 border border-slate-700 rounded-xl p-6 block group">
+                    <div class="w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center text-2xl mb-4 group-hover:bg-blue-900/50 group-hover:text-blue-400 transition-colors">
+                        🐧
+                    </div>
+                    <h4 class="text-xl font-bold text-slate-100 mb-2">Linux & 工具链</h4>
+                    <p class="text-sm text-slate-400 mb-4 line-clamp-2">Linux 常用命令、Vim/VSCode 进阶配置、Git 版本控制高级玩法。</p>
+                    <div class="flex items-center text-xs font-semibold text-blue-500">
+                        查看配置 <span class="ml-1 group-hover:translate-x-1 transition-transform">→</span>
+                    </div>
+                </a>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- 最近更新记录 (Recent Updates) -->
+    <section class="max-w-6xl mx-auto px-6 py-12">
+        <h3 class="text-lg font-bold text-slate-200 mb-6 flex items-center gap-2">
+            <span>⏱️</span> 最近更新
+        </h3>
+        <ul class="space-y-4">
+            <li class="flex items-center gap-4 text-sm bg-slate-900 p-3 rounded-lg border border-slate-800">
+                <span class="text-cyan-500 font-mono w-24 flex-shrink-0">今天</span>
+                <span class="bg-slate-800 text-slate-300 px-2 py-1 rounded text-xs border border-slate-700">建站</span>
+                <a href="#" class="text-slate-300 hover:text-cyan-400 truncate">个人知识库 v2.0 全新暗黑极客版上线</a>
+            </li>
+            <li class="flex items-center gap-4 text-sm bg-slate-900 p-3 rounded-lg border border-slate-800">
+                <span class="text-slate-500 font-mono w-24 flex-shrink-0">2023-11-20</span>
+                <span class="bg-slate-800 text-slate-300 px-2 py-1 rounded text-xs border border-slate-700">C++</span>
+                <a href="#" class="text-slate-300 hover:text-cyan-400 truncate">完成 C++ 多线程与互斥锁 (Mutex) 极简速查手册编写</a>
+            </li>
+            <li class="flex items-center gap-4 text-sm bg-slate-900 p-3 rounded-lg border border-slate-800">
+                <span class="text-slate-500 font-mono w-24 flex-shrink-0">2023-11-15</span>
+                <span class="bg-slate-800 text-slate-300 px-2 py-1 rounded text-xs border border-slate-700">项目</span>
+                <a href="#" class="text-slate-300 hover:text-cyan-400 truncate">安防网关：Jetson Nano 交叉编译环境踩坑实录</a>
+            </li>
+        </ul>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="border-t border-slate-800 bg-slate-950 py-8 text-center text-slate-500 text-sm">
+        <p>© 2024 LCQ. Built with ❤️ and Code.</p>
+    </footer>
+
 </body>
 </html>
