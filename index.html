@@ -35,6 +35,12 @@
         .modal-enter .modal-content { 
             transform: scale(1) !important; 
         }
+
+        /* 点赞按钮的小动画 */
+        .like-animate {
+            transform: scale(1.15);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-300 font-sans antialiased min-h-screen flex flex-col selection:bg-cyan-900 selection:text-cyan-100 relative">
@@ -69,13 +75,24 @@
             <p class="text-lg text-slate-400 mb-8 leading-relaxed">
                 欢迎来到我的个人知识库。这里记录了我从底层 C/C++ 到系统架构、从日常八股到项目实战（如安防网关）的完整学习轨迹。不积跬步，无以至千里。
             </p>
-            <div class="flex gap-4">
-                <a href="#categories" class="px-6 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg shadow-lg shadow-cyan-500/30 transition-all">
+            
+            <!-- 操作按钮组 (加入点赞与充电按钮) -->
+            <div class="flex flex-wrap gap-4 mt-8">
+                <a href="#categories" class="px-6 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg shadow-lg shadow-cyan-500/30 transition-all flex items-center justify-center">
                     开始阅读
                 </a>
-                <a href="#" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-lg border border-slate-700 transition-all">
-                    关于我
-                </a>
+                
+                <!-- 新增：点赞按钮 -->
+                <button id="like-btn" class="px-6 py-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold rounded-lg border border-rose-500/30 transition-all flex items-center justify-center gap-2 group">
+                    <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    给项目点赞 (<span id="like-count" class="tabular-nums">...</span>)
+                </button>
+
+                <!-- 新增：充电按钮 -->
+                <button id="sponsor-btn" class="px-6 py-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 font-semibold rounded-lg border border-amber-500/30 transition-all flex items-center justify-center gap-2 group">
+                    <svg class="w-5 h-5 group-hover:animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    给作者充电
+                </button>
             </div>
         </div>
     </section>
@@ -147,6 +164,31 @@
     </footer>
 
     <!-- ========================================== -->
+    <!-- 充电(赞赏) 悬浮弹窗 (Modal) -->
+    <!-- ========================================== -->
+    <div id="sponsor-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="modal-content bg-slate-900 border border-amber-900/50 rounded-2xl w-full max-w-sm mx-4 shadow-2xl transform scale-95 transition-transform duration-300 p-8 text-center relative overflow-hidden">
+            <!-- 装饰性发光背景 -->
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-amber-500/20 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <h3 class="text-2xl font-bold text-amber-400 mb-3 flex items-center justify-center gap-2 relative z-10">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                感谢充电
+            </h3>
+            <p class="text-sm text-slate-400 mb-6 relative z-10">如果这个知识库对你的学习和面试有帮助，欢迎请作者喝杯咖啡！☕</p>
+            
+            <!-- 🚨 注意：请把这里的 src 换成你真实的微信收款码图片路径，例如 './images/wechat-pay.jpg' -->
+            <div class="bg-white p-2 rounded-xl border-2 border-slate-700 shadow-xl mb-6 relative z-10">
+                <img src="https://via.placeholder.com/300x300.png?text=WeChat+Pay+QR+Code" alt="微信收款码" class="w-full rounded-lg">
+            </div>
+            
+            <button id="close-sponsor-btn" class="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-lg transition-all w-full relative z-10">
+                关闭窗口
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
     <!-- 添加/编辑卡片的悬浮弹窗 (Modal) -->
     <!-- ========================================== -->
     <div id="add-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
@@ -193,11 +235,12 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- 1. UI 交互控制与状态管理逻辑 -->
+    <!-- UI 交互控制与状态管理逻辑 -->
     <!-- ========================================== -->
     <script>
-        let editingCardId = null; // 当前正在编辑的卡片 ID，null 表示新建
-        let currentCloudCards = []; // 本地缓存从云端拉取的数据
+        // --- 知识卡片弹窗逻辑 ---
+        let editingCardId = null;
+        let currentCloudCards = [];
 
         const modal = document.getElementById('add-modal');
         const openBtn = document.getElementById('open-modal-btn');
@@ -207,7 +250,6 @@
         const modalTitle = document.getElementById('modal-title');
         const submitBtn = document.getElementById('submit-btn');
 
-        // 恢复弹窗到新建模式
         const resetModalToSetup = () => {
             editingCardId = null;
             form.reset();
@@ -224,12 +266,25 @@
             statusBox.className = `text-sm py-2 px-3 rounded mt-2 ${isError ? 'bg-red-900/50 text-red-400 border border-red-800' : 'bg-green-900/50 text-green-400 border border-green-800'}`;
             statusBox.classList.remove('hidden');
         };
+
+        // --- 充电弹窗逻辑 ---
+        const sponsorModal = document.getElementById('sponsor-modal');
+        const sponsorBtn = document.getElementById('sponsor-btn');
+        const closeSponsorBtn = document.getElementById('close-sponsor-btn');
+
+        sponsorBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            sponsorModal.classList.add('modal-enter');
+        });
+        
+        closeSponsorBtn.addEventListener('click', () => {
+            sponsorModal.classList.remove('modal-enter');
+        });
     </script>
 
     <!-- ========================================== -->
-    <!-- 2. Supabase 核心逻辑 (渲染、拉取、增删改) -->
+    <!-- Supabase 核心逻辑 (渲染、拉取、增删改、点赞同步) -->
     <!-- ========================================== -->
-    <!-- 引入 Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         // 🔑 Supabase 配置
@@ -237,7 +292,61 @@
         const SUPABASE_KEY = "sb_publishable_QJ8O--Xo_AQLqEGmibpiGQ_iO75gSig";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 渲染动态卡片
+        // --- 1. 点赞同步逻辑 ---
+        const likeBtn = document.getElementById('like-btn');
+        const likeCountSpan = document.getElementById('like-count');
+        let currentLikes = 0;
+
+        // 获取初始点赞数
+        const loadLikes = async () => {
+            try {
+                // 假设你在 Supabase 建了一个 site_stats 表，并且存了一行 id=1 的数据
+                const { data, error } = await supabaseClient
+                    .from('site_stats')
+                    .select('likes')
+                    .eq('id', 1)
+                    .single();
+                
+                if (data) {
+                    currentLikes = data.likes || 0;
+                    likeCountSpan.innerText = currentLikes;
+                } else {
+                    likeCountSpan.innerText = '0';
+                }
+            } catch (err) {
+                console.error("加载点赞数失败, 请检查是否创建了 site_stats 表:", err);
+                likeCountSpan.innerText = '0';
+            }
+        };
+
+        // 点击点赞按钮
+        likeBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            
+            // 乐观 UI 更新（先让前端数字+1，给用户瞬间的反馈）
+            currentLikes++;
+            likeCountSpan.innerText = currentLikes;
+            
+            // 播放小动画
+            likeBtn.style.transform = "scale(1.1)";
+            setTimeout(() => { likeBtn.style.transform = "scale(1)"; }, 150);
+
+            try {
+                // 将最新数据更新到云端
+                await supabaseClient
+                    .from('site_stats')
+                    .update({ likes: currentLikes })
+                    .eq('id', 1);
+            } catch (err) {
+                console.error("更新点赞数失败", err);
+            }
+        });
+
+        // 页面加载时拉取点赞数
+        loadLikes();
+
+
+        // --- 2. 知识卡片渲染与增删改查逻辑 ---
         const renderDynamicCards = (cards) => {
             const container = document.getElementById('dynamic-cards-container');
             if (!container) return;
@@ -246,11 +355,9 @@
             cards.forEach(card => {
                 const a = document.createElement('a');
                 a.href = card.link || '#';
-                // 加入 group/card 类以便控制内部操作栏的悬浮显示
                 a.className = "card-hover bg-slate-800/80 border border-cyan-800/50 rounded-xl p-6 block group/card relative overflow-hidden";
                 
                 a.innerHTML = `
-                    <!-- 悬浮操作栏 (编辑 & 删除) -->
                     <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover/card:opacity-100 transition-opacity z-20">
                         <button class="action-edit-btn p-1.5 bg-slate-700/80 text-cyan-400 rounded hover:bg-slate-600 shadow-sm transition-colors" data-id="${card.id}" title="编辑卡片" onclick="event.preventDefault()">✏️</button>
                         <button class="action-delete-btn p-1.5 bg-slate-700/80 text-red-400 rounded hover:bg-slate-600 shadow-sm transition-colors" data-id="${card.id}" title="永久删除" onclick="event.preventDefault()">🗑️</button>
@@ -272,7 +379,6 @@
             });
         };
 
-        // 从云端加载数据
         const loadSharedCards = async () => {
             try {
                 const { data, error } = await supabaseClient
@@ -282,7 +388,7 @@
                 
                 if (error) throw error;
                 if (data) {
-                    currentCloudCards = data; // 存入缓存供编辑使用
+                    currentCloudCards = data; 
                     renderDynamicCards(data);
                 }
             } catch (error) {
@@ -290,12 +396,10 @@
             }
         };
 
-        // 监听动态卡片的删除与编辑点击
         document.getElementById('cards-grid').addEventListener('click', async (e) => {
-            // 删除逻辑
             const deleteBtn = e.target.closest('.action-delete-btn');
             if (deleteBtn) {
-                e.preventDefault(); // 阻止 <a> 标签跳转
+                e.preventDefault(); 
                 const id = deleteBtn.getAttribute('data-id');
                 if (confirm('🚨 确定要永久删除这张卡片吗？删除后无法恢复！')) {
                     const originalHtml = deleteBtn.innerHTML;
@@ -303,7 +407,7 @@
                     try {
                         const { error } = await supabaseClient.from('knowledge_cards').delete().eq('id', id);
                         if (error) throw error;
-                        loadSharedCards(); // 刷新列表
+                        loadSharedCards(); 
                     } catch(err) {
                         alert('删除失败，请检查网络！');
                         deleteBtn.innerHTML = originalHtml;
@@ -312,19 +416,16 @@
                 return;
             }
 
-            // 编辑逻辑
             const editBtn = e.target.closest('.action-edit-btn');
             if (editBtn) {
-                e.preventDefault(); // 阻止 <a> 标签跳转
+                e.preventDefault(); 
                 const id = editBtn.getAttribute('data-id');
                 const targetCard = currentCloudCards.find(c => c.id == id);
                 if (targetCard) {
-                    // 切换为编辑模式
                     editingCardId = id;
                     modalTitle.innerHTML = '<span class="text-cyan-400">✏️</span> 编辑知识卡片';
                     submitBtn.innerHTML = '<span>保存修改</span>';
                     
-                    // 回填数据
                     document.getElementById('card-title').value = targetCard.title;
                     document.getElementById('card-desc').value = targetCard.description;
                     document.getElementById('card-icon').value = targetCard.icon;
@@ -335,10 +436,8 @@
             }
         });
 
-        // 初始化加载一次
         loadSharedCards();
 
-        // 提交表单逻辑 (分发给 Insert 或 Update)
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -350,21 +449,14 @@
             submitBtn.disabled = true;
             submitBtn.innerHTML = editingCardId ? '正在保存...' : '正在发布...';
 
-            const payload = { 
-                title: title, 
-                description: desc, 
-                icon: icon, 
-                link: link 
-            };
+            const payload = { title, description: desc, icon, link };
 
             try {
                 let errorObj;
                 if (editingCardId) {
-                    // 执行更新
                     const { error } = await supabaseClient.from('knowledge_cards').update(payload).eq('id', editingCardId);
                     errorObj = error;
                 } else {
-                    // 执行新建
                     const { error } = await supabaseClient.from('knowledge_cards').insert([payload]);
                     errorObj = error;
                 }
@@ -372,7 +464,7 @@
                 if (errorObj) throw errorObj;
                 
                 window.showFormStatus(editingCardId ? "✅ 修改已保存！" : "✅ 发布成功！");
-                loadSharedCards(); // 刷新列表
+                loadSharedCards(); 
 
                 setTimeout(() => {
                     modal.classList.remove('modal-enter');
