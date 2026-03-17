@@ -168,7 +168,7 @@
     <footer class="border-t border-slate-800 bg-slate-950 py-8 text-center text-slate-500 text-sm">
         <p>
             © 2024 LCQ. Built with ❤️ and Code.
-            <!-- 新增：极其隐蔽的暗门触发器 -->
+            <!-- 极其隐蔽的暗门触发器 -->
             <button id="secret-trigger" class="opacity-100 hover:opacity-100 hover:text-fuchsia-400 transition-all ml-1 cursor-pointer select-none outline-none" title="Secret Space">✦</button>
         </p>
     </footer>
@@ -187,7 +187,6 @@
             </h3>
             <p class="text-sm text-slate-400 mb-6 relative z-10">如果这个知识库对你的学习和面试有帮助，欢迎请作者喝杯咖啡！☕</p>
             
-            <!-- 🚨 注意：请把这里的 src 换成你真实的微信收款码图片路径，例如 './images/wechat-pay.jpg' -->
             <div class="bg-white p-2 rounded-xl border-2 border-slate-700 shadow-xl mb-6 relative z-10">
                 <img src="12811773753998_.pic.jpg" alt="微信收款码" class="w-full rounded-lg">
             </div>
@@ -274,7 +273,7 @@
                     <span class="text-lg">🌌</span> 隐藏维度留言板
                 </h3>
                 <div class="flex items-center gap-4">
-                    <!-- 新增：刷新按钮 -->
+                    <!-- 刷新按钮 -->
                     <button id="refresh-board-btn" class="text-fuchsia-500/70 hover:text-fuchsia-400 transition-all outline-none" title="刷新留言">
                         <svg id="refresh-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                     </button>
@@ -294,13 +293,12 @@
             <form id="secret-msg-form" class="p-5 border-t border-slate-800 bg-slate-900 rounded-b-2xl">
                 <div class="flex gap-3 items-center">
                     
-                    <!-- 新增：留言者选择器 -->
+                    <!-- 留言者选择器 -->
                     <div class="relative shrink-0">
                         <select id="secret-msg-author" class="appearance-none bg-slate-800 border border-slate-700 rounded-lg pl-4 pr-8 py-2.5 text-fuchsia-400 font-bold focus:outline-none focus:border-fuchsia-500 focus:ring-1 focus:ring-fuchsia-500 transition-colors cursor-pointer text-center">
                             <option value="f">f</option>
                             <option value="l">l</option>
                         </select>
-                        <!-- 下拉箭头图标 -->
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-fuchsia-500/70">
                             <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                         </div>
@@ -326,6 +324,10 @@
                     <span class="text-lg">💬</span> 公开留言板
                 </h3>
                 <div class="flex items-center gap-4">
+                    <!-- 新增：解锁长辈留言按钮 -->
+                    <button id="unlock-public-btn" class="text-indigo-500/70 hover:text-indigo-400 transition-all outline-none" title="解锁隐藏留言">
+                        <svg id="unlock-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    </button>
                     <!-- 刷新按钮 -->
                     <button id="refresh-public-board-btn" class="text-indigo-500/70 hover:text-indigo-400 transition-all outline-none" title="刷新留言">
                         <svg id="refresh-public-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
@@ -365,6 +367,24 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- 3. 公开留言板密码验证弹窗 -->
+    <div id="public-pwd-modal" class="fixed inset-0 z-[65] flex items-center justify-center bg-slate-950/90 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="modal-content bg-slate-900 border border-indigo-900/50 rounded-2xl w-full max-w-sm mx-4 shadow-2xl transform scale-95 transition-transform duration-300 p-8 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <h3 class="text-2xl font-bold text-indigo-400 mb-6 flex items-center justify-center gap-2 relative z-10">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                解锁隐藏留言
+            </h3>
+            <input type="password" id="public-pwd-input" autocomplete="off" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-center text-indigo-400 tracking-[0.3em] font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors mb-4 relative z-10" placeholder="Enter Password">
+            <p id="public-pwd-error" class="text-red-400 text-xs mb-4 hidden relative z-10">密码错误，访问拒绝</p>
+            <div class="flex gap-3 relative z-10">
+                <button id="close-public-pwd-btn" class="flex-1 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-lg transition-all">取消</button>
+                <button id="public-pwd-submit-btn" class="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg shadow-lg shadow-indigo-500/20 transition-all">解锁</button>
+            </div>
         </div>
     </div>
 
@@ -682,7 +702,6 @@
 
         const boardModal = document.getElementById('board-modal');
         const boardClose = document.getElementById('close-board-btn');
-        // 新增：刷新按钮相关的 DOM 节点
         const refreshBoardBtn = document.getElementById('refresh-board-btn');
         const refreshIcon = document.getElementById('refresh-icon');
         
@@ -705,6 +724,17 @@
         const publicMsgAuthor = document.getElementById('public-msg-author');
         const publicMsgSubmitBtn = document.getElementById('public-msg-submit');
 
+        // 新增：解锁相关 DOM 及状态
+        const unlockPublicBtn = document.getElementById('unlock-public-btn');
+        const unlockIcon = document.getElementById('unlock-icon');
+        const publicPwdModal = document.getElementById('public-pwd-modal');
+        const publicPwdInput = document.getElementById('public-pwd-input');
+        const publicPwdSubmit = document.getElementById('public-pwd-submit-btn');
+        const publicPwdClose = document.getElementById('close-public-pwd-btn');
+        const publicPwdError = document.getElementById('public-pwd-error');
+
+        let isParentUnlocked = false; // 记录是否已经解锁了长辈留言
+
         // 点击页脚暗门打开密码验证
         secretTrigger.addEventListener('click', () => {
             pwdInput.value = '';
@@ -719,7 +749,7 @@
 
         // 验证密码逻辑
         const verifyPassword = () => {
-            if (pwdInput.value === 'fyl1222') {
+            if (pwdInput.value === '737804') {
                 pwdModal.classList.remove('modal-enter');
                 boardModal.classList.add('modal-enter');
                 loadSecretMessages();
@@ -733,7 +763,7 @@
         pwdSubmit.addEventListener('click', verifyPassword);
         pwdInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyPassword(); });
 
-        // 新增：绑定刷新按钮点击事件
+        // 绑定刷新按钮点击事件
         if (refreshBoardBtn) {
             refreshBoardBtn.addEventListener('click', () => {
                 loadSecretMessages();
@@ -750,7 +780,6 @@
                 const { data, error } = await supabaseClient
                     .from('secret_messages')
                     .select('*')
-                    // 将 false 改成 true，让老数据排在前面，新数据排在后面（追加到底部）
                     .order('created_at', { ascending: true }); 
                 
                 if (error) throw error;
@@ -764,10 +793,8 @@
                 data.forEach(m => {
                     let msgObj;
                     try {
-                        // 尝试把数据库存的字符串作为 JSON 解析，提取作者和内容
                         msgObj = JSON.parse(m.content);
                     } catch (e) {
-                        // 完美兼容旧数据：如果解析失败（说明是之前发的纯文本），就打上问号
                         msgObj = { author: '?', text: m.content };
                     }
 
@@ -775,7 +802,6 @@
                     div.className = 'bg-slate-800/80 p-4 rounded-xl border border-slate-700/50 hover:border-fuchsia-500/30 transition-colors flex gap-4 items-start';
                     const date = new Date(m.created_at).toLocaleString('zh-CN', { hour12: false });
                     
-                    // 安全转义，防止 XSS 攻击
                     const safeContent = msgObj.text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
                     const safeAuthor = (msgObj.author || '?').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                     
@@ -796,13 +822,11 @@
                     msgList.appendChild(div);
                 });
                 
-                // 滚动到底部（展示最新）
                 msgList.scrollTop = msgList.scrollHeight;
             } catch (err) {
                 console.error("拉取留言失败:", err);
                 msgList.innerHTML = '<div class="text-center py-10 text-red-500/80">维度连接断开（请确认已在 Supabase 创建 secret_messages 表）</div>';
             } finally {
-                // 无论成功还是失败，结束转圈动画
                 if (refreshIcon) refreshIcon.classList.remove('animate-spin');
             }
         };
@@ -811,14 +835,13 @@
         msgForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const textContent = msgInput.value.trim();
-            const authorChoice = msgAuthor.value; // 获取选中的留言者 (f 还是 l)
+            const authorChoice = msgAuthor.value;
             
             if (!textContent) return;
             
             msgSubmitBtn.disabled = true;
             msgSubmitBtn.innerHTML = '传输中...';
 
-            // ⚠️ 核心技巧：不改数据库列，直接把发送者和内容打包成 JSON 字符串存进 content 字段！
             const payloadContent = JSON.stringify({
                 author: authorChoice,
                 text: textContent
@@ -832,7 +855,7 @@
                 if (error) throw error;
                 
                 msgInput.value = '';
-                await loadSecretMessages(); // 重新拉取刷新列表
+                await loadSecretMessages();
             } catch (err) {
                 console.error("发送留言失败:", err);
                 alert('发送失败，请检查网络或数据库配置！');
@@ -863,25 +886,29 @@
         }
 
         // 解锁按钮交互
-        unlockPublicBtn.addEventListener('click', () => {
-            if (isParentUnlocked) {
-                // 如果已经解锁，点击则手动重新锁定
-                isParentUnlocked = false;
-                unlockIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>';
-                loadPublicMessages();
-            } else {
-                publicPwdInput.value = '';
-                publicPwdError.classList.add('hidden');
-                publicPwdModal.classList.add('modal-enter');
-                setTimeout(() => publicPwdInput.focus(), 100);
-            }
-        });
+        if (unlockPublicBtn) {
+            unlockPublicBtn.addEventListener('click', () => {
+                if (isParentUnlocked) {
+                    // 如果已经解锁，点击则手动重新锁定
+                    isParentUnlocked = false;
+                    unlockIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>';
+                    loadPublicMessages();
+                } else {
+                    publicPwdInput.value = '';
+                    publicPwdError.classList.add('hidden');
+                    publicPwdModal.classList.add('modal-enter');
+                    setTimeout(() => publicPwdInput.focus(), 100);
+                }
+            });
+        }
 
-        publicPwdClose.addEventListener('click', () => publicPwdModal.classList.remove('modal-enter'));
+        if (publicPwdClose) {
+            publicPwdClose.addEventListener('click', () => publicPwdModal.classList.remove('modal-enter'));
+        }
 
         // 验证公共面板密码
         const verifyPublicPassword = () => {
-            if (publicPwdInput.value === 'fyl1222') {
+            if (publicPwdInput.value === '737804') {
                 isParentUnlocked = true;
                 publicPwdModal.classList.remove('modal-enter');
                 // 变成开锁图标
@@ -894,8 +921,12 @@
             }
         };
 
-        publicPwdSubmit.addEventListener('click', verifyPublicPassword);
-        publicPwdInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyPublicPassword(); });
+        if (publicPwdSubmit) {
+            publicPwdSubmit.addEventListener('click', verifyPublicPassword);
+        }
+        if (publicPwdInput) {
+            publicPwdInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyPublicPassword(); });
+        }
 
         // 拉取公开留言
         const loadPublicMessages = async () => {
