@@ -7,15 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Chosen Palette: Warm Neutrals (Stone/Sand) with Soft Blue & Amber accents -->
-    <!-- Application Structure Plan: The SPA uses a "Learning Dashboard" architecture. It deviates from a linear document to a module-based exploration interface. A persistent left sidebar provides navigation. The content area switches between three core modules: "Environment & Setup", "Lifecycle Explorer", and "Industrial Pools & Safety". This structure allows users to focus on specific tasks (like configuring CMake) without being distracted by theoretical lifecycle details, while the interactive elements (like the Data Race Simulator) provide immediate visual feedback for complex concepts, significantly enhancing usability over a static Markdown file. -->
-    <!-- Visualization & Content Choices: 
-         1. Code Snippets -> Goal: Organize/Inform -> Viz: Custom Tabbed Code Viewer with Copy function -> Interaction: Tab switching and copy-to-clipboard -> Justification: Condenses long compilation steps and CMake code into a compact, task-oriented UI.
-         2. Thread Lifecycle -> Goal: Organize/Relationships -> Viz: Interactive Matrix/Grid -> Interaction: Clickable command cards that update a central detailed explanation panel -> Justification: Transforms a static table into an exploratory learning tool, linking code directly to its "Plain English" explanation.
-         3. Data Race Warning -> Goal: Compare/Change -> Viz: Dynamic Chart.js Line Chart -> Interaction: Buttons to simulate threads running with and without Mutex -> Justification: Visually proves the invisible danger of data races, making the abstract warning concrete and memorable. NO SVG/Mermaid used.
-    -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
-
     <style>
         body { background-color: #faf9f6; color: #292524; }
         
@@ -88,33 +79,62 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+
+        /* 弹窗动画增强版 */
+        .modal-enter { 
+            opacity: 1 !important; 
+            pointer-events: auto !important; 
+            z-index: 9999 !important; 
+            visibility: visible !important; 
+        }
+        .modal-enter .modal-content { 
+            transform: scale(1) !important; 
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col md:flex-row overflow-hidden font-sans">
 
-    <nav class="w-full md:w-64 bg-white border-r border-stone-200 flex-shrink-0 flex flex-col h-auto md:h-full z-10 shadow-sm">
+    <!-- 左侧导航栏 -->
+    <nav class="w-full md:w-64 bg-white border-r border-stone-200 flex-shrink-0 flex flex-col h-auto md:h-full z-10 shadow-sm relative">
         <div class="p-6 border-b border-stone-100">
             <h1 class="text-xl font-bold text-stone-800 tracking-tight flex items-center gap-2">
                 <span class="text-2xl">⚙️</span> C++ 现代并发
             </h1>
             <p class="text-xs text-stone-500 mt-2 leading-relaxed">从 pthread 迁移到现代 C++ 多线程开发的核心知识体系。</p>
         </div>
-        <div class="flex-1 overflow-y-auto py-4 flex md:flex-col flex-row overflow-x-auto">
-            <button class="nav-item active text-left px-6 py-3 text-sm text-stone-600 hover:bg-stone-50 whitespace-nowrap md:whitespace-normal" data-target="sec-env">
+        
+        <!-- 导航菜单容器 (用于事件委托和动态插入) -->
+        <div id="nav-menu-container" class="flex-1 overflow-y-auto py-4 flex md:flex-col flex-row overflow-x-auto">
+            <button class="nav-item static-nav active text-left px-6 py-3 text-sm text-stone-600 hover:bg-stone-50 whitespace-nowrap md:whitespace-normal" data-target="sec-env">
                 1. 编译环境与头文件
             </button>
-            <button class="nav-item text-left px-6 py-3 text-sm text-stone-600 hover:bg-stone-50 whitespace-nowrap md:whitespace-normal" data-target="sec-life">
+            <button class="nav-item static-nav text-left px-6 py-3 text-sm text-stone-600 hover:bg-stone-50 whitespace-nowrap md:whitespace-normal" data-target="sec-life">
                 2. 线程生命周期指令
             </button>
-            <button class="nav-item text-left px-6 py-3 text-sm text-stone-600 hover:bg-stone-50 whitespace-nowrap md:whitespace-normal" data-target="sec-pool">
+            <button class="nav-item static-nav text-left px-6 py-3 text-sm text-stone-600 hover:bg-stone-50 whitespace-nowrap md:whitespace-normal" data-target="sec-pool">
                 3. 工业模板与数据竞争
+            </button>
+            <!-- 动态生成的章节会插入到这里 -->
+        </div>
+
+        <!-- 底部添加按钮 -->
+        <div class="p-4 border-t border-stone-100 mt-auto bg-stone-50/50 hidden md:block">
+            <button id="open-modal-btn" class="w-full bg-white border border-stone-200 hover:border-blue-300 hover:text-blue-600 text-stone-600 text-sm font-bold py-2.5 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
+                <span>➕</span> 补充新章节/卡片
             </button>
         </div>
     </nav>
 
-    <main class="flex-1 overflow-y-auto relative scroll-smooth bg-[#faf9f6]">
+    <!-- 移动端底部的浮动添加按钮 -->
+    <button id="open-modal-btn-mobile" class="md:hidden fixed bottom-4 right-4 z-40 bg-blue-600 text-white w-12 h-12 rounded-full shadow-xl flex items-center justify-center text-2xl">
+        +
+    </button>
+
+    <!-- 右侧内容区 -->
+    <main id="main-content-container" class="flex-1 overflow-y-auto relative scroll-smooth bg-[#faf9f6]">
         <div class="max-w-5xl mx-auto p-6 md:p-12">
 
+            <!-- 静态章节 1 -->
             <section id="sec-env" class="section-view active">
                 <header class="mb-10">
                     <h2 class="text-3xl font-extrabold text-stone-800 mb-4">编译环境与头文件</h2>
@@ -184,6 +204,7 @@ make
                 </div>
             </section>
 
+            <!-- 静态章节 2 -->
             <section id="sec-life" class="section-view">
                 <header class="mb-10">
                     <h2 class="text-3xl font-extrabold text-stone-800 mb-4">线程的生命周期探索</h2>
@@ -309,6 +330,7 @@ make
                 </div>
             </section>
 
+            <!-- 静态章节 3 -->
             <section id="sec-pool" class="section-view">
                 <header class="mb-10">
                     <h2 class="text-3xl font-extrabold text-stone-800 mb-4">工业模板与数据竞争验证</h2>
@@ -384,43 +406,81 @@ int main() {
                         正如上方图表所示，多线程不加锁（Mutex）直接修改同一个变量，必然导致数据竞争。现象就是：代码没报错，但最终算出来的结果就是不对。在实际工程中，请务必学习 <code>std::mutex</code> 和 <code>std::lock_guard</code> 的用法以保护数据。
                     </p>
                 </div>
-
             </section>
 
         </div>
     </main>
 
-    <script>
-        const navItems = document.querySelectorAll('.nav-item');
-        const sectionViews = document.querySelectorAll('.section-view');
+    <!-- 补充卡片弹窗 (Modal) -->
+    <div id="add-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
+        <div class="modal-content bg-white border border-stone-200 rounded-2xl w-full max-w-lg mx-4 shadow-2xl transform scale-95 transition-all duration-300">
+            <div class="p-6 border-b border-stone-100 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-stone-800">📝 补充章节或卡片</h3>
+                <button id="close-modal-btn" class="text-stone-400 hover:text-stone-700 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <form id="add-card-form" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-stone-600 mb-1">所属章节名 (新名字会自动建章)</label>
+                    <input type="text" id="card-chapter" required autocomplete="off" class="w-full bg-stone-50 border border-stone-200 rounded-lg px-4 py-2.5 text-stone-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" placeholder="例如：4. 读写锁进阶">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-stone-600 mb-1">卡片标题</label>
+                    <input type="text" id="card-title" required autocomplete="off" class="w-full bg-stone-50 border border-stone-200 rounded-lg px-4 py-2.5 text-stone-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" placeholder="例如：std::shared_mutex">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-stone-600 mb-1">卡片内容 / 代码</label>
+                    <textarea id="card-content" required rows="3" class="w-full bg-stone-50 border border-stone-200 rounded-lg px-4 py-2.5 text-stone-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors resize-none font-mono text-sm" placeholder="支持填写代码或文字总结..."></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-stone-600 mb-1">图标 (Emoji)</label>
+                        <input type="text" id="card-icon" required class="w-full bg-stone-50 border border-stone-200 rounded-lg px-4 py-2.5 text-stone-800 text-center text-xl focus:border-blue-500" value="🔒">
+                    </div>
+                </div>
+                
+                <div id="form-status" class="hidden text-sm py-2 px-3 rounded"></div>
 
-        navItems.forEach(item => {
-            item.addEventListener('click', () => {
-                navItems.forEach(nav => nav.classList.remove('active'));
-                item.classList.add('active');
-                const target = item.getAttribute('data-target');
-                sectionViews.forEach(sec => {
-                    if (sec.id === target) {
-                        sec.classList.add('active');
-                    } else {
-                        sec.classList.remove('active');
-                    }
-                });
+                <div class="flex justify-end pt-2">
+                    <button type="submit" id="submit-btn" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-all">发布内容</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 原有 UI 脚本与图表逻辑 (完全保留) -->
+    <script>
+        // 1. 原有导航点击改为“事件委托”，支持动态加入的元素
+        const navContainer = document.getElementById('nav-menu-container');
+        navContainer.addEventListener('click', (e) => {
+            const item = e.target.closest('.nav-item');
+            if (!item) return;
+            
+            navContainer.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            item.classList.add('active');
+            
+            const targetId = item.getAttribute('data-target');
+            document.querySelectorAll('.section-view').forEach(sec => {
+                if (sec.id === targetId) {
+                    sec.classList.add('active');
+                } else {
+                    sec.classList.remove('active');
+                }
             });
         });
 
+        // 2. 原有的标签页切换
         const tabBtns = document.querySelectorAll('.tab-btn');
         const tabContents = document.querySelectorAll('.tab-content');
-
         tabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const parent = btn.closest('.bg-white');
                 const localBtns = parent.querySelectorAll('.tab-btn');
                 const localContents = parent.querySelectorAll('.tab-content');
-                
                 localBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                
                 const target = btn.getAttribute('data-tab');
                 localContents.forEach(content => {
                     if (content.id === target) {
@@ -434,6 +494,7 @@ int main() {
             });
         });
 
+        // 3. 原有的复制代码逻辑
         const copyBtns = document.querySelectorAll('.copy-btn');
         copyBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -451,9 +512,9 @@ int main() {
             });
         });
 
+        // 4. 原有的命令卡片切换
         const cmdCards = document.querySelectorAll('.cmd-card');
         const detailContents = document.querySelectorAll('.detail-content');
-
         cmdCards.forEach(card => {
             card.addEventListener('click', () => {
                 cmdCards.forEach(c => c.classList.remove('active'));
@@ -471,53 +532,30 @@ int main() {
             });
         });
 
+        // 5. 原有的模拟器 Chart.js 逻辑
         let simChart = null;
         let simInterval = null;
-
         function initChart() {
             const ctx = document.getElementById('raceChart').getContext('2d');
             Chart.defaults.font.family = "ui-sans-serif, system-ui, sans-serif";
-            
             simChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: [],
                     datasets: [{
-                        label: '当前累加值',
-                        data: [],
-                        borderColor: '#292524',
-                        backgroundColor: 'rgba(41, 37, 36, 0.05)',
-                        borderWidth: 2,
-                        pointRadius: 0,
-                        fill: true,
-                        tension: 0.2
+                        label: '当前累加值', data: [],
+                        borderColor: '#292524', backgroundColor: 'rgba(41, 37, 36, 0.05)',
+                        borderWidth: 2, pointRadius: 0, fill: true, tension: 0.2
                     }, {
-                        label: '理论完美值',
-                        data: [],
-                        borderColor: '#a8a29e',
-                        borderWidth: 1,
-                        borderDash: [4, 4],
-                        pointRadius: 0,
-                        fill: false
+                        label: '理论完美值', data: [],
+                        borderColor: '#a8a29e', borderWidth: 1, borderDash: [4, 4],
+                        pointRadius: 0, fill: false
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: { duration: 0 },
-                    scales: {
-                        x: { display: false },
-                        y: { 
-                            min: 0, 
-                            max: 520,
-                            grid: { color: '#f5f5f4' },
-                            border: { display: false }
-                        }
-                    },
-                    plugins: {
-                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 6 } },
-                        tooltip: { enabled: false }
-                    }
+                    responsive: true, maintainAspectRatio: false, animation: { duration: 0 },
+                    scales: { x: { display: false }, y: { min: 0, max: 520, grid: { color: '#f5f5f4' }, border: { display: false } } },
+                    plugins: { legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 6 } }, tooltip: { enabled: false } }
                 }
             });
         }
@@ -529,41 +567,23 @@ int main() {
             
             if(simInterval) clearInterval(simInterval);
             
-            btnRace.disabled = true;
-            btnMutex.disabled = true;
-            btnRace.classList.add('opacity-50');
-            btnMutex.classList.add('opacity-50');
+            btnRace.disabled = true; btnMutex.disabled = true;
+            btnRace.classList.add('opacity-50'); btnMutex.classList.add('opacity-50');
             
-            simChart.data.labels = [];
-            simChart.data.datasets[0].data = [];
-            simChart.data.datasets[1].data = [];
+            simChart.data.labels = []; simChart.data.datasets[0].data = []; simChart.data.datasets[1].data = [];
             
             if (isSafe) {
-                simChart.data.datasets[0].borderColor = '#10b981';
-                simChart.data.datasets[0].backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                simChart.data.datasets[0].borderColor = '#10b981'; simChart.data.datasets[0].backgroundColor = 'rgba(16, 185, 129, 0.1)';
             } else {
-                simChart.data.datasets[0].borderColor = '#ef4444';
-                simChart.data.datasets[0].backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                simChart.data.datasets[0].borderColor = '#ef4444'; simChart.data.datasets[0].backgroundColor = 'rgba(239, 68, 68, 0.1)';
             }
-            
             simChart.update();
 
-            let currentStep = 0;
-            const totalSteps = 100;
-            const threads = 5;
-            let actualCount = 0;
+            let currentStep = 0, totalSteps = 100, threads = 5, actualCount = 0;
 
             simInterval = setInterval(() => {
                 currentStep++;
-                
-                let increment = 0;
-                if (isSafe) {
-                    increment = threads;
-                } else {
-                    const randomLost = Math.floor(Math.random() * 3); 
-                    increment = threads - randomLost;
-                }
-                
+                let increment = isSafe ? threads : threads - Math.floor(Math.random() * 3);
                 actualCount += increment;
                 const theoreticalCount = currentStep * threads;
 
@@ -578,17 +598,12 @@ int main() {
 
                 if (currentStep >= totalSteps) {
                     clearInterval(simInterval);
-                    btnRace.disabled = false;
-                    btnMutex.disabled = false;
-                    btnRace.classList.remove('opacity-50');
-                    btnMutex.classList.remove('opacity-50');
-                    
+                    btnRace.disabled = false; btnMutex.disabled = false;
+                    btnRace.classList.remove('opacity-50'); btnMutex.classList.remove('opacity-50');
                     if(!isSafe) {
-                        resultLabel.classList.add('text-red-600');
-                        resultLabel.classList.remove('text-stone-800', 'text-emerald-600');
+                        resultLabel.className = "text-xl font-bold font-mono text-red-600";
                     } else {
-                        resultLabel.classList.add('text-emerald-600');
-                        resultLabel.classList.remove('text-stone-800', 'text-red-600');
+                        resultLabel.className = "text-xl font-bold font-mono text-emerald-600";
                     }
                 }
             }, 30);
@@ -596,9 +611,167 @@ int main() {
 
         document.getElementById('btn-race').addEventListener('click', () => runSimulation(false));
         document.getElementById('btn-mutex').addEventListener('click', () => runSimulation(true));
-
         window.addEventListener('DOMContentLoaded', initChart);
+    </script>
 
+    <!-- ========================================== -->
+    <!-- 全新追加：Supabase 云端章节加载与弹窗逻辑 -->
+    <!-- ========================================== -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // 弹窗基础控制
+        const modalEl = document.getElementById('add-modal');
+        const statusBoxEl = document.getElementById('form-status');
+        const openModalFn = () => modalEl.classList.add('modal-enter');
+        const closeModalFn = () => {
+            modalEl.classList.remove('modal-enter');
+            document.getElementById('add-card-form').reset();
+            statusBoxEl.classList.add('hidden');
+        };
+
+        document.getElementById('open-modal-btn').addEventListener('click', openModalFn);
+        document.getElementById('open-modal-btn-mobile').addEventListener('click', openModalFn);
+        document.getElementById('close-modal-btn').addEventListener('click', closeModalFn);
+
+        window.showFormStatus = (msg, isError = false) => {
+            statusBoxEl.textContent = msg;
+            statusBoxEl.className = `text-sm py-2 px-3 rounded mt-2 ${isError ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-green-50 text-green-600 border border-green-200'}`;
+            statusBoxEl.classList.remove('hidden');
+        };
+
+        // 🔑 Supabase 配置
+        const SUPABASE_URL = "https://hlmpgjvvnezpgobgbtwy.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_QJ8O--Xo_AQLqEGmibpiGQ_iO75gSig";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // 渲染动态章节和卡片
+        const renderDynamicChapters = (cardsData) => {
+            const mainContainer = document.querySelector('#main-content-container > div');
+            const navMenu = document.getElementById('nav-menu-container');
+
+            // 1. 清理之前的动态节点 (防止重复渲染)
+            document.querySelectorAll('.dyn-chapter-nav').forEach(el => el.remove());
+            document.querySelectorAll('.dyn-chapter-sec').forEach(el => el.remove());
+
+            if (!cardsData || cardsData.length === 0) return;
+
+            // 2. 将数据按章节名称 (chapter) 分组
+            const chaptersMap = {};
+            cardsData.forEach(item => {
+                const chap = item.chapter || "其他补充";
+                if (!chaptersMap[chap]) chaptersMap[chap] = [];
+                chaptersMap[chap].push(item);
+            });
+
+            // 3. 为每个动态章节生成导航栏按钮和内容区
+            Object.keys(chaptersMap).forEach((chapterName, index) => {
+                const safeId = "sec-dyn-" + encodeURIComponent(chapterName).replace(/%/g, '');
+
+                // -- 生成左侧导航按钮 --
+                const navBtn = document.createElement('button');
+                navBtn.className = "nav-item dyn-chapter-nav text-left px-6 py-3 text-sm text-blue-600 font-medium hover:bg-stone-50 whitespace-nowrap md:whitespace-normal border-l-4 border-transparent";
+                navBtn.setAttribute('data-target', safeId);
+                navBtn.innerHTML = `📚 ${chapterName}`;
+                navMenu.appendChild(navBtn);
+
+                // -- 生成右侧章节区块 --
+                const sectionHtml = document.createElement('section');
+                sectionHtml.id = safeId;
+                sectionHtml.className = "section-view dyn-chapter-sec";
+                
+                // 构建内部的所有卡片 HTML
+                let cardsHtml = '';
+                chaptersMap[chapterName].forEach(card => {
+                    cardsHtml += `
+                        <div class="bg-white border border-stone-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow mb-4">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="text-3xl">${card.icon}</div>
+                                <h3 class="text-xl font-bold text-stone-800">${card.title}</h3>
+                            </div>
+                            <div class="bg-stone-50 p-4 rounded-lg border border-stone-200 font-mono text-sm text-stone-700 whitespace-pre-wrap">${card.content}</div>
+                        </div>
+                    `;
+                });
+
+                sectionHtml.innerHTML = `
+                    <header class="mb-10 border-b border-stone-200 pb-4">
+                        <h2 class="text-3xl font-extrabold text-stone-800 mb-2">${chapterName}</h2>
+                        <p class="text-stone-500 text-sm">社区补充节点 · 动态加载</p>
+                    </header>
+                    <div class="grid grid-cols-1 gap-6">
+                        ${cardsHtml}
+                    </div>
+                `;
+                mainContainer.appendChild(sectionHtml);
+            });
+        };
+
+        // 从云端拉取数据
+        const fetchNotesFromCloud = async () => {
+            try {
+                // 读取 cpp_guide_notes 表
+                const { data, error } = await supabaseClient
+                    .from('cpp_guide_notes')
+                    .select('*')
+                    .order('created_at', { ascending: true });
+                
+                if (error) throw error;
+                renderDynamicChapters(data);
+            } catch (error) {
+                console.error("加载云端笔记失败:", error);
+            }
+        };
+
+        // 页面加载时拉取一次
+        fetchNotesFromCloud();
+
+        // 提交表单逻辑
+        document.getElementById('add-card-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submit-btn');
+            
+            const chapter = document.getElementById('card-chapter').value.trim();
+            const title = document.getElementById('card-title').value.trim();
+            const content = document.getElementById('card-content').value.trim();
+            const icon = document.getElementById('card-icon').value.trim();
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '正在写入云端...';
+
+            try {
+                const { error } = await supabaseClient
+                    .from('cpp_guide_notes')
+                    .insert([{ 
+                        chapter: chapter,
+                        title: title, 
+                        content: content, 
+                        icon: icon
+                    }]);
+
+                if (error) throw error;
+                
+                window.showFormStatus("笔记补充成功！");
+                fetchNotesFromCloud(); // 重新刷新界面
+                
+                setTimeout(() => {
+                    closeModalFn();
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = `发布内容`;
+                    
+                    // 自动跳转到刚发布的那一章
+                    const safeId = "sec-dyn-" + encodeURIComponent(chapter).replace(/%/g, '');
+                    const newNavBtn = document.querySelector(`[data-target="${safeId}"]`);
+                    if(newNavBtn) newNavBtn.click();
+
+                }, 1200);
+
+            } catch (error) {
+                console.error("提交失败", error);
+                window.showFormStatus("发布失败，请确认云端表已建立", true);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `发布内容`;
+            }
+        });
     </script>
 </body>
 </html>
