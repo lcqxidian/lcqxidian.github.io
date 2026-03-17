@@ -851,6 +851,9 @@
 
         closePublicBoardBtn.addEventListener('click', () => {
             publicBoardModal.classList.remove('modal-enter');
+            // 关闭时自动重置锁定状态（防偷窥）
+            isParentUnlocked = false;
+            unlockIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>';
         });
 
         if (refreshPublicBoardBtn) {
@@ -858,6 +861,41 @@
                 loadPublicMessages();
             });
         }
+
+        // 解锁按钮交互
+        unlockPublicBtn.addEventListener('click', () => {
+            if (isParentUnlocked) {
+                // 如果已经解锁，点击则手动重新锁定
+                isParentUnlocked = false;
+                unlockIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>';
+                loadPublicMessages();
+            } else {
+                publicPwdInput.value = '';
+                publicPwdError.classList.add('hidden');
+                publicPwdModal.classList.add('modal-enter');
+                setTimeout(() => publicPwdInput.focus(), 100);
+            }
+        });
+
+        publicPwdClose.addEventListener('click', () => publicPwdModal.classList.remove('modal-enter'));
+
+        // 验证公共面板密码
+        const verifyPublicPassword = () => {
+            if (publicPwdInput.value === 'fyl1222') {
+                isParentUnlocked = true;
+                publicPwdModal.classList.remove('modal-enter');
+                // 变成开锁图标
+                unlockIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>'; 
+                loadPublicMessages();
+            } else {
+                publicPwdError.classList.remove('hidden');
+                publicPwdInput.classList.add('border-red-500');
+                setTimeout(() => publicPwdInput.classList.remove('border-red-500'), 1500);
+            }
+        };
+
+        publicPwdSubmit.addEventListener('click', verifyPublicPassword);
+        publicPwdInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyPublicPassword(); });
 
         // 拉取公开留言
         const loadPublicMessages = async () => {
@@ -893,6 +931,12 @@
                     const safeContent = msgObj.text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
                     const safeAuthor = (msgObj.author || '?').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                     
+                    // 🚨 智能隐私判定核心逻辑
+                    const isParent = safeAuthor === '妈' || safeAuthor === '爸';
+                    const displayContent = (isParent && !isParentUnlocked) 
+                        ? '<span class="text-slate-500 italic tracking-widest text-lg">*******</span> <span class="text-xs text-indigo-500/50 ml-2">(已隐藏)</span>' 
+                        : safeContent;
+
                     // 提取头像文字：如果选了"friend"太长，头像只取首字母 "f"
                     const avatarText = safeAuthor.length > 2 ? safeAuthor.substring(0, 1) : safeAuthor;
 
@@ -907,7 +951,7 @@
                                 <span class="text-indigo-400 font-bold">${safeAuthor}</span>
                                 <span class="text-xs text-slate-500 font-mono mt-0.5">${date}</span>
                             </div>
-                            <div class="text-slate-200 text-sm leading-relaxed break-words">${safeContent}</div>
+                            <div class="text-slate-200 text-sm leading-relaxed break-words">${displayContent}</div>
                         </div>
                     `;
                     publicMsgList.appendChild(div);
