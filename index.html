@@ -679,7 +679,8 @@
                 const { data, error } = await supabaseClient
                     .from('secret_messages')
                     .select('*')
-                    .order('created_at', { ascending: false });
+                    // 将 false 改成 true，让老数据排在前面，新数据排在后面（追加到底部）
+                    .order('created_at', { ascending: true }); 
                 
                 if (error) throw error;
                 
