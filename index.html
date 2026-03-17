@@ -771,6 +771,120 @@
             }
         });
 
+        // --- 公开留言板交互逻辑 ---
+        publicBoardBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            publicBoardModal.classList.add('modal-enter');
+            loadPublicMessages();
+        });
+
+        closePublicBoardBtn.addEventListener('click', () => {
+            publicBoardModal.classList.remove('modal-enter');
+        });
+
+        if (refreshPublicBoardBtn) {
+            refreshPublicBoardBtn.addEventListener('click', () => {
+                loadPublicMessages();
+            });
+        }
+
+        // 拉取公开留言
+        const loadPublicMessages = async () => {
+            if (refreshPublicIcon) refreshPublicIcon.classList.add('animate-spin');
+            
+            publicMsgList.innerHTML = '<div class="text-center py-10 text-indigo-500/50 animate-pulse">正在连接公开频段...</div>';
+            try {
+                const { data, error } = await supabaseClient
+                    .from('public_messages') // ⚠️ 注意：这是新表
+                    .select('*')
+                    .order('created_at', { ascending: true }); 
+                
+                if (error) throw error;
+                
+                publicMsgList.innerHTML = '';
+                if (!data || data.length === 0) {
+                    publicMsgList.innerHTML = '<div class="text-center py-10 text-slate-600">这里空空如也，来抢首赞和沙发吧！</div>';
+                    return;
+                }
+
+                data.forEach(m => {
+                    let msgObj;
+                    try {
+                        msgObj = JSON.parse(m.content);
+                    } catch (e) {
+                        msgObj = { author: '?', text: m.content };
+                    }
+
+                    const div = document.createElement('div');
+                    div.className = 'bg-slate-800/80 p-4 rounded-xl border border-slate-700/50 hover:border-indigo-500/30 transition-colors flex gap-4 items-start';
+                    const date = new Date(m.created_at).toLocaleString('zh-CN', { hour12: false });
+                    
+                    const safeContent = msgObj.text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const safeAuthor = (msgObj.author || '?').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    
+                    // 提取头像文字：如果选了"friend"太长，头像只取首字母 "f"
+                    const avatarText = safeAuthor.length > 2 ? safeAuthor.substring(0, 1) : safeAuthor;
+
+                    div.innerHTML = `
+                        <div class="shrink-0 mt-1">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-blue-700 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-500/20 border border-indigo-500/30 uppercase">
+                                ${avatarText}
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-1.5">
+                                <span class="text-indigo-400 font-bold">${safeAuthor}</span>
+                                <span class="text-xs text-slate-500 font-mono mt-0.5">${date}</span>
+                            </div>
+                            <div class="text-slate-200 text-sm leading-relaxed break-words">${safeContent}</div>
+                        </div>
+                    `;
+                    publicMsgList.appendChild(div);
+                });
+                
+                publicMsgList.scrollTop = publicMsgList.scrollHeight;
+            } catch (err) {
+                console.error("拉取公开留言失败:", err);
+                publicMsgList.innerHTML = '<div class="text-center py-10 text-red-500/80">连接断开（请确认已在 Supabase 创建 public_messages 表）</div>';
+            } finally {
+                if (refreshPublicIcon) refreshPublicIcon.classList.remove('animate-spin');
+            }
+        };
+
+        // 发送公开留言
+        publicMsgForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const textContent = publicMsgInput.value.trim();
+            const authorChoice = publicMsgAuthor.value;
+            
+            if (!textContent) return;
+            
+            publicMsgSubmitBtn.disabled = true;
+            publicMsgSubmitBtn.innerHTML = '发送中...';
+
+            const payloadContent = JSON.stringify({
+                author: authorChoice,
+                text: textContent
+            });
+
+            try {
+                const { error } = await supabaseClient
+                    .from('public_messages')
+                    .insert([{ content: payloadContent }]);
+                
+                if (error) throw error;
+                
+                publicMsgInput.value = '';
+                await loadPublicMessages();
+            } catch (err) {
+                console.error("发送留言失败:", err);
+                alert('发送失败，请检查网络或数据库配置！');
+            } finally {
+                publicMsgSubmitBtn.disabled = false;
+                publicMsgSubmitBtn.innerHTML = '发送';
+            }
+        });
+
     </script>
 </body>
 </html>
