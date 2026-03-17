@@ -415,7 +415,7 @@ int main() {
     <div id="add-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
         <div class="modal-content bg-white border border-stone-200 rounded-2xl w-full max-w-lg mx-4 shadow-2xl transform scale-95 transition-all duration-300">
             <div class="p-6 border-b border-stone-100 flex justify-between items-center">
-                <h3 class="text-xl font-bold text-stone-800">📝 补充章节或卡片</h3>
+                <h3 id="modal-title" class="text-xl font-bold text-stone-800">📝 补充章节或卡片</h3>
                 <button id="close-modal-btn" class="text-stone-400 hover:text-stone-700 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
@@ -615,22 +615,37 @@ int main() {
     </script>
 
     <!-- ========================================== -->
-    <!-- 全新追加：Supabase 云端章节加载与弹窗逻辑 -->
+    <!-- Supabase 云端章节加载、弹窗及【增删改】逻辑 -->
     <!-- ========================================== -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // 弹窗基础控制
+        // 🔑 弹窗状态与 Supabase 缓存
+        let editingCardId = null; // 当前正在编辑的卡片 ID，如果是 null 则表示“新建”
+        let currentCloudCards = []; // 本地缓存从云端拉取的数据，方便编辑时回显
+
         const modalEl = document.getElementById('add-modal');
         const statusBoxEl = document.getElementById('form-status');
-        const openModalFn = () => modalEl.classList.add('modal-enter');
-        const closeModalFn = () => {
-            modalEl.classList.remove('modal-enter');
-            document.getElementById('add-card-form').reset();
+        const modalTitleEl = document.getElementById('modal-title');
+        const submitBtnEl = document.getElementById('submit-btn');
+        const formEl = document.getElementById('add-card-form');
+
+        // 恢复弹窗到“新建模式”
+        const resetModalToSetup = () => {
+            editingCardId = null;
+            formEl.reset();
+            modalTitleEl.textContent = '📝 补充章节或卡片';
+            submitBtnEl.textContent = '发布内容';
             statusBoxEl.classList.add('hidden');
         };
 
-        document.getElementById('open-modal-btn').addEventListener('click', openModalFn);
-        document.getElementById('open-modal-btn-mobile').addEventListener('click', openModalFn);
+        const openModalFn = () => modalEl.classList.add('modal-enter');
+        const closeModalFn = () => {
+            modalEl.classList.remove('modal-enter');
+            setTimeout(resetModalToSetup, 300); // 等动画结束再清空表单
+        };
+
+        document.getElementById('open-modal-btn').addEventListener('click', () => { resetModalToSetup(); openModalFn(); });
+        document.getElementById('open-modal-btn-mobile').addEventListener('click', () => { resetModalToSetup(); openModalFn(); });
         document.getElementById('close-modal-btn').addEventListener('click', closeModalFn);
 
         window.showFormStatus = (msg, isError = false) => {
@@ -649,13 +664,13 @@ int main() {
             const mainContainer = document.querySelector('#main-content-container > div');
             const navMenu = document.getElementById('nav-menu-container');
 
-            // 1. 清理之前的动态节点 (防止重复渲染)
+            // 1. 清理之前的动态节点
             document.querySelectorAll('.dyn-chapter-nav').forEach(el => el.remove());
             document.querySelectorAll('.dyn-chapter-sec').forEach(el => el.remove());
 
             if (!cardsData || cardsData.length === 0) return;
 
-            // 2. 将数据按章节名称 (chapter) 分组
+            // 2. 数据按章节分组
             const chaptersMap = {};
             cardsData.forEach(item => {
                 const chap = item.chapter || "其他补充";
@@ -663,28 +678,35 @@ int main() {
                 chaptersMap[chap].push(item);
             });
 
-            // 3. 为每个动态章节生成导航栏按钮和内容区
-            Object.keys(chaptersMap).forEach((chapterName, index) => {
+            // 3. 生成 HTML
+            Object.keys(chaptersMap).forEach((chapterName) => {
                 const safeId = "sec-dyn-" + encodeURIComponent(chapterName).replace(/%/g, '');
 
-                // -- 生成左侧导航按钮 --
+                // 左侧导航按钮
                 const navBtn = document.createElement('button');
                 navBtn.className = "nav-item dyn-chapter-nav text-left px-6 py-3 text-sm text-blue-600 font-medium hover:bg-stone-50 whitespace-nowrap md:whitespace-normal border-l-4 border-transparent";
                 navBtn.setAttribute('data-target', safeId);
                 navBtn.innerHTML = `📚 ${chapterName}`;
                 navMenu.appendChild(navBtn);
 
-                // -- 生成右侧章节区块 --
+                // 右侧章节区块
                 const sectionHtml = document.createElement('section');
                 sectionHtml.id = safeId;
                 sectionHtml.className = "section-view dyn-chapter-sec";
                 
-                // 构建内部的所有卡片 HTML
+                // 【核心改进】：卡片增加了编辑和删除按钮的浮动菜单
                 let cardsHtml = '';
                 chaptersMap[chapterName].forEach(card => {
                     cardsHtml += `
-                        <div class="bg-white border border-stone-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow mb-4">
-                            <div class="flex items-center gap-3 mb-4">
+                        <div class="bg-white border border-stone-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all mb-4 relative group/card">
+                            
+                            <!-- 悬浮操作栏 (编辑 & 删除) -->
+                            <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover/card:opacity-100 transition-opacity z-10">
+                                <button class="action-edit-btn p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 shadow-sm transition-colors" data-id="${card.id}" title="编辑这篇笔记">✏️</button>
+                                <button class="action-delete-btn p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 shadow-sm transition-colors" data-id="${card.id}" title="永久删除">🗑️</button>
+                            </div>
+
+                            <div class="flex items-center gap-3 mb-4 pr-20">
                                 <div class="text-3xl">${card.icon}</div>
                                 <h3 class="text-xl font-bold text-stone-800">${card.title}</h3>
                             </div>
@@ -709,67 +731,124 @@ int main() {
         // 从云端拉取数据
         const fetchNotesFromCloud = async () => {
             try {
-                // 读取 cpp_guide_notes 表
                 const { data, error } = await supabaseClient
                     .from('cpp_guide_notes')
                     .select('*')
                     .order('created_at', { ascending: true });
                 
                 if (error) throw error;
+                currentCloudCards = data; // 缓存数据用于编辑时回显
                 renderDynamicChapters(data);
             } catch (error) {
                 console.error("加载云端笔记失败:", error);
             }
         };
 
+        // 全局事件监听：捕获删除和编辑按钮的点击
+        document.getElementById('main-content-container').addEventListener('click', async (e) => {
+            // 捕获删除
+            const deleteBtn = e.target.closest('.action-delete-btn');
+            if (deleteBtn) {
+                const id = deleteBtn.getAttribute('data-id');
+                if (confirm('🚨 确定要永久删除这张知识卡片吗？删除后无法恢复！')) {
+                    const originalHtml = deleteBtn.innerHTML;
+                    deleteBtn.innerHTML = '⏳';
+                    try {
+                        const { error } = await supabaseClient.from('cpp_guide_notes').delete().eq('id', id);
+                        if (error) throw error;
+                        fetchNotesFromCloud(); // 重新加载数据
+                    } catch(err) {
+                        alert('删除失败，请检查网络！');
+                        deleteBtn.innerHTML = originalHtml;
+                    }
+                }
+                return;
+            }
+
+            // 捕获编辑
+            const editBtn = e.target.closest('.action-edit-btn');
+            if (editBtn) {
+                const id = editBtn.getAttribute('data-id');
+                // 从缓存中找出该卡片数据
+                const targetCard = currentCloudCards.find(c => c.id == id);
+                if (targetCard) {
+                    // 进入编辑模式
+                    editingCardId = id;
+                    modalTitleEl.innerHTML = '✏️ <span class="text-blue-600">编辑卡片</span>';
+                    submitBtnEl.textContent = '保存修改';
+                    
+                    // 填充表单数据
+                    document.getElementById('card-chapter').value = targetCard.chapter;
+                    document.getElementById('card-title').value = targetCard.title;
+                    document.getElementById('card-content').value = targetCard.content;
+                    document.getElementById('card-icon').value = targetCard.icon;
+                    
+                    openModalFn();
+                }
+            }
+        });
+
         // 页面加载时拉取一次
         fetchNotesFromCloud();
 
-        // 提交表单逻辑
-        document.getElementById('add-card-form').addEventListener('submit', async (e) => {
+        // 提交表单（智能识别：新建 还是 修改）
+        formEl.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const submitBtn = document.getElementById('submit-btn');
             
             const chapter = document.getElementById('card-chapter').value.trim();
             const title = document.getElementById('card-title').value.trim();
             const content = document.getElementById('card-content').value.trim();
             const icon = document.getElementById('card-icon').value.trim();
 
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '正在写入云端...';
+            submitBtnEl.disabled = true;
+            submitBtnEl.innerHTML = editingCardId ? '正在保存修改...' : '正在写入云端...';
+
+            const payload = { 
+                chapter: chapter,
+                title: title, 
+                content: content, 
+                icon: icon
+            };
 
             try {
-                const { error } = await supabaseClient
-                    .from('cpp_guide_notes')
-                    .insert([{ 
-                        chapter: chapter,
-                        title: title, 
-                        content: content, 
-                        icon: icon
-                    }]);
-
-                if (error) throw error;
+                let errorObj;
                 
-                window.showFormStatus("笔记补充成功！");
-                fetchNotesFromCloud(); // 重新刷新界面
+                if (editingCardId) {
+                    // 状态为编辑，执行 Update 逻辑
+                    const { error } = await supabaseClient
+                        .from('cpp_guide_notes')
+                        .update(payload)
+                        .eq('id', editingCardId);
+                    errorObj = error;
+                } else {
+                    // 状态为新建，执行 Insert 逻辑
+                    const { error } = await supabaseClient
+                        .from('cpp_guide_notes')
+                        .insert([payload]);
+                    errorObj = error;
+                }
+
+                if (errorObj) throw errorObj;
+                
+                window.showFormStatus(editingCardId ? "✅ 修改已保存！" : "✅ 笔记补充成功！");
+                fetchNotesFromCloud(); // 刷新界面
                 
                 setTimeout(() => {
                     closeModalFn();
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = `发布内容`;
+                    submitBtnEl.disabled = false;
                     
-                    // 自动跳转到刚发布的那一章
+                    // 修改或新建完成后，自动跳转到该章节
                     const safeId = "sec-dyn-" + encodeURIComponent(chapter).replace(/%/g, '');
-                    const newNavBtn = document.querySelector(`[data-target="${safeId}"]`);
-                    if(newNavBtn) newNavBtn.click();
+                    const targetNavBtn = document.querySelector(`[data-target="${safeId}"]`);
+                    if(targetNavBtn) targetNavBtn.click();
 
-                }, 1200);
+                }, 1000);
 
             } catch (error) {
                 console.error("提交失败", error);
-                window.showFormStatus("发布失败，请确认云端表已建立", true);
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = `发布内容`;
+                window.showFormStatus("操作失败，请确认网络连接", true);
+                submitBtnEl.disabled = false;
+                submitBtnEl.innerHTML = editingCardId ? '保存修改' : '发布内容';
             }
         });
     </script>
