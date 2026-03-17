@@ -83,9 +83,9 @@
                 </a>
                 
                 <!-- 新增：点赞按钮 -->
-                <button id="like-btn" class="px-6 py-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold rounded-lg border border-rose-500/30 transition-all flex items-center justify-center gap-2 group">
-                    <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                    给项目点赞 (<span id="like-count" class="tabular-nums">...</span>)
+                <button id="like-btn" class="px-6 py-3 bg-slate-800 hover:bg-rose-500/10 text-slate-300 hover:text-rose-400 font-semibold rounded-lg border border-slate-700 hover:border-rose-500/30 transition-all flex items-center justify-center gap-2 group">
+                    <svg id="like-icon" class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
+                    <span id="like-text">给项目点赞</span> (<span id="like-count" class="tabular-nums">...</span>)
                 </button>
 
                 <!-- 新增：充电按钮 -->
@@ -160,7 +160,11 @@
 
     <!-- 页脚 -->
     <footer class="border-t border-slate-800 bg-slate-950 py-8 text-center text-slate-500 text-sm">
-        <p>© 2024 LCQ. Built with ❤️ and Code.</p>
+        <p>
+            © 2024 LCQ. Built with ❤️ and Code.
+            <!-- 新增：极其隐蔽的暗门触发器 -->
+            <button id="secret-trigger" class="opacity-5 hover:opacity-100 hover:text-fuchsia-400 transition-all ml-1 cursor-pointer select-none outline-none" title="Secret Space">✦</button>
+        </p>
     </footer>
 
     <!-- ========================================== -->
@@ -179,7 +183,7 @@
             
             <!-- 🚨 注意：请把这里的 src 换成你真实的微信收款码图片路径，例如 './images/wechat-pay.jpg' -->
             <div class="bg-white p-2 rounded-xl border-2 border-slate-700 shadow-xl mb-6 relative z-10">
-                <img src="12811773753998_.pic.jpg" alt="微信收款码" class="w-full rounded-lg">
+                <img src="https://via.placeholder.com/300x300.png?text=WeChat+Pay+QR+Code" alt="微信收款码" class="w-full rounded-lg">
             </div>
             
             <button id="close-sponsor-btn" class="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-lg transition-all w-full relative z-10">
@@ -228,6 +232,57 @@
                 <div class="flex justify-end pt-2">
                     <button type="submit" id="submit-btn" class="px-6 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-medium rounded-lg shadow-lg shadow-cyan-500/20 transition-all flex items-center gap-2">
                         <span>发布卡片</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- Secret Space 悬浮弹窗 (密码 & 留言板) -->
+    <!-- ========================================== -->
+    <!-- 1. 密码验证弹窗 -->
+    <div id="pwd-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/90 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="modal-content bg-slate-900 border border-fuchsia-900/50 rounded-2xl w-full max-w-sm mx-4 shadow-2xl transform scale-95 transition-transform duration-300 p-8 text-center relative overflow-hidden">
+            <!-- 紫色霓虹背景光 -->
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-fuchsia-600/20 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <h3 class="text-2xl font-bold text-fuchsia-400 mb-6 flex items-center justify-center gap-2 relative z-10">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                Secret Space
+            </h3>
+            <input type="password" id="secret-pwd-input" autocomplete="off" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-center text-fuchsia-400 tracking-[0.3em] font-mono focus:outline-none focus:border-fuchsia-500 focus:ring-1 focus:ring-fuchsia-500 transition-colors mb-4 relative z-10" placeholder="Enter Password">
+            <p id="pwd-error" class="text-red-400 text-xs mb-4 hidden relative z-10">密码错误，访问拒绝</p>
+            <div class="flex gap-3 relative z-10">
+                <button id="close-pwd-btn" class="flex-1 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-lg transition-all">取消</button>
+                <button id="pwd-submit-btn" class="flex-1 px-4 py-2.5 bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-medium rounded-lg shadow-lg shadow-fuchsia-500/20 transition-all">解锁</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 留言板弹窗 -->
+    <div id="board-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/90 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="modal-content bg-slate-900 border border-fuchsia-900/50 rounded-2xl w-full max-w-2xl mx-4 shadow-2xl transform scale-95 transition-transform duration-300 flex flex-col max-h-[80vh]">
+            <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 rounded-t-2xl">
+                <h3 class="text-xl font-bold text-fuchsia-400 flex items-center gap-2">
+                    <span class="text-lg">🌌</span> 隐藏维度留言板
+                </h3>
+                <button id="close-board-btn" class="text-slate-500 hover:text-slate-300 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <!-- 留言列表区 -->
+            <div id="secret-msg-list" class="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-950/50 min-h-[300px]">
+                <!-- 留言内容动态注入 -->
+            </div>
+            
+            <!-- 发送留言区 -->
+            <form id="secret-msg-form" class="p-5 border-t border-slate-800 bg-slate-900 rounded-b-2xl">
+                <div class="flex gap-3">
+                    <input type="text" id="secret-msg-input" required autocomplete="off" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-fuchsia-500 focus:ring-1 focus:ring-fuchsia-500 transition-colors placeholder-slate-600" placeholder="在这里留下你的足迹...">
+                    <button type="submit" id="secret-msg-submit" class="px-6 py-2.5 bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-medium rounded-lg shadow-lg shadow-fuchsia-500/20 transition-all whitespace-nowrap">
+                        发送
                     </button>
                 </div>
             </form>
@@ -294,51 +349,98 @@
 
         // --- 1. 点赞同步逻辑 ---
         const likeBtn = document.getElementById('like-btn');
+        const likeIcon = document.getElementById('like-icon');
+        const likeText = document.getElementById('like-text');
         const likeCountSpan = document.getElementById('like-count');
+        
         let currentLikes = 0;
+        // 利用浏览器的 localStorage 记住当前用户是否点过赞
+        let hasLiked = localStorage.getItem('lcq_has_liked') === 'true';
+
+        // 刷新点赞按钮的 UI（实心红心 vs 空心线框）
+        const updateLikeUI = () => {
+            if (hasLiked) {
+                likeBtn.className = "px-6 py-3 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 font-semibold rounded-lg border border-rose-500/50 transition-all flex items-center justify-center gap-2 group";
+                likeIcon.innerHTML = '<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>';
+                likeIcon.setAttribute("fill", "currentColor");
+                likeIcon.setAttribute("stroke", "none");
+                likeText.innerText = "已赞";
+            } else {
+                likeBtn.className = "px-6 py-3 bg-slate-800 hover:bg-rose-500/10 text-slate-300 hover:text-rose-400 font-semibold rounded-lg border border-slate-700 hover:border-rose-500/30 transition-all flex items-center justify-center gap-2 group";
+                likeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />';
+                likeIcon.setAttribute("fill", "none");
+                likeIcon.setAttribute("stroke", "currentColor");
+                likeIcon.setAttribute("stroke-width", "1.5");
+                likeText.innerText = "给项目点赞";
+            }
+        };
 
         // 获取初始点赞数
         const loadLikes = async () => {
+            updateLikeUI(); // 页面刚加载时，先根据本地记忆渲染按钮样式
             try {
-                // 假设你在 Supabase 建了一个 site_stats 表，并且存了一行 id=1 的数据
                 const { data, error } = await supabaseClient
                     .from('site_stats')
                     .select('likes')
                     .eq('id', 1)
                     .single();
                 
+                if (error) throw error; 
+                
                 if (data) {
                     currentLikes = data.likes || 0;
                     likeCountSpan.innerText = currentLikes;
-                } else {
-                    likeCountSpan.innerText = '0';
                 }
             } catch (err) {
-                console.error("加载点赞数失败, 请检查是否创建了 site_stats 表:", err);
-                likeCountSpan.innerText = '0';
+                console.warn("⚠️ 获取云端点赞数失败，可能 Supabase 中的 site_stats 表未建好或缺少 id=1 的数据。");
+                likeCountSpan.innerText = currentLikes; // 保留默认值 0，不让它强行变错
             }
         };
 
-        // 点击点赞按钮
+        // 点击点赞按钮 (支持取消)
         likeBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             
-            // 乐观 UI 更新（先让前端数字+1，给用户瞬间的反馈）
-            currentLikes++;
+            // 1. 切换本地状态并修改数字
+            hasLiked = !hasLiked;
+            if (hasLiked) {
+                localStorage.setItem('lcq_has_liked', 'true');
+                currentLikes++;
+            } else {
+                localStorage.removeItem('lcq_has_liked');
+                currentLikes = Math.max(0, currentLikes - 1);
+            }
+            
+            // 2. 乐观 UI 更新（瞬间反馈）
             likeCountSpan.innerText = currentLikes;
+            updateLikeUI();
             
             // 播放小动画
             likeBtn.style.transform = "scale(1.1)";
             setTimeout(() => { likeBtn.style.transform = "scale(1)"; }, 150);
 
             try {
-                // 将最新数据更新到云端
-                await supabaseClient
+                // 3. 为了严谨，先查出云端的真实数字（防止被别人覆盖）
+                const { data } = await supabaseClient.from('site_stats').select('likes').eq('id', 1).single();
+                let latestLikes = data ? (data.likes || 0) : 0;
+                
+                if (hasLiked) latestLikes++;
+                else latestLikes = Math.max(0, latestLikes - 1);
+
+                // 4. 将计算后的最新数字同步回云端
+                const { error } = await supabaseClient
                     .from('site_stats')
-                    .update({ likes: currentLikes })
+                    .update({ likes: latestLikes })
                     .eq('id', 1);
+                
+                if (error) throw error;
+                
+                // 5. 同步成功后，用云端的绝对数字纠正本地显示
+                currentLikes = latestLikes;
+                likeCountSpan.innerText = currentLikes;
+
             } catch (err) {
-                console.error("更新点赞数失败", err);
+                console.error("更新云端点赞数失败，请检查数据库配置", err);
             }
         });
 
@@ -479,6 +581,115 @@
                 submitBtn.innerHTML = editingCardId ? '<span>保存修改</span>' : '<span>发布卡片</span>';
             }
         });
+
+        // --- 3. Secret Space 逻辑 ---
+        const secretTrigger = document.getElementById('secret-trigger');
+        const pwdModal = document.getElementById('pwd-modal');
+        const pwdInput = document.getElementById('secret-pwd-input');
+        const pwdSubmit = document.getElementById('pwd-submit-btn');
+        const pwdClose = document.getElementById('close-pwd-btn');
+        const pwdError = document.getElementById('pwd-error');
+
+        const boardModal = document.getElementById('board-modal');
+        const boardClose = document.getElementById('close-board-btn');
+        const msgList = document.getElementById('secret-msg-list');
+        const msgForm = document.getElementById('secret-msg-form');
+        const msgInput = document.getElementById('secret-msg-input');
+        const msgSubmitBtn = document.getElementById('secret-msg-submit');
+
+        // 点击页脚暗门打开密码验证
+        secretTrigger.addEventListener('click', () => {
+            pwdInput.value = '';
+            pwdError.classList.add('hidden');
+            pwdModal.classList.add('modal-enter');
+            // 自动聚焦密码框
+            setTimeout(() => pwdInput.focus(), 100);
+        });
+
+        pwdClose.addEventListener('click', () => pwdModal.classList.remove('modal-enter'));
+        boardClose.addEventListener('click', () => boardModal.classList.remove('modal-enter'));
+
+        // 验证密码逻辑
+        const verifyPassword = () => {
+            if (pwdInput.value === 'fyl1222') {
+                pwdModal.classList.remove('modal-enter');
+                boardModal.classList.add('modal-enter');
+                loadSecretMessages();
+            } else {
+                pwdError.classList.remove('hidden');
+                pwdInput.classList.add('border-red-500');
+                setTimeout(() => pwdInput.classList.remove('border-red-500'), 1500);
+            }
+        };
+
+        pwdSubmit.addEventListener('click', verifyPassword);
+        pwdInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyPassword(); });
+
+        // 拉取留言
+        const loadSecretMessages = async () => {
+            msgList.innerHTML = '<div class="text-center py-10 text-fuchsia-500/50 animate-pulse">正在连接隐藏维度...</div>';
+            try {
+                const { data, error } = await supabaseClient
+                    .from('secret_messages')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                msgList.innerHTML = '';
+                if (!data || data.length === 0) {
+                    msgList.innerHTML = '<div class="text-center py-10 text-slate-600">这里空空如也，留下第一句话吧！</div>';
+                    return;
+                }
+
+                data.forEach(m => {
+                    const div = document.createElement('div');
+                    div.className = 'bg-slate-800/80 p-4 rounded-xl border border-slate-700/50 hover:border-fuchsia-500/30 transition-colors';
+                    const date = new Date(m.created_at).toLocaleString('zh-CN', { hour12: false });
+                    // 安全转义，防止 XSS 攻击
+                    const safeContent = m.content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    div.innerHTML = `
+                        <div class="text-xs text-fuchsia-500/70 mb-2 font-mono">${date}</div>
+                        <div class="text-slate-200 text-sm leading-relaxed break-words">${safeContent}</div>
+                    `;
+                    msgList.appendChild(div);
+                });
+                
+                // 滚动到底部（展示最新）
+                msgList.scrollTop = msgList.scrollHeight;
+            } catch (err) {
+                console.error("拉取留言失败:", err);
+                msgList.innerHTML = '<div class="text-center py-10 text-red-500/80">维度连接断开（请确认已在 Supabase 创建 secret_messages 表）</div>';
+            }
+        };
+
+        // 发送留言
+        msgForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const content = msgInput.value.trim();
+            if (!content) return;
+            
+            msgSubmitBtn.disabled = true;
+            msgSubmitBtn.innerHTML = '传输中...';
+
+            try {
+                const { error } = await supabaseClient
+                    .from('secret_messages')
+                    .insert([{ content }]);
+                
+                if (error) throw error;
+                
+                msgInput.value = '';
+                await loadSecretMessages(); // 重新拉取刷新列表
+            } catch (err) {
+                console.error("发送留言失败:", err);
+                alert('发送失败，请检查网络或数据库配置！');
+            } finally {
+                msgSubmitBtn.disabled = false;
+                msgSubmitBtn.innerHTML = '发送';
+            }
+        });
+
     </script>
 </body>
 </html>
