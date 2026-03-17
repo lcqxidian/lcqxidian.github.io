@@ -27,8 +27,16 @@
         
         /* 弹窗动画 */
         /* 弹窗动画 */
-        .modal-enter { opacity: 1 !important; pointer-events: auto !important; }
-        .modal-enter .modal-content { transform: scale(1) !important; }
+        /* 弹窗动画增强版 */
+        .modal-enter { 
+            opacity: 1 !important; 
+            pointer-events: auto !important; 
+            z-index: 9999 !important; /* 强制置顶，不被导航栏盖住 */
+            visibility: visible !important; /* 确保可见 */
+        }
+        .modal-enter .modal-content { 
+            transform: scale(1) !important; 
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-300 font-sans antialiased min-h-screen flex flex-col selection:bg-cyan-900 selection:text-cyan-100 relative">
