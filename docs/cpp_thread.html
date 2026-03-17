@@ -103,7 +103,7 @@
             <p class="text-xs text-stone-500 mt-2 leading-relaxed">从 pthread 迁移到现代 C++ 多线程开发的核心知识体系。</p>
         </div>
         
-        <!-- 导航菜单容器 (用于事件委托和动态插入) -->
+        <!-- 导航菜单容器 -->
         <div id="nav-menu-container" class="flex-1 overflow-y-auto py-4 flex md:flex-col flex-row overflow-x-auto">
             <button class="nav-item static-nav active text-left px-6 py-3 text-sm text-stone-600 hover:bg-stone-50 whitespace-nowrap md:whitespace-normal" data-target="sec-env">
                 1. 编译环境与头文件
@@ -117,7 +117,7 @@
             <!-- 动态生成的章节会插入到这里 -->
         </div>
 
-        <!-- 底部添加按钮 -->
+        <!-- 底部全局添加按钮 -->
         <div class="p-4 border-t border-stone-100 mt-auto bg-stone-50/50 hidden md:block">
             <button id="open-modal-btn" class="w-full bg-white border border-stone-200 hover:border-blue-300 hover:text-blue-600 text-stone-600 text-sm font-bold py-2.5 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
                 <span>➕</span> 补充新章节/卡片
@@ -125,7 +125,6 @@
         </div>
     </nav>
 
-    <!-- 移动端底部的浮动添加按钮 -->
     <button id="open-modal-btn-mobile" class="md:hidden fixed bottom-4 right-4 z-40 bg-blue-600 text-white w-12 h-12 rounded-full shadow-xl flex items-center justify-center text-2xl">
         +
     </button>
@@ -137,7 +136,7 @@
             <!-- 静态章节 1 -->
             <section id="sec-env" class="section-view active">
                 <header class="mb-10">
-                    <h2 class="text-3xl font-extrabold text-stone-800 mb-4">编译环境与头文件</h2>
+                    <h2 class="text-3xl font-extrabold text-stone-800 mb-4">1. 编译环境与头文件</h2>
                     <p class="text-stone-600 leading-relaxed text-lg">
                         本模块介绍了如何在现代 C++ 项目中正确引入和链接线程库。脱离了直接调用 GCC 的命令行方式，使用 CMake 管理多线程项目是工业级开发的标准起手式。点击下方标签卡浏览不同的配置步骤。
                     </p>
@@ -207,7 +206,7 @@ make
             <!-- 静态章节 2 -->
             <section id="sec-life" class="section-view">
                 <header class="mb-10">
-                    <h2 class="text-3xl font-extrabold text-stone-800 mb-4">线程的生命周期探索</h2>
+                    <h2 class="text-3xl font-extrabold text-stone-800 mb-4">2. 线程的生命周期探索</h2>
                     <p class="text-stone-600 leading-relaxed text-lg">
                         本模块重构了多线程核心指令的交互体验。点击左侧的“操作卡片”，右侧面板会动态显示该指令的白话解释、代码示例以及重要的避坑指南，助你深刻理解从创建到回收的全流程。
                     </p>
@@ -215,7 +214,7 @@ make
 
                 <div class="flex flex-col lg:flex-row gap-6">
                     <div class="w-full lg:w-1/3 flex flex-col gap-3">
-                        <div class="text-sm font-bold text-stone-400 uppercase tracking-wider mb-2">3.1 线程创建</div>
+                        <div class="text-sm font-bold text-stone-400 uppercase tracking-wider mb-2">2.1 线程创建</div>
                         <div class="cmd-card active bg-white border border-stone-200 rounded-lg p-4" data-detail="detail-create">
                             <div class="font-bold text-stone-800">创建即启动</div>
                             <div class="text-xs text-stone-500 mt-1 font-mono">std::thread t1(...)</div>
@@ -226,7 +225,7 @@ make
                             <div class="text-xs text-stone-500 mt-1 font-mono">std::ref(num)</div>
                         </div>
 
-                        <div class="text-sm font-bold text-stone-400 uppercase tracking-wider mb-2 mt-4">3.2 终止与休眠</div>
+                        <div class="text-sm font-bold text-stone-400 uppercase tracking-wider mb-2 mt-4">2.2 终止与休眠</div>
                         <div class="cmd-card bg-white border border-stone-200 rounded-lg p-4" data-detail="detail-join">
                             <div class="font-bold text-stone-800">等待结束 (阻塞)</div>
                             <div class="text-xs text-stone-500 mt-1 font-mono">t1.join()</div>
@@ -333,7 +332,7 @@ make
             <!-- 静态章节 3 -->
             <section id="sec-pool" class="section-view">
                 <header class="mb-10">
-                    <h2 class="text-3xl font-extrabold text-stone-800 mb-4">工业模板与数据竞争验证</h2>
+                    <h2 class="text-3xl font-extrabold text-stone-800 mb-4">3. 工业模板与数据竞争验证</h2>
                     <p class="text-stone-600 leading-relaxed text-lg">
                         本模块展示了在实际项目中如何批量管理线程，并提供了一个交互式图表模拟器，可视化证明多线程并发时不加锁（Mutex）带来的数据竞争风险。
                     </p>
@@ -401,9 +400,9 @@ int main() {
                 </div>
 
                 <div class="bg-amber-50 border-l-4 border-amber-500 p-6 rounded shadow-sm">
-                    <h4 class="text-amber-800 font-bold mb-2 text-lg">⚠️ 避坑警告与第五章预告</h4>
+                    <h4 class="text-amber-800 font-bold mb-2 text-lg">⚠️ 避坑警告与未来展望</h4>
                     <p class="text-amber-900 leading-relaxed text-sm">
-                        正如上方图表所示，多线程不加锁（Mutex）直接修改同一个变量，必然导致数据竞争。现象就是：代码没报错，但最终算出来的结果就是不对。在实际工程中，请务必学习 <code>std::mutex</code> 和 <code>std::lock_guard</code> 的用法以保护数据。
+                        正如上方图表所示，多线程不加锁（Mutex）直接修改同一个变量，必然导致数据竞争。在实际工程中，请务必使用锁来保护数据。后续章节我们将深入探讨这些高级主题。
                     </p>
                 </div>
             </section>
@@ -423,8 +422,10 @@ int main() {
             
             <form id="add-card-form" class="p-6 space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-stone-600 mb-1">所属章节名 (新名字会自动建章)</label>
-                    <input type="text" id="card-chapter" required autocomplete="off" class="w-full bg-stone-50 border border-stone-200 rounded-lg px-4 py-2.5 text-stone-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" placeholder="例如：4. 读写锁进阶">
+                    <!-- 新增：下拉列表提示功能 -->
+                    <label class="block text-sm font-medium text-stone-600 mb-1">所属章节名 (选择已有或新建)</label>
+                    <input type="text" id="card-chapter" list="chapter-datalist" required autocomplete="off" class="w-full bg-stone-50 border border-stone-200 rounded-lg px-4 py-2.5 text-stone-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" placeholder="例如：读写锁进阶">
+                    <datalist id="chapter-datalist"></datalist>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-stone-600 mb-1">卡片标题</label>
@@ -450,53 +451,35 @@ int main() {
         </div>
     </div>
 
-    <!-- 原有 UI 脚本与图表逻辑 (完全保留) -->
+    <!-- 原有 UI 脚本与图表逻辑 (保持不变) -->
     <script>
-        // 1. 原有导航点击改为“事件委托”，支持动态加入的元素
         const navContainer = document.getElementById('nav-menu-container');
         navContainer.addEventListener('click', (e) => {
             const item = e.target.closest('.nav-item');
             if (!item) return;
-            
             navContainer.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             item.classList.add('active');
-            
             const targetId = item.getAttribute('data-target');
             document.querySelectorAll('.section-view').forEach(sec => {
-                if (sec.id === targetId) {
-                    sec.classList.add('active');
-                } else {
-                    sec.classList.remove('active');
-                }
+                if (sec.id === targetId) sec.classList.add('active');
+                else sec.classList.remove('active');
             });
         });
 
-        // 2. 原有的标签页切换
-        const tabBtns = document.querySelectorAll('.tab-btn');
-        const tabContents = document.querySelectorAll('.tab-content');
-        tabBtns.forEach(btn => {
+        document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const parent = btn.closest('.bg-white');
-                const localBtns = parent.querySelectorAll('.tab-btn');
-                const localContents = parent.querySelectorAll('.tab-content');
-                localBtns.forEach(b => b.classList.remove('active'));
+                parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 const target = btn.getAttribute('data-tab');
-                localContents.forEach(content => {
-                    if (content.id === target) {
-                        content.classList.remove('hidden');
-                        content.classList.add('block');
-                    } else {
-                        content.classList.remove('block');
-                        content.classList.add('hidden');
-                    }
+                parent.querySelectorAll('.tab-content').forEach(content => {
+                    if (content.id === target) { content.classList.remove('hidden'); content.classList.add('block'); }
+                    else { content.classList.remove('block'); content.classList.add('hidden'); }
                 });
             });
         });
 
-        // 3. 原有的复制代码逻辑
-        const copyBtns = document.querySelectorAll('.copy-btn');
-        copyBtns.forEach(btn => {
+        document.querySelectorAll('.copy-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const targetId = btn.getAttribute('data-copy');
                 const textToCopy = document.getElementById(targetId).textContent;
@@ -504,15 +487,11 @@ int main() {
                     const originalText = btn.textContent;
                     btn.textContent = '已复制';
                     btn.classList.add('bg-green-100', 'text-green-700');
-                    setTimeout(() => {
-                        btn.textContent = originalText;
-                        btn.classList.remove('bg-green-100', 'text-green-700');
-                    }, 2000);
+                    setTimeout(() => { btn.textContent = originalText; btn.classList.remove('bg-green-100', 'text-green-700'); }, 2000);
                 });
             });
         });
 
-        // 4. 原有的命令卡片切换
         const cmdCards = document.querySelectorAll('.cmd-card');
         const detailContents = document.querySelectorAll('.detail-content');
         cmdCards.forEach(card => {
@@ -521,20 +500,13 @@ int main() {
                 card.classList.add('active');
                 const target = card.getAttribute('data-detail');
                 detailContents.forEach(detail => {
-                    if (detail.id === target) {
-                        detail.classList.remove('hidden');
-                        detail.classList.add('block');
-                    } else {
-                        detail.classList.remove('block');
-                        detail.classList.add('hidden');
-                    }
+                    if (detail.id === target) { detail.classList.remove('hidden'); detail.classList.add('block'); }
+                    else { detail.classList.remove('block'); detail.classList.add('hidden'); }
                 });
             });
         });
 
-        // 5. 原有的模拟器 Chart.js 逻辑
-        let simChart = null;
-        let simInterval = null;
+        let simChart = null, simInterval = null;
         function initChart() {
             const ctx = document.getElementById('raceChart').getContext('2d');
             Chart.defaults.font.family = "ui-sans-serif, system-ui, sans-serif";
@@ -542,86 +514,49 @@ int main() {
                 type: 'line',
                 data: {
                     labels: [],
-                    datasets: [{
-                        label: '当前累加值', data: [],
-                        borderColor: '#292524', backgroundColor: 'rgba(41, 37, 36, 0.05)',
-                        borderWidth: 2, pointRadius: 0, fill: true, tension: 0.2
-                    }, {
-                        label: '理论完美值', data: [],
-                        borderColor: '#a8a29e', borderWidth: 1, borderDash: [4, 4],
-                        pointRadius: 0, fill: false
-                    }]
+                    datasets: [{ label: '当前累加值', data: [], borderColor: '#292524', backgroundColor: 'rgba(41, 37, 36, 0.05)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.2 }, 
+                               { label: '理论完美值', data: [], borderColor: '#a8a29e', borderWidth: 1, borderDash: [4, 4], pointRadius: 0, fill: false }]
                 },
-                options: {
-                    responsive: true, maintainAspectRatio: false, animation: { duration: 0 },
-                    scales: { x: { display: false }, y: { min: 0, max: 520, grid: { color: '#f5f5f4' }, border: { display: false } } },
-                    plugins: { legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 6 } }, tooltip: { enabled: false } }
-                }
+                options: { responsive: true, maintainAspectRatio: false, animation: { duration: 0 }, scales: { x: { display: false }, y: { min: 0, max: 520, grid: { color: '#f5f5f4' }, border: { display: false } } }, plugins: { legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 6 } }, tooltip: { enabled: false } } }
             });
         }
-
         function runSimulation(isSafe) {
-            const btnRace = document.getElementById('btn-race');
-            const btnMutex = document.getElementById('btn-mutex');
-            const resultLabel = document.getElementById('sim-result');
-            
+            const btnRace = document.getElementById('btn-race'), btnMutex = document.getElementById('btn-mutex'), resultLabel = document.getElementById('sim-result');
             if(simInterval) clearInterval(simInterval);
-            
-            btnRace.disabled = true; btnMutex.disabled = true;
-            btnRace.classList.add('opacity-50'); btnMutex.classList.add('opacity-50');
-            
+            btnRace.disabled = true; btnMutex.disabled = true; btnRace.classList.add('opacity-50'); btnMutex.classList.add('opacity-50');
             simChart.data.labels = []; simChart.data.datasets[0].data = []; simChart.data.datasets[1].data = [];
-            
-            if (isSafe) {
-                simChart.data.datasets[0].borderColor = '#10b981'; simChart.data.datasets[0].backgroundColor = 'rgba(16, 185, 129, 0.1)';
-            } else {
-                simChart.data.datasets[0].borderColor = '#ef4444'; simChart.data.datasets[0].backgroundColor = 'rgba(239, 68, 68, 0.1)';
-            }
+            if (isSafe) { simChart.data.datasets[0].borderColor = '#10b981'; simChart.data.datasets[0].backgroundColor = 'rgba(16, 185, 129, 0.1)'; } 
+            else { simChart.data.datasets[0].borderColor = '#ef4444'; simChart.data.datasets[0].backgroundColor = 'rgba(239, 68, 68, 0.1)'; }
             simChart.update();
-
             let currentStep = 0, totalSteps = 100, threads = 5, actualCount = 0;
-
             simInterval = setInterval(() => {
                 currentStep++;
                 let increment = isSafe ? threads : threads - Math.floor(Math.random() * 3);
                 actualCount += increment;
                 const theoreticalCount = currentStep * threads;
-
                 if (actualCount > 500) actualCount = 500;
-                
-                simChart.data.labels.push(currentStep);
-                simChart.data.datasets[0].data.push(actualCount);
-                simChart.data.datasets[1].data.push(theoreticalCount);
-                simChart.update();
-                
+                simChart.data.labels.push(currentStep); simChart.data.datasets[0].data.push(actualCount); simChart.data.datasets[1].data.push(theoreticalCount); simChart.update();
                 resultLabel.textContent = actualCount;
-
                 if (currentStep >= totalSteps) {
                     clearInterval(simInterval);
-                    btnRace.disabled = false; btnMutex.disabled = false;
-                    btnRace.classList.remove('opacity-50'); btnMutex.classList.remove('opacity-50');
-                    if(!isSafe) {
-                        resultLabel.className = "text-xl font-bold font-mono text-red-600";
-                    } else {
-                        resultLabel.className = "text-xl font-bold font-mono text-emerald-600";
-                    }
+                    btnRace.disabled = false; btnMutex.disabled = false; btnRace.classList.remove('opacity-50'); btnMutex.classList.remove('opacity-50');
+                    if(!isSafe) resultLabel.className = "text-xl font-bold font-mono text-red-600";
+                    else resultLabel.className = "text-xl font-bold font-mono text-emerald-600";
                 }
             }, 30);
         }
-
         document.getElementById('btn-race').addEventListener('click', () => runSimulation(false));
         document.getElementById('btn-mutex').addEventListener('click', () => runSimulation(true));
         window.addEventListener('DOMContentLoaded', initChart);
     </script>
 
     <!-- ========================================== -->
-    <!-- Supabase 云端章节加载、弹窗及【增删改】逻辑 -->
+    <!-- Supabase 优化版逻辑：编号连续、追加卡片 -->
     <!-- ========================================== -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // 🔑 弹窗状态与 Supabase 缓存
-        let editingCardId = null; // 当前正在编辑的卡片 ID，如果是 null 则表示“新建”
-        let currentCloudCards = []; // 本地缓存从云端拉取的数据，方便编辑时回显
+        let editingCardId = null;
+        let currentCloudCards = [];
 
         const modalEl = document.getElementById('add-modal');
         const statusBoxEl = document.getElementById('form-status');
@@ -629,11 +564,10 @@ int main() {
         const submitBtnEl = document.getElementById('submit-btn');
         const formEl = document.getElementById('add-card-form');
 
-        // 恢复弹窗到“新建模式”
         const resetModalToSetup = () => {
             editingCardId = null;
             formEl.reset();
-            modalTitleEl.textContent = '📝 补充章节或卡片';
+            modalTitleEl.innerHTML = '📝 补充章节或卡片';
             submitBtnEl.textContent = '发布内容';
             statusBoxEl.classList.add('hidden');
         };
@@ -641,7 +575,7 @@ int main() {
         const openModalFn = () => modalEl.classList.add('modal-enter');
         const closeModalFn = () => {
             modalEl.classList.remove('modal-enter');
-            setTimeout(resetModalToSetup, 300); // 等动画结束再清空表单
+            setTimeout(resetModalToSetup, 300);
         };
 
         document.getElementById('open-modal-btn').addEventListener('click', () => { resetModalToSetup(); openModalFn(); });
@@ -654,39 +588,48 @@ int main() {
             statusBoxEl.classList.remove('hidden');
         };
 
-        // 🔑 Supabase 配置
         const SUPABASE_URL = "https://hlmpgjvvnezpgobgbtwy.supabase.co";
         const SUPABASE_KEY = "sb_publishable_QJ8O--Xo_AQLqEGmibpiGQ_iO75gSig";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 渲染动态章节和卡片
         const renderDynamicChapters = (cardsData) => {
             const mainContainer = document.querySelector('#main-content-container > div');
             const navMenu = document.getElementById('nav-menu-container');
+            const datalistEl = document.getElementById('chapter-datalist');
 
-            // 1. 清理之前的动态节点
+            // 清理旧节点
             document.querySelectorAll('.dyn-chapter-nav').forEach(el => el.remove());
             document.querySelectorAll('.dyn-chapter-sec').forEach(el => el.remove());
+            datalistEl.innerHTML = '';
 
             if (!cardsData || cardsData.length === 0) return;
 
-            // 2. 数据按章节分组
+            // 数据按章节名称分组，同时清洗用户可能多打的数字编号
             const chaptersMap = {};
             cardsData.forEach(item => {
-                const chap = item.chapter || "其他补充";
+                const chap = item.chapter ? item.chapter.replace(/^\d+\.\s*/, '').trim() : "其他补充";
                 if (!chaptersMap[chap]) chaptersMap[chap] = [];
                 chaptersMap[chap].push(item);
             });
 
-            // 3. 生成 HTML
+            let currentChapterNum = 4; // 紧接静态的前3章
+
             Object.keys(chaptersMap).forEach((chapterName) => {
                 const safeId = "sec-dyn-" + encodeURIComponent(chapterName).replace(/%/g, '');
+                
+                // 核心改动 1：自动分配连续编号，不再显示书本图标
+                const displayTitle = `${currentChapterNum}. ${chapterName}`;
+
+                // 将该章节加入下拉列表，方便用户二次添加
+                const option = document.createElement('option');
+                option.value = chapterName;
+                datalistEl.appendChild(option);
 
                 // 左侧导航按钮
                 const navBtn = document.createElement('button');
-                navBtn.className = "nav-item dyn-chapter-nav text-left px-6 py-3 text-sm text-blue-600 font-medium hover:bg-stone-50 whitespace-nowrap md:whitespace-normal border-l-4 border-transparent";
+                navBtn.className = "nav-item dyn-chapter-nav text-left px-6 py-3 text-sm text-stone-600 hover:bg-stone-50 whitespace-nowrap md:whitespace-normal";
                 navBtn.setAttribute('data-target', safeId);
-                navBtn.innerHTML = `📚 ${chapterName}`;
+                navBtn.innerHTML = displayTitle;
                 navMenu.appendChild(navBtn);
 
                 // 右侧章节区块
@@ -694,18 +637,14 @@ int main() {
                 sectionHtml.id = safeId;
                 sectionHtml.className = "section-view dyn-chapter-sec";
                 
-                // 【核心改进】：卡片增加了编辑和删除按钮的浮动菜单
                 let cardsHtml = '';
                 chaptersMap[chapterName].forEach(card => {
                     cardsHtml += `
-                        <div class="bg-white border border-stone-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all mb-4 relative group/card">
-                            
-                            <!-- 悬浮操作栏 (编辑 & 删除) -->
+                        <div class="bg-white border border-stone-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all relative group/card">
                             <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover/card:opacity-100 transition-opacity z-10">
                                 <button class="action-edit-btn p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 shadow-sm transition-colors" data-id="${card.id}" title="编辑这篇笔记">✏️</button>
                                 <button class="action-delete-btn p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 shadow-sm transition-colors" data-id="${card.id}" title="永久删除">🗑️</button>
                             </div>
-
                             <div class="flex items-center gap-3 mb-4 pr-20">
                                 <div class="text-3xl">${card.icon}</div>
                                 <h3 class="text-xl font-bold text-stone-800">${card.title}</h3>
@@ -715,50 +654,61 @@ int main() {
                     `;
                 });
 
+                // 核心改动 2：章节最底部加上一个专属的添加按钮
                 sectionHtml.innerHTML = `
                     <header class="mb-10 border-b border-stone-200 pb-4">
-                        <h2 class="text-3xl font-extrabold text-stone-800 mb-2">${chapterName}</h2>
+                        <h2 class="text-3xl font-extrabold text-stone-800 mb-2">${displayTitle}</h2>
                         <p class="text-stone-500 text-sm">社区补充节点 · 动态加载</p>
                     </header>
-                    <div class="grid grid-cols-1 gap-6">
+                    <div class="grid grid-cols-1 gap-6 mb-6">
                         ${cardsHtml}
                     </div>
+                    <button class="action-add-to-chapter-btn w-full py-4 border-2 border-dashed border-stone-300 hover:border-blue-400 hover:bg-blue-50/50 rounded-xl text-stone-500 hover:text-blue-600 transition-all font-medium flex justify-center items-center gap-2" data-chapter="${chapterName}">
+                        <span>➕</span> 在此章节继续补充卡片
+                    </button>
                 `;
                 mainContainer.appendChild(sectionHtml);
+                
+                currentChapterNum++; // 编号顺延
             });
         };
 
-        // 从云端拉取数据
         const fetchNotesFromCloud = async () => {
             try {
-                const { data, error } = await supabaseClient
-                    .from('cpp_guide_notes')
-                    .select('*')
-                    .order('created_at', { ascending: true });
-                
+                const { data, error } = await supabaseClient.from('cpp_guide_notes').select('*').order('created_at', { ascending: true });
                 if (error) throw error;
-                currentCloudCards = data; // 缓存数据用于编辑时回显
+                currentCloudCards = data; 
                 renderDynamicChapters(data);
             } catch (error) {
                 console.error("加载云端笔记失败:", error);
             }
         };
 
-        // 全局事件监听：捕获删除和编辑按钮的点击
+        // 全局事件监听：捕获 专属添加、编辑、删除 按钮
         document.getElementById('main-content-container').addEventListener('click', async (e) => {
+            // 捕获在本章添加
+            const addBtn = e.target.closest('.action-add-to-chapter-btn');
+            if (addBtn) {
+                const chapter = addBtn.getAttribute('data-chapter');
+                resetModalToSetup();
+                document.getElementById('card-chapter').value = chapter;
+                openModalFn();
+                return;
+            }
+
             // 捕获删除
             const deleteBtn = e.target.closest('.action-delete-btn');
             if (deleteBtn) {
                 const id = deleteBtn.getAttribute('data-id');
-                if (confirm('🚨 确定要永久删除这张知识卡片吗？删除后无法恢复！')) {
+                if (confirm('🚨 确定要永久删除这张知识卡片吗？')) {
                     const originalHtml = deleteBtn.innerHTML;
                     deleteBtn.innerHTML = '⏳';
                     try {
                         const { error } = await supabaseClient.from('cpp_guide_notes').delete().eq('id', id);
                         if (error) throw error;
-                        fetchNotesFromCloud(); // 重新加载数据
+                        fetchNotesFromCloud();
                     } catch(err) {
-                        alert('删除失败，请检查网络！');
+                        alert('删除失败！');
                         deleteBtn.innerHTML = originalHtml;
                     }
                 }
@@ -769,33 +719,30 @@ int main() {
             const editBtn = e.target.closest('.action-edit-btn');
             if (editBtn) {
                 const id = editBtn.getAttribute('data-id');
-                // 从缓存中找出该卡片数据
                 const targetCard = currentCloudCards.find(c => c.id == id);
                 if (targetCard) {
-                    // 进入编辑模式
                     editingCardId = id;
                     modalTitleEl.innerHTML = '✏️ <span class="text-blue-600">编辑卡片</span>';
                     submitBtnEl.textContent = '保存修改';
-                    
-                    // 填充表单数据
                     document.getElementById('card-chapter').value = targetCard.chapter;
                     document.getElementById('card-title').value = targetCard.title;
                     document.getElementById('card-content').value = targetCard.content;
                     document.getElementById('card-icon').value = targetCard.icon;
-                    
                     openModalFn();
                 }
             }
         });
 
-        // 页面加载时拉取一次
         fetchNotesFromCloud();
 
-        // 提交表单（智能识别：新建 还是 修改）
+        // 提交表单（智能识别：新建 还是 修改，并清洗章节名）
         formEl.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const chapter = document.getElementById('card-chapter').value.trim();
+            const rawChapter = document.getElementById('card-chapter').value.trim();
+            // 核心改动 3：自动清洗用户手打的多余前缀编号，比如把 "4. 读写锁" 清洗成 "读写锁"
+            const cleanChapter = rawChapter.replace(/^\d+\.\s*/, '');
+            
             const title = document.getElementById('card-title').value.trim();
             const content = document.getElementById('card-content').value.trim();
             const icon = document.getElementById('card-icon').value.trim();
@@ -803,45 +750,32 @@ int main() {
             submitBtnEl.disabled = true;
             submitBtnEl.innerHTML = editingCardId ? '正在保存修改...' : '正在写入云端...';
 
-            const payload = { 
-                chapter: chapter,
-                title: title, 
-                content: content, 
-                icon: icon
-            };
+            const payload = { chapter: cleanChapter, title: title, content: content, icon: icon };
 
             try {
                 let errorObj;
-                
                 if (editingCardId) {
-                    // 状态为编辑，执行 Update 逻辑
-                    const { error } = await supabaseClient
-                        .from('cpp_guide_notes')
-                        .update(payload)
-                        .eq('id', editingCardId);
+                    const { error } = await supabaseClient.from('cpp_guide_notes').update(payload).eq('id', editingCardId);
                     errorObj = error;
                 } else {
-                    // 状态为新建，执行 Insert 逻辑
-                    const { error } = await supabaseClient
-                        .from('cpp_guide_notes')
-                        .insert([payload]);
+                    const { error } = await supabaseClient.from('cpp_guide_notes').insert([payload]);
                     errorObj = error;
                 }
 
                 if (errorObj) throw errorObj;
                 
                 window.showFormStatus(editingCardId ? "✅ 修改已保存！" : "✅ 笔记补充成功！");
-                fetchNotesFromCloud(); // 刷新界面
+                fetchNotesFromCloud(); 
                 
                 setTimeout(() => {
                     closeModalFn();
                     submitBtnEl.disabled = false;
                     
-                    // 修改或新建完成后，自动跳转到该章节
-                    const safeId = "sec-dyn-" + encodeURIComponent(chapter).replace(/%/g, '');
-                    const targetNavBtn = document.querySelector(`[data-target="${safeId}"]`);
-                    if(targetNavBtn) targetNavBtn.click();
-
+                    const safeId = "sec-dyn-" + encodeURIComponent(cleanChapter).replace(/%/g, '');
+                    setTimeout(() => {
+                        const targetNavBtn = document.querySelector(`[data-target="${safeId}"]`);
+                        if(targetNavBtn) targetNavBtn.click();
+                    }, 100);
                 }, 1000);
 
             } catch (error) {
