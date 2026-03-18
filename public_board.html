@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公开留言板 | LCQ.Space</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        
+        .modal-enter { 
+            opacity: 1 !important; 
+            pointer-events: auto !important; 
+            z-index: 9999 !important; 
+            visibility: visible !important;
+        }
+        .modal-enter .modal-content { 
+            transform: scale(1) !important; 
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-300 font-sans antialiased h-screen flex flex-col selection:bg-indigo-900 selection:text-indigo-100">
+
+    <!-- 主体留言板视图 (充满屏幕，类似独立 App) -->
+    <div class="flex-1 max-w-3xl w-full mx-auto sm:py-6 flex flex-col h-full">
+        <div class="flex-1 bg-slate-900 sm:border border-indigo-900/50 sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden relative">
+            
+            <!-- 头部导航栏 -->
+            <div class="p-4 sm:p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                <div class="flex items-center gap-3">
+                    <a href="index.html" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 rounded-lg transition-colors" title="返回主页">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    </a>
+                    <h3 class="text-xl font-bold text-indigo-400 flex items-center gap-2">
+                        <span class="text-lg">💬</span> 公开留言板
+                    </h3>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <!-- 解锁长辈留言按钮 -->
+                    <button id="unlock-public-btn" class="text-indigo-500/70 hover:text-indigo-400 transition-all outline-none p-1" title="解锁隐藏留言">
+                        <svg id="unlock-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    </button>
+                    <!-- 刷新按钮 -->
+                    <button id="refresh-public-board-btn" class="text-indigo-500/70 hover:text-indigo-400 transition-all outline-none p-1" title="刷新留言">
+                        <svg id="refresh-public-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 留言列表区 -->
+            <div id="public-msg-list" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-slate-950/50 relative">
+                <!-- 留言内容动态注入 -->
+            </div>
+            
+            <!-- 发送留言区 -->
+            <form id="public-msg-form" class="p-4 sm:p-5 border-t border-slate-800 bg-slate-900 shrink-0">
+                <div class="flex gap-2 sm:gap-3 items-center">
+                    <div class="relative shrink-0">
+                        <select id="public-msg-author" class="appearance-none bg-slate-800 border border-slate-700 rounded-lg pl-3 sm:pl-4 pr-7 sm:pr-8 py-2.5 text-indigo-400 font-bold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors cursor-pointer text-center text-sm sm:text-base">
+                            <option value="妈">妈</option>
+                            <option value="爸">爸</option>
+                            <option value="friend">friend</option>
+                            <option value="柳">柳</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-indigo-500/70">
+                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                        </div>
+                    </div>
+
+                    <input type="text" id="public-msg-input" required autocomplete="off" class="flex-1 w-full bg-slate-950 border border-slate-700 rounded-lg px-3 sm:px-4 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors placeholder-slate-600 text-sm sm:text-base" placeholder="想对作者说点什么...">
+                    <button type="submit" id="public-msg-submit" class="px-4 sm:px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg shadow-lg shadow-indigo-500/20 transition-all whitespace-nowrap text-sm sm:text-base">
+                        发送
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 父母留言解锁弹窗 (只在当前页面内悬浮) -->
+    <div id="public-pwd-modal" class="fixed inset-0 z-[65] flex items-center justify-center bg-slate-950/90 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="modal-content bg-slate-900 border border-indigo-900/50 rounded-2xl w-full max-w-sm mx-4 shadow-2xl transform scale-95 transition-transform duration-300 p-8 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <h3 class="text-2xl font-bold text-indigo-400 mb-6 flex items-center justify-center gap-2 relative z-10">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                解锁隐藏留言
+            </h3>
+            <input type="password" id="public-pwd-input" autocomplete="off" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-center text-indigo-400 tracking-[0.3em] font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors mb-4 relative z-10" placeholder="Enter Password">
+            <p id="public-pwd-error" class="text-red-400 text-xs mb-4 hidden relative z-10">密码错误，访问拒绝</p>
+            <div class="flex gap-3 relative z-10">
+                <button id="close-public-pwd-btn" class="flex-1 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-lg transition-all">取消</button>
+                <button id="public-pwd-submit-btn" class="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg shadow-lg shadow-indigo-500/20 transition-all">解锁</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入 Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://hlmpgjvvnezpgobgbtwy.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_QJ8O--Xo_AQLqEGmibpiGQ_iO75gSig";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const refreshPublicBoardBtn = document.getElementById('refresh-public-board-btn');
+        const refreshPublicIcon = document.getElementById('refresh-public-icon');
+        const publicMsgList = document.getElementById('public-msg-list');
+        const publicMsgForm = document.getElementById('public-msg-form');
+        const publicMsgInput = document.getElementById('public-msg-input');
+        const publicMsgAuthor = document.getElementById('public-msg-author');
+        const publicMsgSubmitBtn = document.getElementById('public-msg-submit');
+
+        // 解锁机制相关
+        const unlockPublicBtn = document.getElementById('unlock-public-btn');
+        const unlockIcon = document.getElementById('unlock-icon');
+        const publicPwdModal = document.getElementById('public-pwd-modal');
+        const publicPwdInput = document.getElementById('public-pwd-input');
+        const publicPwdSubmit = document.getElementById('public-pwd-submit-btn');
+        const publicPwdClose = document.getElementById('close-public-pwd-btn');
+        const publicPwdError = document.getElementById('public-pwd-error');
+
+        let isParentUnlocked = false;
+
+        // 页面一加载就拉取留言
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPublicMessages();
+        });
+
+        // 刷新按钮
+        refreshPublicBoardBtn.addEventListener('click', loadPublicMessages);
+
+        // 解锁按钮交互
+        unlockPublicBtn.addEventListener('click', () => {
+            if (isParentUnlocked) {
+                isParentUnlocked = false;
+                unlockIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>';
+                loadPublicMessages();
+            } else {
+                publicPwdInput.value = '';
+                publicPwdError.classList.add('hidden');
+                publicPwdModal.classList.add('modal-enter');
+                setTimeout(() => publicPwdInput.focus(), 100);
+            }
+        });
+
+        publicPwdClose.addEventListener('click', () => publicPwdModal.classList.remove('modal-enter'));
+
+        const verifyPublicPassword = () => {
+            if (publicPwdInput.value === '737804') {
+                isParentUnlocked = true;
+                publicPwdModal.classList.remove('modal-enter');
+                unlockIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>'; 
+                loadPublicMessages();
+            } else {
+                publicPwdError.classList.remove('hidden');
+                publicPwdInput.classList.add('border-red-500');
+                setTimeout(() => publicPwdInput.classList.remove('border-red-500'), 1500);
+            }
+        };
+
+        publicPwdSubmit.addEventListener('click', verifyPublicPassword);
+        publicPwdInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyPublicPassword(); });
+
+        // 拉取留言核心逻辑
+        async function loadPublicMessages() {
+            if (refreshPublicIcon) refreshPublicIcon.classList.add('animate-spin');
+            
+            publicMsgList.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-indigo-500/50 animate-pulse">正在连接公开频段...</div>';
+            try {
+                const { data, error } = await supabaseClient
+                    .from('public_messages')
+                    .select('*')
+                    .order('created_at', { ascending: true }); 
+                
+                if (error) throw error;
+                
+                publicMsgList.innerHTML = '';
+                if (!data || data.length === 0) {
+                    publicMsgList.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-slate-600">这里空空如也，来抢首赞和沙发吧！</div>';
+                    return;
+                }
+
+                data.forEach(m => {
+                    let msgObj;
+                    try {
+                        msgObj = JSON.parse(m.content);
+                    } catch (e) {
+                        msgObj = { author: '?', text: m.content };
+                    }
+
+                    const div = document.createElement('div');
+                    div.className = 'bg-slate-800/80 p-4 rounded-xl border border-slate-700/50 hover:border-indigo-500/30 transition-colors flex gap-4 items-start';
+                    const date = new Date(m.created_at).toLocaleString('zh-CN', { hour12: false });
+                    
+                    const safeContent = msgObj.text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const safeAuthor = (msgObj.author || '?').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    
+                    const isParent = safeAuthor === '妈' || safeAuthor === '爸';
+                    const displayContent = (isParent && !isParentUnlocked) 
+                        ? '<span class="text-slate-500 italic tracking-widest text-lg">*******</span> <span class="text-xs text-indigo-500/50 ml-2">(已隐藏)</span>' 
+                        : safeContent;
+
+                    const avatarText = safeAuthor.length > 2 ? safeAuthor.substring(0, 1) : safeAuthor;
+
+                    div.innerHTML = `
+                        <div class="shrink-0 mt-1">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-blue-700 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-500/20 border border-indigo-500/30 uppercase">
+                                ${avatarText}
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-3 mb-1.5 flex-wrap">
+                                <span class="text-indigo-400 font-bold">${safeAuthor}</span>
+                                <span class="text-xs text-slate-500 font-mono mt-0.5">${date}</span>
+                            </div>
+                            <div class="text-slate-200 text-sm leading-relaxed break-words">${displayContent}</div>
+                        </div>
+                    `;
+                    publicMsgList.appendChild(div);
+                });
+                
+                // 等待DOM渲染完后滚到底部
+                setTimeout(() => {
+                    publicMsgList.scrollTop = publicMsgList.scrollHeight;
+                }, 50);
+
+            } catch (err) {
+                console.error("拉取公开留言失败:", err);
+                publicMsgList.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-red-500/80">连接断开（请确认已在 Supabase 创建 public_messages 表）</div>';
+            } finally {
+                if (refreshPublicIcon) refreshPublicIcon.classList.remove('animate-spin');
+            }
+        }
+
+        // 发送留言
+        publicMsgForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const textContent = publicMsgInput.value.trim();
+            const authorChoice = publicMsgAuthor.value;
+            
+            if (!textContent) return;
+            
+            publicMsgSubmitBtn.disabled = true;
+            publicMsgSubmitBtn.innerHTML = '发送中...';
+
+            const payloadContent = JSON.stringify({
+                author: authorChoice,
+                text: textContent
+            });
+
+            try {
+                const { error } = await supabaseClient
+                    .from('public_messages')
+                    .insert([{ content: payloadContent }]);
+                
+                if (error) throw error;
+                
+                publicMsgInput.value = '';
+                await loadPublicMessages();
+            } catch (err) {
+                console.error("发送留言失败:", err);
+                alert('发送失败，请检查网络或数据库配置！');
+            } finally {
+                publicMsgSubmitBtn.disabled = false;
+                publicMsgSubmitBtn.innerHTML = '发送';
+            }
+        });
+    </script>
+</body>
+</html>
