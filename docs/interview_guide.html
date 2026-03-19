@@ -7,10 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <style>
-        body { background-color: #faf9f6; color: #312e81; } /* 调整为靛蓝调的深色 */
+        body { background-color: #faf9f6; color: #312e81; } /* 靛蓝调深色 */
         
         .code-block {
-            background-color: #1e1b4b; /* 深靛蓝背景 */
+            background-color: #1e1b4b; 
             color: #e0e7ff;
             font-family: monospace;
             border-radius: 0.5rem;
@@ -26,7 +26,7 @@
         }
         
         .tab-btn.active {
-            border-bottom-color: #6366f1; /* 靛蓝色 */
+            border-bottom-color: #6366f1; 
             color: #4f46e5;
             font-weight: 600;
         }
@@ -84,16 +84,7 @@
         </div>
         
         <div id="nav-menu-container" class="flex-1 overflow-y-auto py-4 flex md:flex-col flex-row overflow-x-auto">
-            <button class="nav-item static-nav active text-left px-6 py-3 text-sm text-indigo-700 hover:bg-indigo-50 whitespace-nowrap md:whitespace-normal" data-target="sec-os">
-                1. 操作系统 (OS)
-            </button>
-            <button class="nav-item static-nav text-left px-6 py-3 text-sm text-indigo-700 hover:bg-indigo-50 whitespace-nowrap md:whitespace-normal" data-target="sec-net">
-                2. 计算机网络
-            </button>
-            <button class="nav-item static-nav text-left px-6 py-3 text-sm text-indigo-700 hover:bg-indigo-50 whitespace-nowrap md:whitespace-normal" data-target="sec-db">
-                3. 数据库原理
-            </button>
-            <!-- 动态生成的章节会插入到这里 -->
+            <!-- 静态内容已清空，动态生成的章节会插入到这里 -->
         </div>
 
         <div class="p-4 border-t border-indigo-50 mt-auto bg-indigo-50/50 hidden md:block">
@@ -110,160 +101,7 @@
     <!-- 右侧内容区 -->
     <main id="main-content-container" class="flex-1 overflow-y-auto relative scroll-smooth bg-[#faf9f6]">
         <div class="max-w-5xl mx-auto p-6 md:p-12">
-
-            <!-- 章节 1: 操作系统 -->
-            <section id="sec-os" class="section-view active">
-                <header class="mb-10">
-                    <h2 class="text-3xl font-extrabold text-indigo-950 mb-4">1. 操作系统 (OS) 核心</h2>
-                    <p class="text-indigo-800/80 leading-relaxed text-lg">
-                        操作系统是底层的基石，面试中最常考察的是进程与线程、内存管理机制以及死锁的预防。
-                    </p>
-                </header>
-
-                <div class="flex flex-col lg:flex-row gap-6">
-                    <div class="w-full lg:w-1/3 flex flex-col gap-3">
-                        <div class="text-sm font-bold text-indigo-400 uppercase tracking-wider mb-2">高频考点</div>
-                        <div class="cmd-card active bg-white border border-indigo-100 rounded-lg p-4" data-detail="detail-proc-thread">
-                            <div class="font-bold text-indigo-900">进程与线程的区别</div>
-                        </div>
-                        <div class="cmd-card bg-white border border-indigo-100 rounded-lg p-4" data-detail="detail-deadlock">
-                            <div class="font-bold text-indigo-900">什么是死锁及条件</div>
-                        </div>
-                        <div class="cmd-card bg-white border border-indigo-100 rounded-lg p-4" data-detail="detail-memory">
-                            <div class="font-bold text-indigo-900">虚拟内存机制</div>
-                        </div>
-                    </div>
-
-                    <div class="w-full lg:w-2/3">
-                        <div class="bg-white rounded-xl shadow-sm border border-indigo-100 h-full p-8 flex flex-col justify-center min-h-[400px]">
-                            
-                            <div id="detail-proc-thread" class="detail-content block">
-                                <span class="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold mb-4">🔥 必考题</span>
-                                <h3 class="text-2xl font-bold text-indigo-950 mb-4">进程 vs 线程</h3>
-                                <div class="bg-indigo-50/50 p-4 rounded-lg border border-indigo-100 text-sm text-indigo-900 mb-4 leading-relaxed space-y-2">
-                                    <p><strong>1. 根本区别：</strong>进程是操作系统资源分配的基本单位，线程是处理器任务调度和执行的基本单位。</p>
-                                    <p><strong>2. 资源开销：</strong>每个进程都有独立的代码和数据空间（程序上下文），程序之间的切换会有较大的开销；线程可以看做轻量级的进程，同一类线程共享代码和数据空间，每个线程都有自己独立的运行栈和程序计数器（PC），线程之间切换的开销小。</p>
-                                    <p><strong>3. 内存分配：</strong>同一进程的线程共享本进程的地址空间和资源，而进程之间的地址空间和资源是相互独立的。</p>
-                                    <p><strong>4. 影响关系：</strong>一个进程崩溃后，在保护模式下不会对其他进程产生影响，但是一个线程崩溃整个进程都死掉。所以多进程要比多线程健壮。</p>
-                                </div>
-                            </div>
-
-                            <div id="detail-deadlock" class="detail-content hidden">
-                                <span class="inline-block px-3 py-1 bg-rose-100 text-rose-700 rounded-full text-xs font-bold mb-4">💀 并发杀手</span>
-                                <h3 class="text-2xl font-bold text-indigo-950 mb-4">死锁的四个必要条件</h3>
-                                <div class="bg-indigo-50/50 p-4 rounded-lg border border-indigo-100 text-sm text-indigo-900 leading-relaxed space-y-2">
-                                    <p><strong>1. 互斥条件：</strong>一个资源每次只能被一个进程使用。</p>
-                                    <p><strong>2. 请求与保持条件：</strong>一个进程因请求资源而阻塞时，对已获得的资源保持不放。</p>
-                                    <p><strong>3. 不剥夺条件：</strong>进程已获得的资源，在未使用完之前，不能强行剥夺。</p>
-                                    <p><strong>4. 循环等待条件：</strong>若干进程之间形成一种头尾相接的循环等待资源关系。</p>
-                                    <p class="mt-4 text-rose-600 font-semibold">打破死锁的常用方法：破坏请求与保持（一次性申请所有资源），破坏循环等待（按序申请资源）。</p>
-                                </div>
-                            </div>
-
-                            <div id="detail-memory" class="detail-content hidden">
-                                <span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold mb-4">🧠 内存管理</span>
-                                <h3 class="text-2xl font-bold text-indigo-950 mb-4">虚拟内存的意义</h3>
-                                <div class="bg-indigo-50/50 p-4 rounded-lg border border-indigo-100 text-sm text-indigo-900 leading-relaxed space-y-2">
-                                    <p>虚拟内存使得应用程序认为它拥有连续的可用的内存（一个连续完整的地址空间），而实际上，它通常是被分隔成多个物理内存碎片，还有部分暂时存储在外部磁盘存储器上，在需要时进行数据交换。</p>
-                                    <p><strong>优点：</strong><br>
-                                    1. 扩大了内存的可用容量。<br>
-                                    2. 隔离进程，防止恶意的或者含有 bug 的程序读取或修改其他程序的内存。<br>
-                                    3. 更高效地使用物理内存（通过分页机制）。</p>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 章节 2: 计算机网络 -->
-            <section id="sec-net" class="section-view">
-                <header class="mb-10">
-                    <h2 class="text-3xl font-extrabold text-indigo-950 mb-4">2. 计算机网络</h2>
-                    <p class="text-indigo-800/80 leading-relaxed text-lg">
-                        网络协议是后端开发和通信的基础。TCP/IP 协议族、HTTP 工作原理是重中之重。
-                    </p>
-                </header>
-
-                <div class="bg-white rounded-xl shadow-sm border border-indigo-100 overflow-hidden mb-8">
-                    <div class="flex border-b border-indigo-50 bg-indigo-50/30 px-2 pt-2 overflow-x-auto">
-                        <button class="tab-btn active px-4 py-3 text-sm font-medium text-indigo-600 hover:text-indigo-900 whitespace-nowrap" data-tab="tab-tcp">TCP 三次握手</button>
-                        <button class="tab-btn px-4 py-3 text-sm font-medium text-indigo-600 hover:text-indigo-900 whitespace-nowrap" data-tab="tab-http">HTTP vs HTTPS</button>
-                    </div>
-
-                    <div class="p-6">
-                        <div id="tab-tcp" class="tab-content block">
-                            <h3 class="font-semibold text-indigo-900 mb-4 text-xl">为什么需要三次握手？</h3>
-                            <div class="bg-indigo-50/50 p-5 rounded border border-indigo-100 text-sm text-indigo-900 leading-relaxed">
-                                <p class="mb-2">三次握手的主要目的是确认双方的接收和发送能力是否正常，以及指定自己的初始化序列号（ISN）为后面的可靠传送做准备。</p>
-                                <ul class="list-decimal pl-5 space-y-1">
-                                    <li><strong>第一次握手 (SYN)：</strong>客户端发送，服务端接收。确认：客户端的发送能力正常。</li>
-                                    <li><strong>第二次握手 (SYN+ACK)：</strong>服务端发送，客户端接收。确认：服务端的接收、发送能力正常；客户端的接收能力正常。</li>
-                                    <li><strong>第三次握手 (ACK)：</strong>客户端发送，服务端接收。确认：服务端的接收能力正常。</li>
-                                </ul>
-                                <p class="mt-4 text-rose-600">为什么不是两次？防止已失效的连接请求报文段突然又传送到了服务端，因而产生错误，导致服务端白白开启资源等待。</p>
-                            </div>
-                        </div>
-
-                        <div id="tab-http" class="tab-content hidden">
-                            <h3 class="font-semibold text-indigo-900 mb-4 text-xl">HTTPS 的加密原理</h3>
-                            <div class="bg-indigo-50/50 p-5 rounded border border-indigo-100 text-sm text-indigo-900 leading-relaxed">
-                                <p>HTTPS = HTTP + SSL/TLS。它在 HTTP 之上加入了一层加密协议，保障数据传输安全。</p>
-                                <p class="mt-2 font-bold">加解密过程（混合加密）：</p>
-                                <ul class="list-disc pl-5 space-y-1">
-                                    <li><strong>对称加密：</strong>客户端和服务器使用同一个密钥进行加密和解密。速度快，用于实际传输的数据加密。</li>
-                                    <li><strong>非对称加密：</strong>使用公钥和私钥。客户端用服务端的公钥加密“对称密钥”，服务端用私钥解密，从而安全地交换对称密钥。</li>
-                                    <li><strong>数字证书 (CA)：</strong>防止中间人伪造公钥，确保服务端发来的公钥确实是合法的。</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 章节 3: 数据库原理 -->
-            <section id="sec-db" class="section-view">
-                <header class="mb-10">
-                    <h2 class="text-3xl font-extrabold text-indigo-950 mb-4">3. 数据库原理 (MySQL)</h2>
-                    <p class="text-indigo-800/80 leading-relaxed text-lg">
-                        不论什么语言，数据库底层原理总是面试官最爱深挖的地方，尤其是索引结构和事务机制。
-                    </p>
-                </header>
-
-                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
-                    <div class="bg-white rounded-xl shadow-sm border border-indigo-100 overflow-hidden flex flex-col p-6">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="text-3xl">🗂️</div>
-                            <h3 class="text-xl font-bold text-indigo-900">事务的 ACID 特性</h3>
-                        </div>
-                        <div class="bg-indigo-50/50 p-4 rounded-lg border border-indigo-100 text-sm text-indigo-800 leading-relaxed h-full">
-                            <ul class="space-y-3">
-                                <li><strong>原子性 (Atomicity)：</strong>事务是最小的执行单位，不允许分割。事务的原子性确保动作要么全部完成，要么完全不起作用。(Undo log 实现)</li>
-                                <li><strong>一致性 (Consistency)：</strong>执行事务前后，数据保持一致。(其他三个特性共同保证)</li>
-                                <li><strong>隔离性 (Isolation)：</strong>并发访问数据库时，一个用户的事务不被其他事务所干扰。(MVCC 和 锁机制实现)</li>
-                                <li><strong>持久性 (Durability)：</strong>一个事务被提交之后，它对数据库中数据的改变是持久的。(Redo log 实现)</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-xl shadow-sm border border-indigo-100 overflow-hidden flex flex-col p-6">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="text-3xl">🌳</div>
-                            <h3 class="text-xl font-bold text-indigo-900">B+树索引原理</h3>
-                        </div>
-                        <div class="bg-indigo-50/50 p-4 rounded-lg border border-indigo-100 text-sm text-indigo-800 leading-relaxed h-full">
-                            <p class="mb-2 font-bold text-indigo-900">为什么 MySQL InnoDB 选择 B+ 树？</p>
-                            <ol class="list-decimal pl-4 space-y-2">
-                                <li><strong>层级更低，IO次数少：</strong>B+树非叶子节点只存索引键不存数据，一页能容纳更多索引，树的高度更矮，磁盘 IO 查找次数更少。</li>
-                                <li><strong>查询效率稳定：</strong>所有数据都存在叶子节点，每次查询的路径长度相同。</li>
-                                <li><strong>范围查询快：</strong>B+树的叶子节点用双向链表连在一起，非常适合基于范围的顺序查找和排序。</li>
-                            </ol>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
+            <!-- 静态内容已清空，章节内容将全部由云端动态生成 -->
         </div>
     </main>
 
@@ -403,7 +241,19 @@
             document.querySelectorAll('.dyn-chapter-sec').forEach(el => el.remove());
             datalistEl.innerHTML = '';
 
-            if (!cardsData || cardsData.length === 0) return;
+            // 如果没有任何数据，显示空缺省页
+            if (!cardsData || cardsData.length === 0) {
+                mainContainer.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full text-indigo-300 mt-32 text-center">
+                        <div class="text-6xl mb-4">🚀</div>
+                        <h2 class="text-2xl font-bold text-indigo-900 mb-2">题库空空如也</h2>
+                        <p class="text-indigo-600">请点击左下角的「➕ 补充面经或卡片」开始构建你的专属八股文库！</p>
+                    </div>
+                `;
+                return;
+            }
+
+            mainContainer.innerHTML = ''; // 清理缺省页
 
             const chaptersMap = {};
             cardsData.forEach(item => {
@@ -412,7 +262,8 @@
                 chaptersMap[chap].push(item);
             });
 
-            let currentChapterNum = 4; // 紧接静态的前3章
+            let currentChapterNum = 1; // 纯净版从 1 开始编号
+            let isFirst = true; // 用于标记第一个章节，使其默认激活
 
             Object.keys(chaptersMap).forEach((chapterName) => {
                 const safeId = "sec-dyn-" + encodeURIComponent(chapterName).replace(/%/g, '');
@@ -422,17 +273,17 @@
                 option.value = chapterName;
                 datalistEl.appendChild(option);
 
-                // 左导航
+                // 左导航 (第一个章节默认选中 active)
                 const navBtn = document.createElement('button');
-                navBtn.className = "nav-item dyn-chapter-nav text-left px-6 py-3 text-sm text-indigo-700 hover:bg-indigo-50 whitespace-nowrap md:whitespace-normal";
+                navBtn.className = "nav-item dyn-chapter-nav text-left px-6 py-3 text-sm text-indigo-700 hover:bg-indigo-50 whitespace-nowrap md:whitespace-normal" + (isFirst ? " active" : "");
                 navBtn.setAttribute('data-target', safeId);
                 navBtn.innerHTML = displayTitle;
                 navMenu.appendChild(navBtn);
 
-                // 右内容
+                // 右内容 (第一个章节默认展示 active)
                 const sectionHtml = document.createElement('section');
                 sectionHtml.id = safeId;
-                sectionHtml.className = "section-view dyn-chapter-sec";
+                sectionHtml.className = "section-view dyn-chapter-sec" + (isFirst ? " active" : "");
                 
                 let cardsHtml = '';
                 chaptersMap[chapterName].forEach(card => {
@@ -465,6 +316,7 @@
                 `;
                 mainContainer.appendChild(sectionHtml);
                 currentChapterNum++;
+                isFirst = false;
             });
         };
 
