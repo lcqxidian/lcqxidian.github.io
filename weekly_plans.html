@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Plans | LCQ.Space</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        .plan-card {
+            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .plan-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(45, 212, 191, 0.45);
+            box-shadow: 0 20px 35px -25px rgba(45, 212, 191, 0.65);
+        }
+
+        .task-item input:checked + span {
+            color: #94a3b8;
+            text-decoration: line-through;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-300 font-sans antialiased min-h-screen selection:bg-teal-900 selection:text-teal-100">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
+        <div class="bg-slate-900 border border-slate-800 rounded-[28px] shadow-2xl overflow-hidden">
+            <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-sm">
+                <div class="px-5 sm:px-8 py-5 flex flex-col gap-5">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <a href="index.html" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 rounded-lg transition-colors" title="返回主页">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                                </svg>
+                            </a>
+                            <div>
+                                <p class="text-xs uppercase tracking-[0.35em] text-teal-400/80">Weekly Plans</p>
+                                <h1 class="text-2xl sm:text-3xl font-bold text-slate-100">每周学习计划板</h1>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap gap-3">
+                            <button id="focus-mode-btn" class="px-4 py-2.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 border border-teal-500/30 rounded-lg transition-all text-sm font-medium">
+                                进入专注模式
+                            </button>
+                            <button id="reset-progress-btn" class="px-4 py-2.5 bg-slate-800 hover:bg-rose-500/10 text-slate-300 hover:text-rose-300 border border-slate-700 hover:border-rose-500/30 rounded-lg transition-all text-sm font-medium">
+                                清空本周勾选
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] gap-4">
+                        <section class="rounded-2xl border border-teal-500/20 bg-gradient-to-br from-teal-500/10 via-slate-900 to-slate-900 px-5 sm:px-6 py-5 sm:py-6 relative overflow-hidden">
+                            <div class="absolute -top-10 right-0 w-40 h-40 bg-teal-400/10 rounded-full blur-3xl pointer-events-none"></div>
+                            <p class="text-sm text-teal-300 mb-3">这周先把节奏跑顺，再谈提速。</p>
+                            <h2 class="text-2xl sm:text-4xl font-bold text-slate-50 leading-tight mb-4">
+                                把知识点拆进每天，
+                                <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 via-cyan-300 to-emerald-300">把输出落到本周</span>
+                            </h2>
+                            <p class="text-slate-400 leading-relaxed max-w-2xl">
+                                这个模块会按周展示学习主题、日计划和复盘区。勾选状态与复盘内容会自动保存在当前浏览器，下次打开还能继续接着学。
+                            </p>
+                        </section>
+
+                        <section class="grid grid-cols-2 gap-4">
+                            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
+                                <p class="text-xs uppercase tracking-[0.2em] text-slate-500 mb-2">Week Range</p>
+                                <div id="week-range" class="text-lg font-semibold text-slate-100">加载中...</div>
+                                <p class="text-sm text-slate-500 mt-3">按周查看，方便和面试/项目安排对齐。</p>
+                            </div>
+                            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
+                                <p class="text-xs uppercase tracking-[0.2em] text-slate-500 mb-2">Progress</p>
+                                <div class="text-3xl font-bold text-emerald-400" id="progress-text">0%</div>
+                                <p class="text-sm text-slate-500 mt-3" id="progress-summary">0 / 0 项已完成</p>
+                            </div>
+                            <div class="col-span-2 rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
+                                <div class="flex items-center justify-between gap-4 mb-3">
+                                    <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Weekly Theme</p>
+                                    <span class="px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 text-xs border border-amber-500/20">学习主线</span>
+                                </div>
+                                <h3 class="text-xl font-bold text-slate-100 mb-2">C++ 基础巩固 + 系统面试查漏补缺 + 项目表达打磨</h3>
+                                <p class="text-sm text-slate-400 leading-relaxed">
+                                    主线不求多，重点是“输入一块，输出一块”。这周建议至少完成一轮代码练习、一轮八股整理、一次项目复盘表达。
+                                </p>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </header>
+
+            <main id="plans-root" class="p-5 sm:p-8 space-y-8 bg-[radial-gradient(circle_at_top,_rgba(20,184,166,0.08),_transparent_30%),linear-gradient(to_bottom,_rgba(15,23,42,0.98),_rgba(2,6,23,1))]">
+                <section class="grid grid-cols-1 xl:grid-cols-[1.45fr_0.55fr] gap-6">
+                    <div>
+                        <div class="flex items-center gap-3 mb-5">
+                            <div class="w-2 h-8 bg-teal-400 rounded-full"></div>
+                            <h2 class="text-2xl font-bold text-slate-100">每日执行计划</h2>
+                        </div>
+                        <div id="plans-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-5"></div>
+                    </div>
+
+                    <aside class="space-y-5">
+                        <section class="rounded-2xl border border-slate-800 bg-slate-900/80 p-5">
+                            <div class="flex items-center justify-between gap-3 mb-4">
+                                <h3 class="text-lg font-semibold text-slate-100">本周三大目标</h3>
+                                <span class="text-xs px-2.5 py-1 rounded-full bg-teal-500/10 text-teal-300 border border-teal-500/20">Must Win</span>
+                            </div>
+                            <ul class="space-y-3 text-sm text-slate-300">
+                                <li class="flex gap-3">
+                                    <span class="text-teal-300 mt-0.5">01</span>
+                                    <span>整理一份可复述的 C++ 并发知识清单，能口头讲清线程、锁和同步。</span>
+                                </li>
+                                <li class="flex gap-3">
+                                    <span class="text-teal-300 mt-0.5">02</span>
+                                    <span>补完 1 个项目复盘模板，把“背景-方案-权衡-结果”串成完整表达。</span>
+                                </li>
+                                <li class="flex gap-3">
+                                    <span class="text-teal-300 mt-0.5">03</span>
+                                    <span>至少完成 2 次手写或代码敲练，避免只看不练。</span>
+                                </li>
+                            </ul>
+                        </section>
+
+                        <section class="rounded-2xl border border-slate-800 bg-slate-900/80 p-5">
+                            <h3 class="text-lg font-semibold text-slate-100 mb-4">学习节奏建议</h3>
+                            <div class="space-y-3 text-sm">
+                                <div class="rounded-xl border border-slate-800 bg-slate-950/70 p-3">
+                                    <p class="text-slate-200 font-medium">输入</p>
+                                    <p class="text-slate-500 mt-1">每天 60-90 分钟集中啃一个主题，不要并行开太多坑。</p>
+                                </div>
+                                <div class="rounded-xl border border-slate-800 bg-slate-950/70 p-3">
+                                    <p class="text-slate-200 font-medium">输出</p>
+                                    <p class="text-slate-500 mt-1">每晚花 15 分钟写一段自己的总结，比收藏十篇文章更有效。</p>
+                                </div>
+                                <div class="rounded-xl border border-slate-800 bg-slate-950/70 p-3">
+                                    <p class="text-slate-200 font-medium">复盘</p>
+                                    <p class="text-slate-500 mt-1">周末只做两件事：补漏和总结，不再盲目加新内容。</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="rounded-2xl border border-slate-800 bg-slate-900/80 p-5">
+                            <div class="flex items-center justify-between gap-3 mb-3">
+                                <h3 class="text-lg font-semibold text-slate-100">本周复盘</h3>
+                                <span id="review-status" class="text-xs text-slate-500">自动保存</span>
+                            </div>
+                            <textarea id="weekly-review" rows="10" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors placeholder-slate-600 resize-none" placeholder="记录本周掌握了什么、卡在哪里、下周第一优先级是什么..."></textarea>
+                        </section>
+                    </aside>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const weeklyPlan = [
+            {
+                day: '周一',
+                short: 'Mon',
+                focus: 'C++ 并发基础',
+                tag: '基础打牢',
+                tasks: ['复习 thread / mutex / lock_guard', '整理 5 个并发常见面试点', '手敲一个生产者消费者示例']
+            },
+            {
+                day: '周二',
+                short: 'Tue',
+                focus: '操作系统核心概念',
+                tag: '八股强化',
+                tasks: ['梳理进程与线程区别', '复盘常见锁与死锁条件', '输出一页自己的 OS 速记卡']
+            },
+            {
+                day: '周三',
+                short: 'Wed',
+                focus: '网络基础回顾',
+                tag: '知识串联',
+                tasks: ['复习 TCP 三次握手与四次挥手', '补一题粘包/拆包相关回答', '对照项目场景讲一次网络链路']
+            },
+            {
+                day: '周四',
+                short: 'Thu',
+                focus: '项目表达训练',
+                tag: '项目复盘',
+                tasks: ['写安防网关项目 STAR 提纲', '总结一个性能瓶颈与优化过程', '录一次 3 分钟口述']
+            },
+            {
+                day: '周五',
+                short: 'Fri',
+                focus: '代码实战日',
+                tag: '动手输出',
+                tasks: ['完成 1 道中等偏上的代码题', '重写 1 个常见数据结构实现', '记录实现中的边界情况']
+            },
+            {
+                day: '周六',
+                short: 'Sat',
+                focus: '查漏补缺',
+                tag: '补短板',
+                tasks: ['回看本周做错或没讲顺的点', '补 2 个薄弱知识点', '把零散笔记合并到统一结构']
+            },
+            {
+                day: '周日',
+                short: 'Sun',
+                focus: '复盘与下周预热',
+                tag: '总结迭代',
+                tasks: ['完成周复盘', '列出下周 3 个最重要任务', '清理桌面、仓库和待办']
+            }
+        ];
+
+        const STORAGE_KEY = 'lcq_weekly_plans_progress_v1';
+        const REVIEW_KEY = 'lcq_weekly_plans_review_v1';
+        const FOCUS_MODE_KEY = 'lcq_weekly_plans_focus_mode_v1';
+
+        const plansGrid = document.getElementById('plans-grid');
+        const progressText = document.getElementById('progress-text');
+        const progressSummary = document.getElementById('progress-summary');
+        const reviewInput = document.getElementById('weekly-review');
+        const reviewStatus = document.getElementById('review-status');
+        const resetProgressBtn = document.getElementById('reset-progress-btn');
+        const weekRange = document.getElementById('week-range');
+        const focusModeBtn = document.getElementById('focus-mode-btn');
+        const plansRoot = document.getElementById('plans-root');
+
+        const loadProgress = () => {
+            try {
+                return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+            } catch (error) {
+                return {};
+            }
+        };
+
+        const saveProgress = (progress) => {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+        };
+
+        const escapeHtml = (value) => value
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+
+        const getWeekLabel = () => {
+            const now = new Date();
+            const currentDay = now.getDay() || 7;
+            const monday = new Date(now);
+            monday.setDate(now.getDate() - currentDay + 1);
+            monday.setHours(0, 0, 0, 0);
+
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+
+            const format = (date) => `${date.getMonth() + 1}.${date.getDate()}`;
+            return `${format(monday)} - ${format(sunday)}`;
+        };
+
+        const renderPlans = () => {
+            const progress = loadProgress();
+
+            plansGrid.innerHTML = weeklyPlan.map((plan, dayIndex) => `
+                <section class="plan-card rounded-2xl border border-slate-800 bg-slate-900/80 overflow-hidden">
+                    <div class="px-5 py-4 border-b border-slate-800 bg-gradient-to-r from-slate-900 via-slate-900 to-teal-500/10">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <div class="text-xs uppercase tracking-[0.25em] text-slate-500">${plan.short}</div>
+                                <h3 class="text-xl font-bold text-slate-100 mt-1">${plan.day}</h3>
+                                <p class="text-sm text-slate-400 mt-2">${plan.focus}</p>
+                            </div>
+                            <span class="shrink-0 px-3 py-1 rounded-full text-xs border border-teal-500/20 bg-teal-500/10 text-teal-300">${plan.tag}</span>
+                        </div>
+                    </div>
+                    <div class="p-5 space-y-3">
+                        ${plan.tasks.map((task, taskIndex) => {
+                            const key = `${dayIndex}-${taskIndex}`;
+                            const checked = Boolean(progress[key]);
+                            return `
+                                <label class="task-item flex gap-3 rounded-xl border ${checked ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-slate-800 bg-slate-950/70'} px-4 py-3 cursor-pointer transition-colors">
+                                    <input data-task-key="${key}" type="checkbox" class="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900 text-emerald-400 focus:ring-emerald-500" ${checked ? 'checked' : ''}>
+                                    <span class="text-sm leading-relaxed text-slate-200">${escapeHtml(task)}</span>
+                                </label>
+                            `;
+                        }).join('')}
+                    </div>
+                </section>
+            `).join('');
+
+            updateProgressSummary();
+        };
+
+        const updateProgressSummary = () => {
+            const progress = loadProgress();
+            const totalTasks = weeklyPlan.reduce((sum, plan) => sum + plan.tasks.length, 0);
+            const completedTasks = Object.values(progress).filter(Boolean).length;
+            const progressValue = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+
+            progressText.textContent = `${progressValue}%`;
+            progressSummary.textContent = `${completedTasks} / ${totalTasks} 项已完成`;
+        };
+
+        plansGrid.addEventListener('change', (event) => {
+            const target = event.target;
+            if (!target.matches('input[type="checkbox"][data-task-key]')) return;
+
+            const progress = loadProgress();
+            progress[target.dataset.taskKey] = target.checked;
+            saveProgress(progress);
+            renderPlans();
+        });
+
+        resetProgressBtn.addEventListener('click', () => {
+            localStorage.removeItem(STORAGE_KEY);
+            renderPlans();
+        });
+
+        reviewInput.addEventListener('input', () => {
+            localStorage.setItem(REVIEW_KEY, reviewInput.value);
+            reviewStatus.textContent = '已保存';
+            clearTimeout(window.reviewTimer);
+            window.reviewTimer = setTimeout(() => {
+                reviewStatus.textContent = '自动保存';
+            }, 1200);
+        });
+
+        focusModeBtn.addEventListener('click', () => {
+            const nextValue = plansRoot.classList.toggle('max-w-4xl');
+            plansRoot.classList.toggle('mx-auto');
+            localStorage.setItem(FOCUS_MODE_KEY, nextValue ? 'on' : 'off');
+            focusModeBtn.textContent = nextValue ? '退出专注模式' : '进入专注模式';
+        });
+
+        weekRange.textContent = getWeekLabel();
+        reviewInput.value = localStorage.getItem(REVIEW_KEY) || '';
+
+        if (localStorage.getItem(FOCUS_MODE_KEY) === 'on') {
+            plansRoot.classList.add('max-w-4xl', 'mx-auto');
+            focusModeBtn.textContent = '退出专注模式';
+        }
+
+        renderPlans();
+    </script>
+</body>
+</html>
