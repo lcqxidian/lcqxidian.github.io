@@ -123,7 +123,7 @@
             <button id="open-modal-btn" class="w-full bg-white border border-stone-200 hover:border-blue-300 hover:text-blue-600 text-stone-600 text-sm font-bold py-2.5 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
                 <span>➕</span> <span id="open-modal-btn-label">补充新章节/卡片</span>
             </button>
-            <p id="admin-edit-hint" class="text-xs text-stone-400 mt-3 leading-relaxed">当前为只读模式，请先回首页右上角完成管理员认证。</p>
+            <p id="admin-edit-hint" class="text-xs text-stone-400 mt-3 leading-relaxed">当前为只读模式，请先回首页右上角完成用户登录，并选择管理员角色。</p>
         </div>
     </nav>
 
@@ -571,7 +571,7 @@ int main() {
         const openModalBtnMobile = document.getElementById('open-modal-btn-mobile');
 
         const hasAdminAccess = () => window.LCQAdminAuth.isAuthenticated();
-        const ensureAdminAccess = (message) => window.LCQAdminAuth.requireAuth(message || '请先回首页右上角完成管理员认证，再修改 C++ 模块内容。');
+        const ensureAdminAccess = (message) => window.LCQAdminAuth.requireAuth(message || '请先回首页右上角完成用户登录，并选择管理员角色后再修改 C++ 模块内容。');
 
         const resetModalToSetup = () => {
             editingCardId = null;
@@ -592,10 +592,10 @@ int main() {
 
             openModalBtnDesktop.classList.toggle('opacity-60', !authed);
             openModalBtnMobile.classList.toggle('opacity-60', !authed);
-            openModalBtnLabelEl.textContent = authed ? '补充新章节/卡片' : '管理员认证后可编辑';
+            openModalBtnLabelEl.textContent = authed ? '补充新章节/卡片' : '管理员登录后可编辑';
             adminEditHintEl.textContent = authed
-                ? '管理员已认证，你现在可以新增、编辑和删除 C++ 模块里的云端补充卡片。'
-                : '当前为只读模式，请先回首页右上角完成管理员认证。';
+                ? '管理员角色已登录，你现在可以新增、编辑和删除 C++ 模块里的云端补充卡片。'
+                : '当前为只读模式，请先回首页右上角完成用户登录，并选择管理员角色。';
 
             renderDynamicChapters(currentCloudCards);
         };

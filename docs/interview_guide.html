@@ -31,13 +31,15 @@
             display: block;
         }
 
+        .chapter-card,
         .topic-card {
             transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
         }
 
+        .chapter-card:hover,
         .topic-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 18px 35px -28px rgba(79, 70, 229, 0.5);
+            box-shadow: 0 18px 35px -28px rgba(79, 70, 229, 0.45);
             border-color: #c7d2fe;
         }
 
@@ -89,7 +91,7 @@
                         <span class="text-2xl">🚀</span> 面试八股作战图
                     </h1>
                     <p class="text-xs text-indigo-500 mt-2 leading-relaxed">
-                        现在拆成 3 个主战区：C++ 八股、Linux 八股、单片机八股。每个战区都支持你继续补充题目并同步到 Supabase。
+                        现在拆成 3 个主战区：C++ 八股、Linux 八股、单片机八股。分类页只展示章节，点进章节才看题目。
                     </p>
                 </div>
                 <a href="../index.html" class="shrink-0 p-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-500 hover:text-indigo-800 transition-colors" title="返回主页">
@@ -116,16 +118,16 @@
             <div class="rounded-2xl border border-indigo-100 bg-white px-4 py-4 mb-3">
                 <p class="text-[11px] uppercase tracking-[0.22em] text-indigo-400 mb-1">Storage</p>
                 <p id="storage-status" class="text-sm font-semibold text-indigo-700">正在连接云端...</p>
-                <p id="auth-mode-text" class="text-xs text-indigo-500 mt-2 leading-relaxed">当前为只读模式，请先回首页右上角完成管理员认证。</p>
+                <p id="auth-mode-text" class="text-xs text-indigo-500 mt-2 leading-relaxed">当前为只读模式，请先回首页右上角完成用户登录，并选择管理员角色。</p>
             </div>
             <button id="open-modal-btn" class="w-full bg-white border border-indigo-200 hover:border-indigo-400 hover:text-indigo-600 text-indigo-700 text-sm font-bold py-2.5 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
-                <span>➕</span> <span id="open-modal-btn-label">管理员认证后可编辑</span>
+                <span>➕</span> <span id="open-modal-btn-label">管理员登录后可编辑</span>
             </button>
         </div>
     </nav>
 
     <button id="open-modal-btn-mobile" class="md:hidden fixed bottom-4 right-4 z-40 bg-indigo-600 text-white min-w-12 h-12 px-4 rounded-full shadow-xl flex items-center justify-center text-sm font-semibold opacity-70">
-        补充
+        需认证
     </button>
 
     <main id="main-content-container" class="flex-1 overflow-y-auto relative scroll-smooth bg-[#f6f3ee]">
@@ -137,7 +139,7 @@
                             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[11px] tracking-[0.22em] uppercase text-indigo-100 mb-4">C++ Stack</div>
                             <h2 class="text-3xl md:text-4xl font-extrabold mb-4">1. C++ 八股</h2>
                             <p class="text-indigo-100/85 leading-relaxed text-base md:text-lg">
-                                聚焦对象模型、内存管理、STL、智能指针、左值右值、模板、多态与并发基础。适合把“为什么这样设计”讲顺，而不是只背概念名词。
+                                分类页只管搭章节，像对象模型、STL、智能指针、模板、多态、并发这些都先作为章节组织，再点进章节细看题目。
                             </p>
                         </div>
                         <div class="grid grid-cols-2 gap-3 min-w-[220px]">
@@ -162,7 +164,7 @@
                             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[11px] tracking-[0.22em] uppercase text-emerald-100 mb-4">Linux Core</div>
                             <h2 class="text-3xl md:text-4xl font-extrabold mb-4">2. Linux 八股</h2>
                             <p class="text-emerald-100/85 leading-relaxed text-base md:text-lg">
-                                适合整理进程线程、调度、文件系统、网络命令、内存管理、常用排障命令这些“既能答题又能上手干活”的知识点。
+                                这里适合先按进程线程、文件系统、网络命令、内存管理、排障命令拆章节，再把高频题归到对应章节里。
                             </p>
                         </div>
                         <div class="grid grid-cols-2 gap-3 min-w-[220px]">
@@ -187,7 +189,7 @@
                             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[11px] tracking-[0.22em] uppercase text-amber-100 mb-4">MCU Notes</div>
                             <h2 class="text-3xl md:text-4xl font-extrabold mb-4">3. 单片机八股</h2>
                             <p class="text-amber-100/85 leading-relaxed text-base md:text-lg">
-                                用来收拢 STM32、外设、中断、寄存器、串口/I2C/SPI、定时器、ADC/PWM 这些内容，让“原理 + 实战经验”能一起讲出来。
+                                更适合按 GPIO、中断、串口/I2C/SPI、定时器、ADC/DMA 这些外设能力来建章节，然后进入章节看题目。
                             </p>
                         </div>
                         <div class="grid grid-cols-2 gap-3 min-w-[220px]">
@@ -211,8 +213,8 @@
         <div class="modal-content bg-white border border-indigo-100 rounded-3xl w-full max-w-2xl mx-4 shadow-2xl transform scale-95 transition-all duration-300 overflow-hidden">
             <div class="p-6 border-b border-indigo-50 flex justify-between items-center">
                 <div>
-                    <h3 id="modal-title" class="text-xl font-bold text-indigo-950">📝 补充八股题目</h3>
-                    <p class="text-sm text-indigo-500 mt-1">按分类、章节和题目来组织，后续页面会自动分组展示。</p>
+                    <h3 id="modal-title" class="text-xl font-bold text-indigo-950">📝 新建章节并录入第一题</h3>
+                    <p class="text-sm text-indigo-500 mt-1">章节页不直接铺题目，所以这里会把题目归到你指定的章节里。</p>
                 </div>
                 <button id="close-modal-btn" class="text-indigo-400 hover:text-indigo-700 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -251,7 +253,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-indigo-900 mb-2">一句话摘要</label>
-                    <textarea id="card-summary" rows="2" class="editor-field px-4 py-3 text-sm resize-none" placeholder="可选。适合写 1~2 句核心结论，展示时会放在内容上方。"></textarea>
+                    <textarea id="card-summary" rows="2" class="editor-field px-4 py-3 text-sm resize-none" placeholder="可选。适合写 1~2 句核心结论，展示时会放在章节详情里的题目上方。"></textarea>
                 </div>
 
                 <div>
@@ -265,7 +267,7 @@
                         <input type="number" id="card-sort-order" class="editor-field px-4 py-3 text-sm" value="100" placeholder="数字越小越靠前">
                     </div>
                     <div class="rounded-2xl border border-indigo-100 bg-indigo-50/60 px-4 py-3 text-sm text-indigo-700">
-                        同一章节内会先按排序值从小到大展示，再按创建时间排序。默认填 `100` 就可以，后面想手动调顺序再改。
+                        同一章节内会先按排序值从小到大展示，再按创建时间排序。默认填 `100` 就可以。
                     </div>
                 </div>
 
@@ -273,9 +275,38 @@
 
                 <div class="flex justify-end gap-3 pt-2">
                     <button type="button" id="cancel-modal-btn" class="px-5 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium rounded-xl transition-colors">取消</button>
-                    <button type="submit" id="submit-btn" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-md transition-all">发布内容</button>
+                    <button type="submit" id="submit-btn" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-md transition-all">创建章节并保存题目</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div id="chapter-detail-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-indigo-950/70 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
+        <div class="modal-content bg-white border border-indigo-100 rounded-3xl w-full max-w-5xl max-h-[88vh] mx-4 shadow-2xl transform scale-95 transition-all duration-300 overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-indigo-50 flex items-start justify-between gap-4">
+                <div>
+                    <p id="chapter-detail-breadcrumb" class="text-xs uppercase tracking-[0.24em] text-indigo-400 mb-2">章节详情</p>
+                    <h3 id="chapter-detail-title" class="text-2xl font-bold text-indigo-950">章节标题</h3>
+                    <p id="chapter-detail-subtitle" class="text-sm text-indigo-500 mt-2">点进章节后，这里才展示题目。</p>
+                </div>
+                <button id="close-chapter-detail-btn" class="text-indigo-400 hover:text-indigo-700 transition-colors shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div class="flex flex-wrap gap-2">
+                    <span id="chapter-detail-count-badge" class="px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-sm font-semibold">0 道题</span>
+                    <span id="chapter-detail-role-badge" class="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-sm font-semibold">只读模式</span>
+                </div>
+                <button id="chapter-detail-add-btn" class="hidden px-4 py-2.5 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium transition-colors">
+                    在本章节新增题目
+                </button>
+            </div>
+
+            <div id="chapter-detail-list" class="flex-1 overflow-y-auto p-6 bg-[#faf9f6] space-y-5"></div>
         </div>
     </div>
 
@@ -320,6 +351,7 @@
 
         let editingCardId = null;
         let currentCloudCards = [];
+        let currentChapterView = null;
 
         const navContainer = document.getElementById('nav-menu-container');
         const modalEl = document.getElementById('add-modal');
@@ -340,11 +372,19 @@
         const contentFieldEl = document.getElementById('card-content');
         const iconFieldEl = document.getElementById('card-icon');
         const sortOrderFieldEl = document.getElementById('card-sort-order');
+        const chapterDetailModalEl = document.getElementById('chapter-detail-modal');
+        const chapterDetailTitleEl = document.getElementById('chapter-detail-title');
+        const chapterDetailBreadcrumbEl = document.getElementById('chapter-detail-breadcrumb');
+        const chapterDetailSubtitleEl = document.getElementById('chapter-detail-subtitle');
+        const chapterDetailCountBadgeEl = document.getElementById('chapter-detail-count-badge');
+        const chapterDetailRoleBadgeEl = document.getElementById('chapter-detail-role-badge');
+        const chapterDetailListEl = document.getElementById('chapter-detail-list');
+        const chapterDetailAddBtnEl = document.getElementById('chapter-detail-add-btn');
 
         const hasAdminAccess = () => window.LCQAdminAuth.isAuthenticated();
-        const ensureAdminAccess = (message) => window.LCQAdminAuth.requireAuth(message || '请先回首页右上角完成管理员认证，再修改面试八股内容。');
+        const ensureAdminAccess = (message) => window.LCQAdminAuth.requireAuth(message || '请先回首页右上角完成用户登录，并选择管理员角色后再修改面试八股内容。');
 
-        const escapeHtml = (value = '') => value
+        const escapeHtml = (value = '') => String(value)
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
@@ -399,6 +439,17 @@
             });
         };
 
+        const getCardsForCategory = (categoryKey) => currentCloudCards
+            .filter((item) => normalizeCategory(item.category) === categoryKey);
+
+        const getCardsForChapter = (categoryKey, chapterName) => getCardsForCategory(categoryKey)
+            .filter((item) => cleanChapterName(item.chapter) === cleanChapterName(chapterName))
+            .sort((a, b) => {
+                const orderDiff = parseSortOrder(a.sort_order) - parseSortOrder(b.sort_order);
+                if (orderDiff !== 0) return orderDiff;
+                return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+            });
+
         const updateChapterDatalist = () => {
             const currentCategory = normalizeCategory(categoryFieldEl.value);
             const chapters = Array.from(new Set(
@@ -418,8 +469,8 @@
             categoryFieldEl.value = 'cpp';
             iconFieldEl.value = CATEGORY_META.cpp.icon;
             sortOrderFieldEl.value = '100';
-            modalTitleEl.textContent = '📝 补充八股题目';
-            submitBtnEl.textContent = '发布内容';
+            modalTitleEl.textContent = '📝 新建章节并录入第一题';
+            submitBtnEl.textContent = '创建章节并保存题目';
             statusBoxEl.classList.add('hidden');
             updateChapterDatalist();
         };
@@ -432,6 +483,15 @@
             if (preset.chapter) {
                 chapterFieldEl.value = cleanChapterName(preset.chapter);
             }
+
+            if (preset.mode === 'chapter') {
+                modalTitleEl.textContent = '📝 新建章节并录入第一题';
+                submitBtnEl.textContent = '创建章节并保存题目';
+            } else if (preset.mode === 'topic') {
+                modalTitleEl.textContent = '📝 在本章节新增题目';
+                submitBtnEl.textContent = '保存题目';
+            }
+
             if (!iconFieldEl.value.trim()) {
                 iconFieldEl.value = CATEGORY_META[normalizeCategory(categoryFieldEl.value)].icon;
             }
@@ -443,75 +503,41 @@
             setTimeout(resetModalToSetup, 250);
         };
 
-        const createEmptyCategoryHtml = (categoryKey, canEdit) => {
-            const meta = CATEGORY_META[categoryKey];
-            const toneClasses = {
-                indigo: 'border-indigo-200 bg-white text-indigo-900 bg-indigo-50 text-indigo-600 border-indigo-100',
-                emerald: 'border-emerald-200 bg-white text-emerald-900 bg-emerald-50 text-emerald-600 border-emerald-100',
-                amber: 'border-amber-200 bg-white text-amber-900 bg-amber-50 text-amber-700 border-amber-100'
-            };
-            const classes = toneClasses[meta.emptyTone].split(' ');
-
-            return `
-                <section class="rounded-3xl border ${classes[0]} ${classes[1]} p-8">
-                    <div class="max-w-3xl">
-                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full ${classes[3]} ${classes[4]} border ${classes[5]} text-xs font-semibold mb-4">
-                            ${meta.icon} ${meta.label}
-                        </div>
-                        <h3 class="text-2xl font-bold ${classes[2]} mb-3">这一块现在还是空的</h3>
-                        <p class="text-sm leading-relaxed text-slate-600 mb-5">
-                            你可以先按章节开始搭目录，再往每个章节里补题目。比如下面这些方向都很适合先开坑：
-                        </p>
-                        <div class="flex flex-wrap gap-2 mb-6">
-                            ${meta.emptyIdeas.map((idea) => `<span class="px-3 py-1 rounded-full bg-white border border-slate-200 text-sm text-slate-600">${escapeHtml(idea)}</span>`).join('')}
-                        </div>
-                        ${canEdit ? `
-                            <button class="action-add-in-category-btn px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium transition-colors" data-category="${categoryKey}">
-                                在 ${meta.label} 里录入第一道题
-                            </button>
-                        ` : `
-                            <div class="text-sm text-slate-500">当前只读。先回首页完成管理员认证后，就可以在这里直接新增内容。</div>
-                        `}
-                    </div>
-                </section>
-            `;
+        const closeChapterDetail = () => {
+            chapterDetailModalEl.classList.remove('modal-enter');
         };
 
-        const renderCategory = (categoryKey, cards) => {
+        const openChapterDetail = (categoryKey, chapterName) => {
             const meta = CATEGORY_META[categoryKey];
-            const containerEl = document.getElementById(meta.containerId);
+            const cards = getCardsForChapter(categoryKey, chapterName);
             const canEdit = hasAdminAccess();
-            const grouped = {};
 
-            cards.forEach((item) => {
-                const chapter = cleanChapterName(item.chapter);
-                if (!grouped[chapter]) grouped[chapter] = [];
-                grouped[chapter].push(item);
-            });
+            currentChapterView = { category: categoryKey, chapter: cleanChapterName(chapterName) };
+            chapterDetailBreadcrumbEl.textContent = `${meta.label} / 章节详情`;
+            chapterDetailTitleEl.textContent = cleanChapterName(chapterName);
+            chapterDetailSubtitleEl.textContent = '这里才展示当前章节下的具体题目。';
+            chapterDetailCountBadgeEl.textContent = `${cards.length} 道题`;
+            chapterDetailRoleBadgeEl.textContent = canEdit ? '管理员可编辑' : '当前只读';
+            chapterDetailRoleBadgeEl.className = canEdit
+                ? 'px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm font-semibold'
+                : 'px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-sm font-semibold';
+            chapterDetailAddBtnEl.classList.toggle('hidden', !canEdit);
 
-            const chapterNames = Object.keys(grouped).sort((a, b) => {
-                const aOrder = Math.min(...grouped[a].map((item) => parseSortOrder(item.sort_order)));
-                const bOrder = Math.min(...grouped[b].map((item) => parseSortOrder(item.sort_order)));
-                if (aOrder !== bOrder) return aOrder - bOrder;
-                return a.localeCompare(b, 'zh-CN');
-            });
-
-            document.getElementById(meta.cardCountId).textContent = String(cards.length);
-            document.getElementById(meta.chapterCountId).textContent = String(chapterNames.length);
-
-            if (cards.length === 0) {
-                containerEl.innerHTML = createEmptyCategoryHtml(categoryKey, canEdit);
-                return;
-            }
-
-            containerEl.innerHTML = chapterNames.map((chapterName, chapterIndex) => {
-                const chapterCards = grouped[chapterName].sort((a, b) => {
-                    const orderDiff = parseSortOrder(a.sort_order) - parseSortOrder(b.sort_order);
-                    if (orderDiff !== 0) return orderDiff;
-                    return new Date(a.created_at || 0) - new Date(b.created_at || 0);
-                });
-
-                const cardsHtml = chapterCards.map((card) => {
+            if (!cards.length) {
+                chapterDetailListEl.innerHTML = `
+                    <div class="rounded-3xl border border-slate-200 bg-white p-8 text-center">
+                        <div class="text-5xl mb-4">${meta.icon}</div>
+                        <h4 class="text-xl font-bold text-slate-900 mb-3">这个章节还没有题目</h4>
+                        <p class="text-sm text-slate-500 mb-5">章节已经有了，但里面还没录入任何题目。你可以现在就往这个章节里补第一道题。</p>
+                        ${canEdit ? `
+                            <button class="action-add-to-chapter-btn px-5 py-3 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium transition-colors" data-category="${categoryKey}" data-chapter="${escapeHtml(chapterName)}">
+                                在本章节新增题目
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                chapterDetailListEl.innerHTML = cards.map((card) => {
                     const summaryHtml = card.summary
                         ? `<p class="text-sm text-slate-600 leading-relaxed mb-4">${escapeHtml(card.summary)}</p>`
                         : '';
@@ -541,35 +567,126 @@
                         </article>
                     `;
                 }).join('');
+            }
+
+            chapterDetailModalEl.classList.add('modal-enter');
+        };
+
+        const createEmptyCategoryHtml = (categoryKey, canEdit) => {
+            const meta = CATEGORY_META[categoryKey];
+            const toneClasses = {
+                indigo: 'border-indigo-200 bg-white text-indigo-900 bg-indigo-50 text-indigo-600 border-indigo-100',
+                emerald: 'border-emerald-200 bg-white text-emerald-900 bg-emerald-50 text-emerald-600 border-emerald-100',
+                amber: 'border-amber-200 bg-white text-amber-900 bg-amber-50 text-amber-700 border-amber-100'
+            };
+            const classes = toneClasses[meta.emptyTone].split(' ');
+
+            return `
+                <section class="rounded-3xl border ${classes[0]} ${classes[1]} p-8">
+                    <div class="max-w-3xl">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full ${classes[3]} ${classes[4]} border ${classes[5]} text-xs font-semibold mb-4">
+                            ${meta.icon} ${meta.label}
+                        </div>
+                        <h3 class="text-2xl font-bold ${classes[2]} mb-3">这一块现在还是空的</h3>
+                        <p class="text-sm leading-relaxed text-slate-600 mb-5">
+                            你可以先按章节开始搭目录，再往每个章节里补题目。比如下面这些方向都很适合先开坑：
+                        </p>
+                        <div class="flex flex-wrap gap-2 mb-6">
+                            ${meta.emptyIdeas.map((idea) => `<span class="px-3 py-1 rounded-full bg-white border border-slate-200 text-sm text-slate-600">${escapeHtml(idea)}</span>`).join('')}
+                        </div>
+                        ${canEdit ? `
+                            <button class="action-add-in-category-btn px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium transition-colors" data-category="${categoryKey}">
+                                在 ${meta.label} 里新建章节并录入第一题
+                            </button>
+                        ` : `
+                            <div class="text-sm text-slate-500">当前只读。先回首页完成用户登录，并选择管理员角色后，就可以在这里直接新增内容。</div>
+                        `}
+                    </div>
+                </section>
+            `;
+        };
+
+        const renderCategory = (categoryKey, cards) => {
+            const meta = CATEGORY_META[categoryKey];
+            const containerEl = document.getElementById(meta.containerId);
+            const canEdit = hasAdminAccess();
+            const grouped = {};
+
+            cards.forEach((item) => {
+                const chapter = cleanChapterName(item.chapter);
+                if (!grouped[chapter]) grouped[chapter] = [];
+                grouped[chapter].push(item);
+            });
+
+            const chapterNames = Object.keys(grouped).sort((a, b) => {
+                const aOrder = Math.min(...grouped[a].map((item) => parseSortOrder(item.sort_order)));
+                const bOrder = Math.min(...grouped[b].map((item) => parseSortOrder(item.sort_order)));
+                if (aOrder !== bOrder) return aOrder - bOrder;
+                return a.localeCompare(b, 'zh-CN');
+            });
+
+            document.getElementById(meta.cardCountId).textContent = String(cards.length);
+            document.getElementById(meta.chapterCountId).textContent = String(chapterNames.length);
+
+            if (!cards.length) {
+                containerEl.innerHTML = createEmptyCategoryHtml(categoryKey, canEdit);
+                return;
+            }
+
+            const topActionHtml = canEdit
+                ? `
+                    <div class="flex justify-end">
+                        <button class="action-add-in-category-btn px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium transition-colors" data-category="${categoryKey}">
+                            在 ${meta.label} 里新建章节并录入第一题
+                        </button>
+                    </div>
+                `
+                : '';
+
+            const chaptersHtml = chapterNames.map((chapterName, chapterIndex) => {
+                const chapterCards = getCardsForChapter(categoryKey, chapterName);
+                const lastUpdated = chapterCards.length
+                    ? new Date(chapterCards[chapterCards.length - 1].updated_at || chapterCards[chapterCards.length - 1].created_at || Date.now()).toLocaleDateString('zh-CN')
+                    : '--';
 
                 return `
-                    <section class="rounded-3xl border border-slate-200 bg-white/85 shadow-sm overflow-hidden">
-                        <div class="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-white to-slate-50">
-                            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                                <div>
-                                    <p class="text-[11px] uppercase tracking-[0.24em] text-slate-400 mb-2">Chapter ${String(chapterIndex + 1).padStart(2, '0')}</p>
-                                    <h3 class="text-2xl font-bold text-slate-900">${escapeHtml(chapterName)}</h3>
-                                    <p class="text-sm text-slate-500 mt-2">本章共 ${chapterCards.length} 道题，适合围绕同一主题连续复习。</p>
+                    <article class="chapter-card rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+                            <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-2 mb-3">
+                                    <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 text-[11px] font-semibold tracking-[0.16em] uppercase">Chapter ${String(chapterIndex + 1).padStart(2, '0')}</span>
+                                    <span class="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 text-[11px] font-semibold">${chapterCards.length} 道题</span>
                                 </div>
+                                <h3 class="text-2xl font-bold text-slate-900">${escapeHtml(chapterName)}</h3>
+                                <p class="text-sm text-slate-500 mt-3 leading-relaxed">
+                                    章节页不直接铺题目。点击进入后再查看和维护这一章里的题目内容。
+                                </p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-3 lg:justify-end">
+                                <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                    <p class="text-[11px] uppercase tracking-[0.18em] text-slate-400">Last Update</p>
+                                    <p class="text-sm font-semibold text-slate-700 mt-1">${escapeHtml(lastUpdated)}</p>
+                                </div>
+                                <button class="action-open-chapter-btn px-4 py-2.5 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium transition-colors" data-category="${categoryKey}" data-chapter="${escapeHtml(chapterName)}">
+                                    进入章节
+                                </button>
                                 ${canEdit ? `
-                                    <button class="action-add-to-chapter-btn px-4 py-2.5 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium transition-colors" data-category="${categoryKey}" data-chapter="${escapeHtml(chapterName)}">
-                                        在本章继续补充
+                                    <button class="action-add-to-chapter-btn px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium transition-colors" data-category="${categoryKey}" data-chapter="${escapeHtml(chapterName)}">
+                                        在本章新增题目
                                     </button>
                                 ` : ''}
                             </div>
                         </div>
-                        <div class="p-6 grid grid-cols-1 xl:grid-cols-2 gap-5">
-                            ${cardsHtml}
-                        </div>
-                    </section>
+                    </article>
                 `;
             }).join('');
+
+            containerEl.innerHTML = `${topActionHtml}<div class="space-y-5">${chaptersHtml}</div>`;
         };
 
         const renderAllCategories = () => {
             Object.keys(CATEGORY_META).forEach((categoryKey) => {
-                const cards = currentCloudCards.filter((item) => normalizeCategory(item.category) === categoryKey);
-                renderCategory(categoryKey, cards);
+                renderCategory(categoryKey, getCardsForCategory(categoryKey));
             });
         };
 
@@ -578,13 +695,16 @@
 
             openModalBtnDesktop.classList.toggle('opacity-70', !authed);
             openModalBtnMobile.classList.toggle('opacity-70', !authed);
-            openModalBtnLabelEl.textContent = authed ? '补充面试题 / 面经' : '管理员认证后可编辑';
-            openModalBtnMobile.textContent = authed ? '新增题目' : '需认证';
+            openModalBtnLabelEl.textContent = authed ? '新建章节 / 录入题目' : '管理员登录后可编辑';
+            openModalBtnMobile.textContent = authed ? '新建章节' : '需认证';
             authModeTextEl.textContent = authed
-                ? '管理员已认证，你现在可以新增、编辑和删除这 3 个模块里的八股内容。'
-                : '当前为只读模式，请先回首页右上角完成管理员认证。';
+                ? '管理员角色已登录，你现在可以新增、编辑和删除这 3 个模块里的章节题目。'
+                : '当前为只读模式，请先回首页右上角完成用户登录，并选择管理员角色。';
 
             renderAllCategories();
+            if (currentChapterView) {
+                openChapterDetail(currentChapterView.category, currentChapterView.chapter);
+            }
         };
 
         const fetchNotesFromCloud = async () => {
@@ -601,6 +721,9 @@
                 currentCloudCards = Array.isArray(data) ? data : [];
                 updateChapterDatalist();
                 renderAllCategories();
+                if (currentChapterView) {
+                    openChapterDetail(currentChapterView.category, currentChapterView.chapter);
+                }
                 setStorageStatus(currentCloudCards.length ? '已加载云端题库' : '云端为空，等待首次录入', currentCloudCards.length ? 'success' : 'info');
             } catch (error) {
                 console.error('加载面试八股失败:', error);
@@ -620,19 +743,34 @@
         openModalBtnDesktop.addEventListener('click', () => {
             if (!ensureAdminAccess()) return;
             resetModalToSetup();
-            openModal();
+            openModal({ mode: 'chapter' });
         });
 
         openModalBtnMobile.addEventListener('click', () => {
             if (!ensureAdminAccess()) return;
             resetModalToSetup();
-            openModal();
+            openModal({ mode: 'chapter' });
         });
 
         document.getElementById('close-modal-btn').addEventListener('click', closeModal);
         document.getElementById('cancel-modal-btn').addEventListener('click', closeModal);
         modalEl.addEventListener('click', (event) => {
             if (event.target === modalEl) closeModal();
+        });
+
+        document.getElementById('close-chapter-detail-btn').addEventListener('click', closeChapterDetail);
+        chapterDetailModalEl.addEventListener('click', (event) => {
+            if (event.target === chapterDetailModalEl) closeChapterDetail();
+        });
+
+        chapterDetailAddBtnEl.addEventListener('click', () => {
+            if (!currentChapterView || !ensureAdminAccess()) return;
+            resetModalToSetup();
+            openModal({
+                mode: 'topic',
+                category: currentChapterView.category,
+                chapter: currentChapterView.chapter
+            });
         });
 
         categoryFieldEl.addEventListener('change', () => {
@@ -642,12 +780,18 @@
             }
         });
 
-        document.getElementById('main-content-container').addEventListener('click', async (event) => {
+        const handleTopicActionClick = async (event) => {
             const addInCategoryBtn = event.target.closest('.action-add-in-category-btn');
             if (addInCategoryBtn) {
                 if (!ensureAdminAccess()) return;
                 resetModalToSetup();
-                openModal({ category: addInCategoryBtn.dataset.category });
+                openModal({ mode: 'chapter', category: addInCategoryBtn.dataset.category });
+                return;
+            }
+
+            const openChapterBtn = event.target.closest('.action-open-chapter-btn');
+            if (openChapterBtn) {
+                openChapterDetail(openChapterBtn.dataset.category, openChapterBtn.dataset.chapter);
                 return;
             }
 
@@ -656,6 +800,7 @@
                 if (!ensureAdminAccess()) return;
                 resetModalToSetup();
                 openModal({
+                    mode: 'topic',
                     category: addToChapterBtn.dataset.category,
                     chapter: addToChapterBtn.dataset.chapter
                 });
@@ -664,7 +809,7 @@
 
             const deleteBtn = event.target.closest('.action-delete-btn');
             if (deleteBtn) {
-                if (!ensureAdminAccess('请先回首页完成管理员认证，再删除面试八股内容。')) return;
+                if (!ensureAdminAccess('请先回首页完成用户登录，并选择管理员角色后再删除面试八股内容。')) return;
                 const id = deleteBtn.dataset.id;
                 if (!confirm('确定要删除这道题吗？')) return;
 
@@ -685,13 +830,13 @@
 
             const editBtn = event.target.closest('.action-edit-btn');
             if (editBtn) {
-                if (!ensureAdminAccess('请先回首页完成管理员认证，再编辑面试八股内容。')) return;
+                if (!ensureAdminAccess('请先回首页完成用户登录，并选择管理员角色后再编辑面试八股内容。')) return;
                 const id = editBtn.dataset.id;
                 const targetCard = currentCloudCards.find((item) => String(item.id) === String(id));
                 if (!targetCard) return;
 
                 editingCardId = id;
-                modalTitleEl.textContent = '✏️ 编辑八股题目';
+                modalTitleEl.textContent = '✏️ 编辑题目';
                 submitBtnEl.textContent = '保存修改';
                 categoryFieldEl.value = normalizeCategory(targetCard.category);
                 updateChapterDatalist();
@@ -704,11 +849,14 @@
                 statusBoxEl.classList.add('hidden');
                 modalEl.classList.add('modal-enter');
             }
-        });
+        };
+
+        document.getElementById('main-content-container').addEventListener('click', handleTopicActionClick);
+        chapterDetailListEl.addEventListener('click', handleTopicActionClick);
 
         formEl.addEventListener('submit', async (event) => {
             event.preventDefault();
-            if (!ensureAdminAccess('请先回首页完成管理员认证，再提交八股内容。')) return;
+            if (!ensureAdminAccess('请先回首页完成用户登录，并选择管理员角色后再提交八股内容。')) return;
 
             const category = normalizeCategory(categoryFieldEl.value);
             const chapter = cleanChapterName(chapterFieldEl.value);
@@ -750,16 +898,17 @@
 
                 setTimeout(() => {
                     closeModal();
-                    setStorageStatus(editingCardId ? '内容已更新到云端' : '新增内容已同步到云端', 'success');
+                    openChapterDetail(category, chapter);
+                    setStorageStatus(editingCardId ? '内容已更新到云端' : '章节内容已同步到云端', 'success');
                     submitBtnEl.disabled = false;
-                    submitBtnEl.textContent = editingCardId ? '保存修改' : '发布内容';
+                    submitBtnEl.textContent = editingCardId ? '保存修改' : '创建章节并保存题目';
                 }, 700);
             } catch (error) {
                 console.error('提交失败:', error);
                 showFormStatus('操作失败，请检查新表字段或 RLS 配置', true);
                 setStorageStatus('写入失败，请检查权限配置', 'error');
                 submitBtnEl.disabled = false;
-                submitBtnEl.textContent = editingCardId ? '保存修改' : '发布内容';
+                submitBtnEl.textContent = editingCardId ? '保存修改' : '创建章节并保存题目';
             }
         });
 
