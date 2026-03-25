@@ -6,6 +6,7 @@
     <title>C++多线程现代开发指南 | 交互式知识舱</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../admin_auth.js"></script>
     
     <style>
         body { background-color: #faf9f6; color: #292524; }
@@ -120,8 +121,9 @@
         <!-- 底部全局添加按钮 -->
         <div class="p-4 border-t border-stone-100 mt-auto bg-stone-50/50 hidden md:block">
             <button id="open-modal-btn" class="w-full bg-white border border-stone-200 hover:border-blue-300 hover:text-blue-600 text-stone-600 text-sm font-bold py-2.5 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
-                <span>➕</span> 补充新章节/卡片
+                <span>➕</span> <span id="open-modal-btn-label">补充新章节/卡片</span>
             </button>
+            <p id="admin-edit-hint" class="text-xs text-stone-400 mt-3 leading-relaxed">当前为只读模式，请先回首页右上角完成管理员认证。</p>
         </div>
     </nav>
 
@@ -563,6 +565,13 @@ int main() {
         const modalTitleEl = document.getElementById('modal-title');
         const submitBtnEl = document.getElementById('submit-btn');
         const formEl = document.getElementById('add-card-form');
+        const adminEditHintEl = document.getElementById('admin-edit-hint');
+        const openModalBtnLabelEl = document.getElementById('open-modal-btn-label');
+        const openModalBtnDesktop = document.getElementById('open-modal-btn');
+        const openModalBtnMobile = document.getElementById('open-modal-btn-mobile');
+
+        const hasAdminAccess = () => window.LCQAdminAuth.isAuthenticated();
+        const ensureAdminAccess = (message) => window.LCQAdminAuth.requireAuth(message || '请先回首页右上角完成管理员认证，再修改 C++ 模块内容。');
 
         const resetModalToSetup = () => {
             editingCardId = null;
@@ -578,8 +587,29 @@ int main() {
             setTimeout(resetModalToSetup, 300);
         };
 
-        document.getElementById('open-modal-btn').addEventListener('click', () => { resetModalToSetup(); openModalFn(); });
-        document.getElementById('open-modal-btn-mobile').addEventListener('click', () => { resetModalToSetup(); openModalFn(); });
+        const applyAdminEditUI = () => {
+            const authed = hasAdminAccess();
+
+            openModalBtnDesktop.classList.toggle('opacity-60', !authed);
+            openModalBtnMobile.classList.toggle('opacity-60', !authed);
+            openModalBtnLabelEl.textContent = authed ? '补充新章节/卡片' : '管理员认证后可编辑';
+            adminEditHintEl.textContent = authed
+                ? '管理员已认证，你现在可以新增、编辑和删除 C++ 模块里的云端补充卡片。'
+                : '当前为只读模式，请先回首页右上角完成管理员认证。';
+
+            renderDynamicChapters(currentCloudCards);
+        };
+
+        document.getElementById('open-modal-btn').addEventListener('click', () => {
+            if (!ensureAdminAccess()) return;
+            resetModalToSetup();
+            openModalFn();
+        });
+        document.getElementById('open-modal-btn-mobile').addEventListener('click', () => {
+            if (!ensureAdminAccess()) return;
+            resetModalToSetup();
+            openModalFn();
+        });
         document.getElementById('close-modal-btn').addEventListener('click', closeModalFn);
 
         window.showFormStatus = (msg, isError = false) => {
@@ -596,6 +626,7 @@ int main() {
             const mainContainer = document.querySelector('#main-content-container > div');
             const navMenu = document.getElementById('nav-menu-container');
             const datalistEl = document.getElementById('chapter-datalist');
+            const canEdit = hasAdminAccess();
 
             // 清理旧节点
             document.querySelectorAll('.dyn-chapter-nav').forEach(el => el.remove());
@@ -641,10 +672,10 @@ int main() {
                 chaptersMap[chapterName].forEach(card => {
                     cardsHtml += `
                         <div class="bg-white border border-stone-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all relative group/card">
-                            <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover/card:opacity-100 transition-opacity z-10">
+                            ${canEdit ? `<div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover/card:opacity-100 transition-opacity z-10">
                                 <button class="action-edit-btn p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 shadow-sm transition-colors" data-id="${card.id}" title="编辑这篇笔记">✏️</button>
                                 <button class="action-delete-btn p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 shadow-sm transition-colors" data-id="${card.id}" title="永久删除">🗑️</button>
-                            </div>
+                            </div>` : ''}
                             <div class="flex items-center gap-3 mb-4 pr-20">
                                 <div class="text-3xl">${card.icon}</div>
                                 <h3 class="text-xl font-bold text-stone-800">${card.title}</h3>
@@ -663,9 +694,10 @@ int main() {
                     <div class="grid grid-cols-1 gap-6 mb-6">
                         ${cardsHtml}
                     </div>
+                    ${canEdit ? `
                     <button class="action-add-to-chapter-btn w-full py-4 border-2 border-dashed border-stone-300 hover:border-blue-400 hover:bg-blue-50/50 rounded-xl text-stone-500 hover:text-blue-600 transition-all font-medium flex justify-center items-center gap-2" data-chapter="${chapterName}">
                         <span>➕</span> 在此章节继续补充卡片
-                    </button>
+                    </button>` : ''}
                 `;
                 mainContainer.appendChild(sectionHtml);
                 
@@ -689,6 +721,7 @@ int main() {
             // 捕获在本章添加
             const addBtn = e.target.closest('.action-add-to-chapter-btn');
             if (addBtn) {
+                if (!ensureAdminAccess()) return;
                 const chapter = addBtn.getAttribute('data-chapter');
                 resetModalToSetup();
                 document.getElementById('card-chapter').value = chapter;
@@ -699,6 +732,7 @@ int main() {
             // 捕获删除
             const deleteBtn = e.target.closest('.action-delete-btn');
             if (deleteBtn) {
+                if (!ensureAdminAccess()) return;
                 const id = deleteBtn.getAttribute('data-id');
                 if (confirm('🚨 确定要永久删除这张知识卡片吗？')) {
                     const originalHtml = deleteBtn.innerHTML;
@@ -718,6 +752,7 @@ int main() {
             // 捕获编辑
             const editBtn = e.target.closest('.action-edit-btn');
             if (editBtn) {
+                if (!ensureAdminAccess()) return;
                 const id = editBtn.getAttribute('data-id');
                 const targetCard = currentCloudCards.find(c => c.id == id);
                 if (targetCard) {
@@ -738,6 +773,7 @@ int main() {
         // 提交表单（智能识别：新建 还是 修改，并清洗章节名）
         formEl.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!ensureAdminAccess()) return;
             
             const rawChapter = document.getElementById('card-chapter').value.trim();
             // 核心改动 3：自动清洗用户手打的多余前缀编号，比如把 "4. 读写锁" 清洗成 "读写锁"
@@ -785,6 +821,8 @@ int main() {
                 submitBtnEl.innerHTML = editingCardId ? '保存修改' : '发布内容';
             }
         });
+        window.addEventListener('lcq-admin-auth-changed', applyAdminEditUI);
+        applyAdminEditUI();
     </script>
 </body>
 </html>

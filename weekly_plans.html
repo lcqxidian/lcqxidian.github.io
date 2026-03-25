@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weekly Plans | LCQ.Space</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="admin_auth.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { background-color: #faf9f6; color: #292524; }
@@ -109,6 +110,7 @@
                     <div>
                         <p class="text-[11px] uppercase tracking-[0.22em] text-stone-400 mb-1">Storage</p>
                         <p id="save-status" class="text-sm font-semibold text-teal-700">正在连接云端...</p>
+                        <p id="auth-mode-text" class="text-xs text-stone-500 mt-1">当前为只读模式，请先回首页右上角完成管理员认证。</p>
                     </div>
                     <button id="clear-all-btn" class="px-3 py-2 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors">
                         清空全部
@@ -350,10 +352,14 @@
         const clearAllBtn = document.getElementById('clear-all-btn');
         const navItems = Array.from(document.querySelectorAll('.nav-item'));
         const sections = Array.from(document.querySelectorAll('.section-view'));
+        const authModeText = document.getElementById('auth-mode-text');
         let currentWeekKey = '';
         let currentRecord = null;
         let isHydrating = true;
         let saveTimer = null;
+
+        const hasAdminAccess = () => window.LCQAdminAuth.isAuthenticated();
+        const ensureAdminAccess = (message) => window.LCQAdminAuth.requireAuth(message || '请先回首页右上角完成管理员认证，再修改 Weekly Plans。');
 
         const updateSaveStatus = (text) => {
             saveStatus.textContent = text;
@@ -416,7 +422,26 @@
             clearAllBtn.classList.toggle('cursor-not-allowed', disabled);
         };
 
+        const applyAdminEditState = () => {
+            const authed = hasAdminAccess();
+            const shouldDisable = isHydrating || !authed;
+
+            setFieldsDisabled(shouldDisable);
+            authModeText.textContent = authed
+                ? '管理员已认证，可编辑并同步 Weekly Plans 到云端。'
+                : '当前为只读模式，请先回首页右上角完成管理员认证。';
+
+            if (!isHydrating && !authed) {
+                updateSaveStatus('只读模式');
+            }
+        };
+
         const saveToCloud = async () => {
+            if (!ensureAdminAccess()) {
+                updateSaveStatus('只读模式');
+                return;
+            }
+
             const content = collectFormData();
             const title = content.overview_title || '';
 
@@ -447,6 +472,10 @@
 
         const queueSave = () => {
             if (isHydrating) return;
+            if (!hasAdminAccess()) {
+                updateSaveStatus('只读模式');
+                return;
+            }
             updateSaveStatus('等待同步...');
             clearTimeout(saveTimer);
             saveTimer = setTimeout(() => {
@@ -468,16 +497,16 @@
                 console.error('读取 weekly plans 失败:', error);
                 fillFields({});
                 updateSaveStatus('云端读取失败');
-                setFieldsDisabled(false);
                 isHydrating = false;
+                applyAdminEditState();
                 return;
             }
 
             currentRecord = data;
             fillFields(data?.content || {});
             updateSaveStatus(data ? '已加载云端内容' : '新的一周，等待首次保存');
-            setFieldsDisabled(false);
             isHydrating = false;
+            applyAdminEditState();
         };
 
         fields.forEach((field) => {
@@ -486,6 +515,7 @@
 
         clearAllBtn.addEventListener('click', async () => {
             if (isHydrating) return;
+            if (!ensureAdminAccess()) return;
             fields.forEach((field) => {
                 field.value = '';
             });
@@ -505,6 +535,7 @@
 
         currentWeekKey = getWeekKey();
         weekRange.textContent = getWeekLabel();
+        window.addEventListener('lcq-admin-auth-changed', applyAdminEditState);
         loadFromCloud();
     </script>
 </body>

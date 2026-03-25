@@ -5,37 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>硬核面试八股文 | 交互式知识舱</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
+    <script src="../admin_auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background-color: #faf9f6; color: #312e81; } /* 靛蓝调深色 */
-        
-        .code-block {
-            background-color: #1e1b4b; 
-            color: #e0e7ff;
-            font-family: monospace;
-            border-radius: 0.5rem;
-            padding: 1.25rem;
-            overflow-x: auto;
-            font-size: 0.875rem;
-            line-height: 1.5;
-        }
-
-        .tab-btn {
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s ease;
-        }
-        
-        .tab-btn.active {
-            border-bottom-color: #6366f1; 
-            color: #4f46e5;
-            font-weight: 600;
-        }
+        body { background-color: #f6f3ee; color: #312e81; }
 
         .nav-item {
             transition: all 0.2s ease;
             border-left: 3px solid transparent;
         }
-        
+
         .nav-item.active {
             background-color: #eef2ff;
             border-left-color: #6366f1;
@@ -43,389 +22,752 @@
             font-weight: 600;
         }
 
-        .cmd-card {
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-        
-        .cmd-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.1);
-            border-color: #a5b4fc;
-        }
-        
-        .cmd-card.active {
-            background-color: #e0e7ff;
-            border-color: #6366f1;
+        .section-view {
+            display: none;
+            animation: fadeIn 0.35s ease-out;
         }
 
-        .section-view { display: none; animation: fadeIn 0.4s ease-out; }
-        .section-view.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .section-view.active {
+            display: block;
+        }
+
+        .topic-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .topic-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 35px -28px rgba(79, 70, 229, 0.5);
+            border-color: #c7d2fe;
+        }
+
+        .editor-field {
+            width: 100%;
+            border: 1px solid #c7d2fe;
+            border-radius: 0.9rem;
+            background: #f8faff;
+            color: #312e81;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        }
+
+        .editor-field:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+            background: #ffffff;
+        }
+
+        .modal-enter {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            z-index: 9999 !important;
+            visibility: visible !important;
+        }
+
+        .modal-enter .modal-content {
+            transform: scale(1) !important;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 999px; }
         ::-webkit-scrollbar-thumb:hover { background: #a5b4fc; }
-
-        .modal-enter { opacity: 1 !important; pointer-events: auto !important; z-index: 9999 !important; visibility: visible !important; }
-        .modal-enter .modal-content { transform: scale(1) !important; }
     </style>
 </head>
 <body class="h-screen flex flex-col md:flex-row overflow-hidden font-sans">
 
-    <!-- 左侧导航栏 -->
-    <nav class="w-full md:w-64 bg-white border-r border-indigo-100 flex-shrink-0 flex flex-col h-auto md:h-full z-10 shadow-sm relative">
+    <nav class="w-full md:w-72 bg-white border-r border-indigo-100 flex-shrink-0 flex flex-col h-auto md:h-full z-10 shadow-sm relative">
         <div class="p-6 border-b border-indigo-50">
-            <h1 class="text-xl font-bold text-indigo-900 tracking-tight flex items-center gap-2">
-                <span class="text-2xl">🚀</span> 面试核心八股
-            </h1>
-            <p class="text-xs text-indigo-500 mt-2 leading-relaxed">涵盖操作系统、计算机网络、数据库等底层原理与高频真题。</p>
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <h1 class="text-xl font-bold text-indigo-950 tracking-tight flex items-center gap-2">
+                        <span class="text-2xl">🚀</span> 面试八股作战图
+                    </h1>
+                    <p class="text-xs text-indigo-500 mt-2 leading-relaxed">
+                        现在拆成 3 个主战区：C++ 八股、Linux 八股、单片机八股。每个战区都支持你继续补充题目并同步到 Supabase。
+                    </p>
+                </div>
+                <a href="../index.html" class="shrink-0 p-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-500 hover:text-indigo-800 transition-colors" title="返回主页">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                </a>
+            </div>
         </div>
-        
+
         <div id="nav-menu-container" class="flex-1 overflow-y-auto py-4 flex md:flex-col flex-row overflow-x-auto">
-            <!-- 静态内容已清空，动态生成的章节会插入到这里 -->
+            <button class="nav-item active text-left px-6 py-3 text-sm text-indigo-700 hover:bg-indigo-50 whitespace-nowrap md:whitespace-normal" data-target="sec-cpp">
+                1. C++ 八股
+            </button>
+            <button class="nav-item text-left px-6 py-3 text-sm text-indigo-700 hover:bg-indigo-50 whitespace-nowrap md:whitespace-normal" data-target="sec-linux">
+                2. Linux 八股
+            </button>
+            <button class="nav-item text-left px-6 py-3 text-sm text-indigo-700 hover:bg-indigo-50 whitespace-nowrap md:whitespace-normal" data-target="sec-mcu">
+                3. 单片机八股
+            </button>
         </div>
 
         <div class="p-4 border-t border-indigo-50 mt-auto bg-indigo-50/50 hidden md:block">
+            <div class="rounded-2xl border border-indigo-100 bg-white px-4 py-4 mb-3">
+                <p class="text-[11px] uppercase tracking-[0.22em] text-indigo-400 mb-1">Storage</p>
+                <p id="storage-status" class="text-sm font-semibold text-indigo-700">正在连接云端...</p>
+                <p id="auth-mode-text" class="text-xs text-indigo-500 mt-2 leading-relaxed">当前为只读模式，请先回首页右上角完成管理员认证。</p>
+            </div>
             <button id="open-modal-btn" class="w-full bg-white border border-indigo-200 hover:border-indigo-400 hover:text-indigo-600 text-indigo-700 text-sm font-bold py-2.5 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
-                <span>➕</span> 补充面经或卡片
+                <span>➕</span> <span id="open-modal-btn-label">管理员认证后可编辑</span>
             </button>
         </div>
     </nav>
 
-    <button id="open-modal-btn-mobile" class="md:hidden fixed bottom-4 right-4 z-40 bg-indigo-600 text-white w-12 h-12 rounded-full shadow-xl flex items-center justify-center text-2xl">
-        +
+    <button id="open-modal-btn-mobile" class="md:hidden fixed bottom-4 right-4 z-40 bg-indigo-600 text-white min-w-12 h-12 px-4 rounded-full shadow-xl flex items-center justify-center text-sm font-semibold opacity-70">
+        补充
     </button>
 
-    <!-- 右侧内容区 -->
-    <main id="main-content-container" class="flex-1 overflow-y-auto relative scroll-smooth bg-[#faf9f6]">
-        <div class="max-w-5xl mx-auto p-6 md:p-12">
-            <!-- 静态内容已清空，章节内容将全部由云端动态生成 -->
+    <main id="main-content-container" class="flex-1 overflow-y-auto relative scroll-smooth bg-[#f6f3ee]">
+        <div class="max-w-6xl mx-auto p-6 md:p-12 space-y-10">
+            <section id="sec-cpp" class="section-view active">
+                <div class="rounded-[28px] border border-indigo-200 bg-gradient-to-br from-indigo-950 via-indigo-900 to-blue-900 p-8 md:p-10 text-white shadow-xl shadow-indigo-950/10">
+                    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+                        <div class="max-w-3xl">
+                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[11px] tracking-[0.22em] uppercase text-indigo-100 mb-4">C++ Stack</div>
+                            <h2 class="text-3xl md:text-4xl font-extrabold mb-4">1. C++ 八股</h2>
+                            <p class="text-indigo-100/85 leading-relaxed text-base md:text-lg">
+                                聚焦对象模型、内存管理、STL、智能指针、左值右值、模板、多态与并发基础。适合把“为什么这样设计”讲顺，而不是只背概念名词。
+                            </p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 min-w-[220px]">
+                            <div class="rounded-2xl bg-white/10 border border-white/10 px-4 py-4">
+                                <p class="text-xs text-indigo-100/70">题目数</p>
+                                <p id="count-cpp-cards" class="text-2xl font-bold mt-1">0</p>
+                            </div>
+                            <div class="rounded-2xl bg-white/10 border border-white/10 px-4 py-4">
+                                <p class="text-xs text-indigo-100/70">章节数</p>
+                                <p id="count-cpp-chapters" class="text-2xl font-bold mt-1">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="category-container-cpp" class="mt-6 space-y-6"></div>
+            </section>
+
+            <section id="sec-linux" class="section-view">
+                <div class="rounded-[28px] border border-emerald-200 bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-900 p-8 md:p-10 text-white shadow-xl shadow-emerald-950/10">
+                    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+                        <div class="max-w-3xl">
+                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[11px] tracking-[0.22em] uppercase text-emerald-100 mb-4">Linux Core</div>
+                            <h2 class="text-3xl md:text-4xl font-extrabold mb-4">2. Linux 八股</h2>
+                            <p class="text-emerald-100/85 leading-relaxed text-base md:text-lg">
+                                适合整理进程线程、调度、文件系统、网络命令、内存管理、常用排障命令这些“既能答题又能上手干活”的知识点。
+                            </p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 min-w-[220px]">
+                            <div class="rounded-2xl bg-white/10 border border-white/10 px-4 py-4">
+                                <p class="text-xs text-emerald-100/70">题目数</p>
+                                <p id="count-linux-cards" class="text-2xl font-bold mt-1">0</p>
+                            </div>
+                            <div class="rounded-2xl bg-white/10 border border-white/10 px-4 py-4">
+                                <p class="text-xs text-emerald-100/70">章节数</p>
+                                <p id="count-linux-chapters" class="text-2xl font-bold mt-1">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="category-container-linux" class="mt-6 space-y-6"></div>
+            </section>
+
+            <section id="sec-mcu" class="section-view">
+                <div class="rounded-[28px] border border-amber-200 bg-gradient-to-br from-amber-950 via-orange-900 to-rose-900 p-8 md:p-10 text-white shadow-xl shadow-amber-950/10">
+                    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+                        <div class="max-w-3xl">
+                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[11px] tracking-[0.22em] uppercase text-amber-100 mb-4">MCU Notes</div>
+                            <h2 class="text-3xl md:text-4xl font-extrabold mb-4">3. 单片机八股</h2>
+                            <p class="text-amber-100/85 leading-relaxed text-base md:text-lg">
+                                用来收拢 STM32、外设、中断、寄存器、串口/I2C/SPI、定时器、ADC/PWM 这些内容，让“原理 + 实战经验”能一起讲出来。
+                            </p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 min-w-[220px]">
+                            <div class="rounded-2xl bg-white/10 border border-white/10 px-4 py-4">
+                                <p class="text-xs text-amber-100/70">题目数</p>
+                                <p id="count-mcu-cards" class="text-2xl font-bold mt-1">0</p>
+                            </div>
+                            <div class="rounded-2xl bg-white/10 border border-white/10 px-4 py-4">
+                                <p class="text-xs text-amber-100/70">章节数</p>
+                                <p id="count-mcu-chapters" class="text-2xl font-bold mt-1">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="category-container-mcu" class="mt-6 space-y-6"></div>
+            </section>
         </div>
     </main>
 
-    <!-- 补充卡片弹窗 (Modal) -->
     <div id="add-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-indigo-950/70 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
-        <div class="modal-content bg-white border border-indigo-100 rounded-2xl w-full max-w-lg mx-4 shadow-2xl transform scale-95 transition-all duration-300">
+        <div class="modal-content bg-white border border-indigo-100 rounded-3xl w-full max-w-2xl mx-4 shadow-2xl transform scale-95 transition-all duration-300 overflow-hidden">
             <div class="p-6 border-b border-indigo-50 flex justify-between items-center">
-                <h3 id="modal-title" class="text-xl font-bold text-indigo-900">📝 补充面经或卡片</h3>
+                <div>
+                    <h3 id="modal-title" class="text-xl font-bold text-indigo-950">📝 补充八股题目</h3>
+                    <p class="text-sm text-indigo-500 mt-1">按分类、章节和题目来组织，后续页面会自动分组展示。</p>
+                </div>
                 <button id="close-modal-btn" class="text-indigo-400 hover:text-indigo-700 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
                 </button>
             </div>
-            
+
             <form id="add-card-form" class="p-6 space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-indigo-800 mb-1">所属章节名 (选择已有或新建)</label>
-                    <input type="text" id="card-chapter" list="chapter-datalist" required autocomplete="off" class="w-full bg-indigo-50/50 border border-indigo-200 rounded-lg px-4 py-2.5 text-indigo-900 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors" placeholder="例如：4. Redis 缓存">
-                    <datalist id="chapter-datalist"></datalist>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-indigo-800 mb-1">考点 / 面试题</label>
-                    <input type="text" id="card-title" required autocomplete="off" class="w-full bg-indigo-50/50 border border-indigo-200 rounded-lg px-4 py-2.5 text-indigo-900 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors" placeholder="例如：缓存击穿与雪崩的区别">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-indigo-800 mb-1">标准答案 / 核心要点</label>
-                    <textarea id="card-content" required rows="4" class="w-full bg-indigo-50/50 border border-indigo-200 rounded-lg px-4 py-2.5 text-indigo-900 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors resize-none text-sm" placeholder="写入你的总结..."></textarea>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-indigo-800 mb-1">图标 (Emoji)</label>
-                        <input type="text" id="card-icon" required class="w-full bg-indigo-50/50 border border-indigo-200 rounded-lg px-4 py-2.5 text-indigo-900 text-center text-xl focus:border-indigo-500" value="💡">
+                        <label class="block text-sm font-medium text-indigo-900 mb-2">所属大块</label>
+                        <select id="card-category" class="editor-field px-4 py-3 text-sm">
+                            <option value="cpp">C++ 八股</option>
+                            <option value="linux">Linux 八股</option>
+                            <option value="mcu">单片机八股</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-indigo-900 mb-2">章节名</label>
+                        <input type="text" id="card-chapter" list="chapter-datalist" required autocomplete="off" class="editor-field px-4 py-3 text-sm" placeholder="例如：智能指针 / 文件系统 / STM32 定时器">
+                        <datalist id="chapter-datalist"></datalist>
                     </div>
                 </div>
-                
-                <div id="form-status" class="hidden text-sm py-2 px-3 rounded"></div>
 
-                <div class="flex justify-end pt-2">
-                    <button type="submit" id="submit-btn" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-md transition-all">发布内容</button>
+                <div class="grid grid-cols-1 md:grid-cols-[1fr_110px] gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-indigo-900 mb-2">题目标题</label>
+                        <input type="text" id="card-title" required autocomplete="off" class="editor-field px-4 py-3 text-sm" placeholder="例如：shared_ptr 为什么会有循环引用问题？">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-indigo-900 mb-2">图标</label>
+                        <input type="text" id="card-icon" class="editor-field px-4 py-3 text-center text-xl" value="📌">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-indigo-900 mb-2">一句话摘要</label>
+                    <textarea id="card-summary" rows="2" class="editor-field px-4 py-3 text-sm resize-none" placeholder="可选。适合写 1~2 句核心结论，展示时会放在内容上方。"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-indigo-900 mb-2">标准答案 / 你的总结</label>
+                    <textarea id="card-content" required rows="7" class="editor-field px-4 py-3 text-sm resize-none" placeholder="这里写完整内容，支持换行。建议按“定义 -> 为什么 -> 场景 -> 易错点”来整理。"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-[160px_1fr] gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-indigo-900 mb-2">排序值</label>
+                        <input type="number" id="card-sort-order" class="editor-field px-4 py-3 text-sm" value="100" placeholder="数字越小越靠前">
+                    </div>
+                    <div class="rounded-2xl border border-indigo-100 bg-indigo-50/60 px-4 py-3 text-sm text-indigo-700">
+                        同一章节内会先按排序值从小到大展示，再按创建时间排序。默认填 `100` 就可以，后面想手动调顺序再改。
+                    </div>
+                </div>
+
+                <div id="form-status" class="hidden text-sm py-2 px-3 rounded-xl"></div>
+
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" id="cancel-modal-btn" class="px-5 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium rounded-xl transition-colors">取消</button>
+                    <button type="submit" id="submit-btn" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-md transition-all">发布内容</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- UI 脚本 -->
     <script>
-        // 导航切换
-        const navContainer = document.getElementById('nav-menu-container');
-        navContainer.addEventListener('click', (e) => {
-            const item = e.target.closest('.nav-item');
-            if (!item) return;
-            navContainer.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-            item.classList.add('active');
-            const targetId = item.getAttribute('data-target');
-            document.querySelectorAll('.section-view').forEach(sec => {
-                if (sec.id === targetId) sec.classList.add('active');
-                else sec.classList.remove('active');
-            });
-        });
-
-        // 标签切换
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const parent = btn.closest('.bg-white');
-                parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                const target = btn.getAttribute('data-tab');
-                parent.querySelectorAll('.tab-content').forEach(content => {
-                    if (content.id === target) { content.classList.remove('hidden'); content.classList.add('block'); }
-                    else { content.classList.remove('block'); content.classList.add('hidden'); }
-                });
-            });
-        });
-
-        // 卡片切换
-        const cmdCards = document.querySelectorAll('.cmd-card');
-        const detailContents = document.querySelectorAll('.detail-content');
-        cmdCards.forEach(card => {
-            card.addEventListener('click', () => {
-                cmdCards.forEach(c => c.classList.remove('active'));
-                card.classList.add('active');
-                const target = card.getAttribute('data-detail');
-                detailContents.forEach(detail => {
-                    if (detail.id === target) { detail.classList.remove('hidden'); detail.classList.add('block'); }
-                    else { detail.classList.remove('block'); detail.classList.add('hidden'); }
-                });
-            });
-        });
-    </script>
-
-    <!-- Supabase 逻辑 (连接到新的 interview_notes 表) -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        let editingCardId = null;
-        let currentCloudCards = [];
-
-        const modalEl = document.getElementById('add-modal');
-        const statusBoxEl = document.getElementById('form-status');
-        const modalTitleEl = document.getElementById('modal-title');
-        const submitBtnEl = document.getElementById('submit-btn');
-        const formEl = document.getElementById('add-card-form');
-
-        const resetModalToSetup = () => {
-            editingCardId = null;
-            formEl.reset();
-            modalTitleEl.innerHTML = '📝 补充面经或卡片';
-            submitBtnEl.textContent = '发布内容';
-            statusBoxEl.classList.add('hidden');
-        };
-
-        const openModalFn = () => modalEl.classList.add('modal-enter');
-        const closeModalFn = () => {
-            modalEl.classList.remove('modal-enter');
-            setTimeout(resetModalToSetup, 300);
-        };
-
-        document.getElementById('open-modal-btn').addEventListener('click', () => { resetModalToSetup(); openModalFn(); });
-        document.getElementById('open-modal-btn-mobile').addEventListener('click', () => { resetModalToSetup(); openModalFn(); });
-        document.getElementById('close-modal-btn').addEventListener('click', closeModalFn);
-
-        window.showFormStatus = (msg, isError = false) => {
-            statusBoxEl.textContent = msg;
-            statusBoxEl.className = `text-sm py-2 px-3 rounded mt-2 ${isError ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'}`;
-            statusBoxEl.classList.remove('hidden');
+        const CATEGORY_META = {
+            cpp: {
+                label: 'C++ 八股',
+                icon: '💻',
+                sectionId: 'sec-cpp',
+                containerId: 'category-container-cpp',
+                cardCountId: 'count-cpp-cards',
+                chapterCountId: 'count-cpp-chapters',
+                emptyTone: 'indigo',
+                emptyIdeas: ['对象模型', 'STL 容器', '智能指针', '左值右值', '多态与虚函数']
+            },
+            linux: {
+                label: 'Linux 八股',
+                icon: '🐧',
+                sectionId: 'sec-linux',
+                containerId: 'category-container-linux',
+                cardCountId: 'count-linux-cards',
+                chapterCountId: 'count-linux-chapters',
+                emptyTone: 'emerald',
+                emptyIdeas: ['进程与线程', '常用命令', '文件系统', '内存管理', '网络排障']
+            },
+            mcu: {
+                label: '单片机八股',
+                icon: '🔌',
+                sectionId: 'sec-mcu',
+                containerId: 'category-container-mcu',
+                cardCountId: 'count-mcu-cards',
+                chapterCountId: 'count-mcu-chapters',
+                emptyTone: 'amber',
+                emptyIdeas: ['GPIO', '中断系统', '串口/I2C/SPI', '定时器/PWM', 'ADC/DMA']
+            }
         };
 
         const SUPABASE_URL = "https://hlmpgjvvnezpgobgbtwy.supabase.co";
         const SUPABASE_KEY = "sb_publishable_QJ8O--Xo_AQLqEGmibpiGQ_iO75gSig";
+        const TABLE_NAME = 'interview_topics';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 渲染动态章节
-        const renderDynamicChapters = (cardsData) => {
-            const mainContainer = document.querySelector('#main-content-container > div');
-            const navMenu = document.getElementById('nav-menu-container');
-            const datalistEl = document.getElementById('chapter-datalist');
+        let editingCardId = null;
+        let currentCloudCards = [];
 
-            document.querySelectorAll('.dyn-chapter-nav').forEach(el => el.remove());
-            document.querySelectorAll('.dyn-chapter-sec').forEach(el => el.remove());
-            datalistEl.innerHTML = '';
+        const navContainer = document.getElementById('nav-menu-container');
+        const modalEl = document.getElementById('add-modal');
+        const formEl = document.getElementById('add-card-form');
+        const statusBoxEl = document.getElementById('form-status');
+        const modalTitleEl = document.getElementById('modal-title');
+        const submitBtnEl = document.getElementById('submit-btn');
+        const storageStatusEl = document.getElementById('storage-status');
+        const authModeTextEl = document.getElementById('auth-mode-text');
+        const openModalBtnDesktop = document.getElementById('open-modal-btn');
+        const openModalBtnMobile = document.getElementById('open-modal-btn-mobile');
+        const openModalBtnLabelEl = document.getElementById('open-modal-btn-label');
+        const chapterDatalistEl = document.getElementById('chapter-datalist');
+        const categoryFieldEl = document.getElementById('card-category');
+        const chapterFieldEl = document.getElementById('card-chapter');
+        const titleFieldEl = document.getElementById('card-title');
+        const summaryFieldEl = document.getElementById('card-summary');
+        const contentFieldEl = document.getElementById('card-content');
+        const iconFieldEl = document.getElementById('card-icon');
+        const sortOrderFieldEl = document.getElementById('card-sort-order');
 
-            // 如果没有任何数据，显示空缺省页
-            if (!cardsData || cardsData.length === 0) {
-                mainContainer.innerHTML = `
-                    <div class="flex flex-col items-center justify-center h-full text-indigo-300 mt-32 text-center">
-                        <div class="text-6xl mb-4">🚀</div>
-                        <h2 class="text-2xl font-bold text-indigo-900 mb-2">题库空空如也</h2>
-                        <p class="text-indigo-600">请点击左下角的「➕ 补充面经或卡片」开始构建你的专属八股文库！</p>
+        const hasAdminAccess = () => window.LCQAdminAuth.isAuthenticated();
+        const ensureAdminAccess = (message) => window.LCQAdminAuth.requireAuth(message || '请先回首页右上角完成管理员认证，再修改面试八股内容。');
+
+        const escapeHtml = (value = '') => value
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+
+        const normalizeCategory = (value = '') => {
+            const raw = String(value).trim().toLowerCase();
+            if (raw === 'cpp' || raw.includes('c++') || raw === 'cxx') return 'cpp';
+            if (raw === 'linux' || raw.includes('linux')) return 'linux';
+            if (raw === 'mcu' || raw.includes('单片') || raw.includes('stm32') || raw.includes('嵌入式')) return 'mcu';
+            return 'cpp';
+        };
+
+        const cleanChapterName = (value = '') => {
+            const cleaned = String(value).replace(/^\d+\.\s*/, '').trim();
+            return cleaned || '未命名章节';
+        };
+
+        const parseSortOrder = (value) => {
+            const parsed = Number.parseInt(value, 10);
+            return Number.isFinite(parsed) ? parsed : 100;
+        };
+
+        const setStorageStatus = (text, tone = 'info') => {
+            storageStatusEl.textContent = text;
+            storageStatusEl.className = `text-sm font-semibold ${
+                tone === 'error'
+                    ? 'text-rose-600'
+                    : tone === 'success'
+                        ? 'text-emerald-700'
+                        : 'text-indigo-700'
+            }`;
+        };
+
+        const showFormStatus = (message, isError = false) => {
+            statusBoxEl.textContent = message;
+            statusBoxEl.className = `text-sm py-2 px-3 rounded-xl ${
+                isError
+                    ? 'bg-rose-50 text-rose-600 border border-rose-200'
+                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+            }`;
+            statusBoxEl.classList.remove('hidden');
+        };
+
+        const switchSection = (targetId) => {
+            navContainer.querySelectorAll('.nav-item').forEach((item) => {
+                item.classList.toggle('active', item.dataset.target === targetId);
+            });
+            document.querySelectorAll('.section-view').forEach((section) => {
+                section.classList.toggle('active', section.id === targetId);
+            });
+        };
+
+        const updateChapterDatalist = () => {
+            const currentCategory = normalizeCategory(categoryFieldEl.value);
+            const chapters = Array.from(new Set(
+                currentCloudCards
+                    .filter((item) => normalizeCategory(item.category) === currentCategory)
+                    .map((item) => cleanChapterName(item.chapter))
+            )).sort((a, b) => a.localeCompare(b, 'zh-CN'));
+
+            chapterDatalistEl.innerHTML = chapters
+                .map((chapter) => `<option value="${escapeHtml(chapter)}"></option>`)
+                .join('');
+        };
+
+        const resetModalToSetup = () => {
+            editingCardId = null;
+            formEl.reset();
+            categoryFieldEl.value = 'cpp';
+            iconFieldEl.value = CATEGORY_META.cpp.icon;
+            sortOrderFieldEl.value = '100';
+            modalTitleEl.textContent = '📝 补充八股题目';
+            submitBtnEl.textContent = '发布内容';
+            statusBoxEl.classList.add('hidden');
+            updateChapterDatalist();
+        };
+
+        const openModal = (preset = {}) => {
+            if (preset.category) {
+                categoryFieldEl.value = normalizeCategory(preset.category);
+            }
+            updateChapterDatalist();
+            if (preset.chapter) {
+                chapterFieldEl.value = cleanChapterName(preset.chapter);
+            }
+            if (!iconFieldEl.value.trim()) {
+                iconFieldEl.value = CATEGORY_META[normalizeCategory(categoryFieldEl.value)].icon;
+            }
+            modalEl.classList.add('modal-enter');
+        };
+
+        const closeModal = () => {
+            modalEl.classList.remove('modal-enter');
+            setTimeout(resetModalToSetup, 250);
+        };
+
+        const createEmptyCategoryHtml = (categoryKey, canEdit) => {
+            const meta = CATEGORY_META[categoryKey];
+            const toneClasses = {
+                indigo: 'border-indigo-200 bg-white text-indigo-900 bg-indigo-50 text-indigo-600 border-indigo-100',
+                emerald: 'border-emerald-200 bg-white text-emerald-900 bg-emerald-50 text-emerald-600 border-emerald-100',
+                amber: 'border-amber-200 bg-white text-amber-900 bg-amber-50 text-amber-700 border-amber-100'
+            };
+            const classes = toneClasses[meta.emptyTone].split(' ');
+
+            return `
+                <section class="rounded-3xl border ${classes[0]} ${classes[1]} p-8">
+                    <div class="max-w-3xl">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full ${classes[3]} ${classes[4]} border ${classes[5]} text-xs font-semibold mb-4">
+                            ${meta.icon} ${meta.label}
+                        </div>
+                        <h3 class="text-2xl font-bold ${classes[2]} mb-3">这一块现在还是空的</h3>
+                        <p class="text-sm leading-relaxed text-slate-600 mb-5">
+                            你可以先按章节开始搭目录，再往每个章节里补题目。比如下面这些方向都很适合先开坑：
+                        </p>
+                        <div class="flex flex-wrap gap-2 mb-6">
+                            ${meta.emptyIdeas.map((idea) => `<span class="px-3 py-1 rounded-full bg-white border border-slate-200 text-sm text-slate-600">${escapeHtml(idea)}</span>`).join('')}
+                        </div>
+                        ${canEdit ? `
+                            <button class="action-add-in-category-btn px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium transition-colors" data-category="${categoryKey}">
+                                在 ${meta.label} 里录入第一道题
+                            </button>
+                        ` : `
+                            <div class="text-sm text-slate-500">当前只读。先回首页完成管理员认证后，就可以在这里直接新增内容。</div>
+                        `}
                     </div>
-                `;
+                </section>
+            `;
+        };
+
+        const renderCategory = (categoryKey, cards) => {
+            const meta = CATEGORY_META[categoryKey];
+            const containerEl = document.getElementById(meta.containerId);
+            const canEdit = hasAdminAccess();
+            const grouped = {};
+
+            cards.forEach((item) => {
+                const chapter = cleanChapterName(item.chapter);
+                if (!grouped[chapter]) grouped[chapter] = [];
+                grouped[chapter].push(item);
+            });
+
+            const chapterNames = Object.keys(grouped).sort((a, b) => {
+                const aOrder = Math.min(...grouped[a].map((item) => parseSortOrder(item.sort_order)));
+                const bOrder = Math.min(...grouped[b].map((item) => parseSortOrder(item.sort_order)));
+                if (aOrder !== bOrder) return aOrder - bOrder;
+                return a.localeCompare(b, 'zh-CN');
+            });
+
+            document.getElementById(meta.cardCountId).textContent = String(cards.length);
+            document.getElementById(meta.chapterCountId).textContent = String(chapterNames.length);
+
+            if (cards.length === 0) {
+                containerEl.innerHTML = createEmptyCategoryHtml(categoryKey, canEdit);
                 return;
             }
 
-            mainContainer.innerHTML = ''; // 清理缺省页
-
-            const chaptersMap = {};
-            cardsData.forEach(item => {
-                const chap = item.chapter ? item.chapter.replace(/^\d+\.\s*/, '').trim() : "其他补充";
-                if (!chaptersMap[chap]) chaptersMap[chap] = [];
-                chaptersMap[chap].push(item);
-            });
-
-            let currentChapterNum = 1; // 纯净版从 1 开始编号
-            let isFirst = true; // 用于标记第一个章节，使其默认激活
-
-            Object.keys(chaptersMap).forEach((chapterName) => {
-                const safeId = "sec-dyn-" + encodeURIComponent(chapterName).replace(/%/g, '');
-                const displayTitle = `${currentChapterNum}. ${chapterName}`;
-
-                const option = document.createElement('option');
-                option.value = chapterName;
-                datalistEl.appendChild(option);
-
-                // 左导航 (第一个章节默认选中 active)
-                const navBtn = document.createElement('button');
-                navBtn.className = "nav-item dyn-chapter-nav text-left px-6 py-3 text-sm text-indigo-700 hover:bg-indigo-50 whitespace-nowrap md:whitespace-normal" + (isFirst ? " active" : "");
-                navBtn.setAttribute('data-target', safeId);
-                navBtn.innerHTML = displayTitle;
-                navMenu.appendChild(navBtn);
-
-                // 右内容 (第一个章节默认展示 active)
-                const sectionHtml = document.createElement('section');
-                sectionHtml.id = safeId;
-                sectionHtml.className = "section-view dyn-chapter-sec" + (isFirst ? " active" : "");
-                
-                let cardsHtml = '';
-                chaptersMap[chapterName].forEach(card => {
-                    cardsHtml += `
-                        <div class="bg-white border border-indigo-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-all relative group/card">
-                            <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover/card:opacity-100 transition-opacity z-10">
-                                <button class="action-edit-btn p-1.5 bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100 shadow-sm transition-colors" data-id="${card.id}" title="编辑">✏️</button>
-                                <button class="action-delete-btn p-1.5 bg-rose-50 text-rose-600 rounded hover:bg-rose-100 shadow-sm transition-colors" data-id="${card.id}" title="删除">🗑️</button>
-                            </div>
-                            <div class="flex items-center gap-3 mb-4 pr-20">
-                                <div class="text-3xl">${card.icon}</div>
-                                <h3 class="text-xl font-bold text-indigo-950">${card.title}</h3>
-                            </div>
-                            <div class="bg-indigo-50/50 p-4 rounded-lg border border-indigo-100 text-sm text-indigo-900 whitespace-pre-wrap leading-relaxed">${card.content}</div>
-                        </div>
-                    `;
+            containerEl.innerHTML = chapterNames.map((chapterName, chapterIndex) => {
+                const chapterCards = grouped[chapterName].sort((a, b) => {
+                    const orderDiff = parseSortOrder(a.sort_order) - parseSortOrder(b.sort_order);
+                    if (orderDiff !== 0) return orderDiff;
+                    return new Date(a.created_at || 0) - new Date(b.created_at || 0);
                 });
 
-                sectionHtml.innerHTML = `
-                    <header class="mb-10 border-b border-indigo-100 pb-4">
-                        <h2 class="text-3xl font-extrabold text-indigo-950 mb-2">${displayTitle}</h2>
-                        <p class="text-indigo-500 text-sm">面试题库 · 动态加载</p>
-                    </header>
-                    <div class="grid grid-cols-1 gap-6 mb-6">
-                        ${cardsHtml}
-                    </div>
-                    <button class="action-add-to-chapter-btn w-full py-4 border-2 border-dashed border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50/50 rounded-xl text-indigo-400 hover:text-indigo-600 transition-all font-medium flex justify-center items-center gap-2" data-chapter="${chapterName}">
-                        <span>➕</span> 录入新的面试题
-                    </button>
+                const cardsHtml = chapterCards.map((card) => {
+                    const summaryHtml = card.summary
+                        ? `<p class="text-sm text-slate-600 leading-relaxed mb-4">${escapeHtml(card.summary)}</p>`
+                        : '';
+
+                    return `
+                        <article class="topic-card relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm group/card">
+                            ${canEdit ? `
+                                <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                                    <button class="action-edit-btn p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 shadow-sm transition-colors" data-id="${card.id}" title="编辑">✏️</button>
+                                    <button class="action-delete-btn p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 shadow-sm transition-colors" data-id="${card.id}" title="删除">🗑️</button>
+                                </div>
+                            ` : ''}
+                            <div class="flex items-start gap-3 pr-16">
+                                <div class="w-11 h-11 shrink-0 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-xl">${escapeHtml(card.icon || meta.icon)}</div>
+                                <div class="min-w-0">
+                                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                                        <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 text-[11px] font-semibold tracking-[0.16em] uppercase">#${parseSortOrder(card.sort_order)}</span>
+                                        <span class="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 text-[11px] font-semibold">面试题</span>
+                                    </div>
+                                    <h4 class="text-lg font-bold text-slate-900 leading-snug">${escapeHtml(card.title || '未命名题目')}</h4>
+                                </div>
+                            </div>
+                            <div class="mt-5">
+                                ${summaryHtml}
+                                <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700 whitespace-pre-wrap leading-7">${escapeHtml(card.content || '')}</div>
+                            </div>
+                        </article>
+                    `;
+                }).join('');
+
+                return `
+                    <section class="rounded-3xl border border-slate-200 bg-white/85 shadow-sm overflow-hidden">
+                        <div class="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-white to-slate-50">
+                            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                                <div>
+                                    <p class="text-[11px] uppercase tracking-[0.24em] text-slate-400 mb-2">Chapter ${String(chapterIndex + 1).padStart(2, '0')}</p>
+                                    <h3 class="text-2xl font-bold text-slate-900">${escapeHtml(chapterName)}</h3>
+                                    <p class="text-sm text-slate-500 mt-2">本章共 ${chapterCards.length} 道题，适合围绕同一主题连续复习。</p>
+                                </div>
+                                ${canEdit ? `
+                                    <button class="action-add-to-chapter-btn px-4 py-2.5 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium transition-colors" data-category="${categoryKey}" data-chapter="${escapeHtml(chapterName)}">
+                                        在本章继续补充
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div class="p-6 grid grid-cols-1 xl:grid-cols-2 gap-5">
+                            ${cardsHtml}
+                        </div>
+                    </section>
                 `;
-                mainContainer.appendChild(sectionHtml);
-                currentChapterNum++;
-                isFirst = false;
+            }).join('');
+        };
+
+        const renderAllCategories = () => {
+            Object.keys(CATEGORY_META).forEach((categoryKey) => {
+                const cards = currentCloudCards.filter((item) => normalizeCategory(item.category) === categoryKey);
+                renderCategory(categoryKey, cards);
             });
+        };
+
+        const applyAdminEditUI = () => {
+            const authed = hasAdminAccess();
+
+            openModalBtnDesktop.classList.toggle('opacity-70', !authed);
+            openModalBtnMobile.classList.toggle('opacity-70', !authed);
+            openModalBtnLabelEl.textContent = authed ? '补充面试题 / 面经' : '管理员认证后可编辑';
+            openModalBtnMobile.textContent = authed ? '新增题目' : '需认证';
+            authModeTextEl.textContent = authed
+                ? '管理员已认证，你现在可以新增、编辑和删除这 3 个模块里的八股内容。'
+                : '当前为只读模式，请先回首页右上角完成管理员认证。';
+
+            renderAllCategories();
         };
 
         const fetchNotesFromCloud = async () => {
             try {
-                // 注意这里连接的是全新的表 interview_notes
-                const { data, error } = await supabaseClient.from('interview_notes').select('*').order('created_at', { ascending: true });
+                setStorageStatus('正在读取云端...', 'info');
+                const { data, error } = await supabaseClient
+                    .from(TABLE_NAME)
+                    .select('*')
+                    .order('sort_order', { ascending: true })
+                    .order('created_at', { ascending: true });
+
                 if (error) throw error;
-                currentCloudCards = data; 
-                renderDynamicChapters(data);
+
+                currentCloudCards = Array.isArray(data) ? data : [];
+                updateChapterDatalist();
+                renderAllCategories();
+                setStorageStatus(currentCloudCards.length ? '已加载云端题库' : '云端为空，等待首次录入', currentCloudCards.length ? 'success' : 'info');
             } catch (error) {
-                console.error("加载云端数据失败:", error);
+                console.error('加载面试八股失败:', error);
+                currentCloudCards = [];
+                updateChapterDatalist();
+                renderAllCategories();
+                setStorageStatus('读取失败，请检查新表或 RLS 配置', 'error');
             }
         };
 
-        document.getElementById('main-content-container').addEventListener('click', async (e) => {
-            const addBtn = e.target.closest('.action-add-to-chapter-btn');
-            if (addBtn) {
-                const chapter = addBtn.getAttribute('data-chapter');
-                resetModalToSetup();
-                document.getElementById('card-chapter').value = chapter;
-                openModalFn();
-                return;
-            }
+        navContainer.addEventListener('click', (event) => {
+            const item = event.target.closest('.nav-item');
+            if (!item) return;
+            switchSection(item.dataset.target);
+        });
 
-            const deleteBtn = e.target.closest('.action-delete-btn');
-            if (deleteBtn) {
-                const id = deleteBtn.getAttribute('data-id');
-                if (confirm('🚨 确定要删除这道面试题吗？')) {
-                    const originalHtml = deleteBtn.innerHTML;
-                    deleteBtn.innerHTML = '⏳';
-                    try {
-                        const { error } = await supabaseClient.from('interview_notes').delete().eq('id', id);
-                        if (error) throw error;
-                        fetchNotesFromCloud();
-                    } catch(err) {
-                        alert('删除失败！');
-                        deleteBtn.innerHTML = originalHtml;
-                    }
-                }
-                return;
-            }
+        openModalBtnDesktop.addEventListener('click', () => {
+            if (!ensureAdminAccess()) return;
+            resetModalToSetup();
+            openModal();
+        });
 
-            const editBtn = e.target.closest('.action-edit-btn');
-            if (editBtn) {
-                const id = editBtn.getAttribute('data-id');
-                const targetCard = currentCloudCards.find(c => c.id == id);
-                if (targetCard) {
-                    editingCardId = id;
-                    modalTitleEl.innerHTML = '✏️ <span class="text-indigo-600">修改内容</span>';
-                    submitBtnEl.textContent = '保存修改';
-                    document.getElementById('card-chapter').value = targetCard.chapter;
-                    document.getElementById('card-title').value = targetCard.title;
-                    document.getElementById('card-content').value = targetCard.content;
-                    document.getElementById('card-icon').value = targetCard.icon;
-                    openModalFn();
-                }
+        openModalBtnMobile.addEventListener('click', () => {
+            if (!ensureAdminAccess()) return;
+            resetModalToSetup();
+            openModal();
+        });
+
+        document.getElementById('close-modal-btn').addEventListener('click', closeModal);
+        document.getElementById('cancel-modal-btn').addEventListener('click', closeModal);
+        modalEl.addEventListener('click', (event) => {
+            if (event.target === modalEl) closeModal();
+        });
+
+        categoryFieldEl.addEventListener('change', () => {
+            updateChapterDatalist();
+            if (!iconFieldEl.value.trim() || Object.values(CATEGORY_META).some((meta) => meta.icon === iconFieldEl.value.trim())) {
+                iconFieldEl.value = CATEGORY_META[normalizeCategory(categoryFieldEl.value)].icon;
             }
         });
 
-        fetchNotesFromCloud();
+        document.getElementById('main-content-container').addEventListener('click', async (event) => {
+            const addInCategoryBtn = event.target.closest('.action-add-in-category-btn');
+            if (addInCategoryBtn) {
+                if (!ensureAdminAccess()) return;
+                resetModalToSetup();
+                openModal({ category: addInCategoryBtn.dataset.category });
+                return;
+            }
 
-        formEl.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const rawChapter = document.getElementById('card-chapter').value.trim();
-            const cleanChapter = rawChapter.replace(/^\d+\.\s*/, '');
-            const title = document.getElementById('card-title').value.trim();
-            const content = document.getElementById('card-content').value.trim();
-            const icon = document.getElementById('card-icon').value.trim();
+            const addToChapterBtn = event.target.closest('.action-add-to-chapter-btn');
+            if (addToChapterBtn) {
+                if (!ensureAdminAccess()) return;
+                resetModalToSetup();
+                openModal({
+                    category: addToChapterBtn.dataset.category,
+                    chapter: addToChapterBtn.dataset.chapter
+                });
+                return;
+            }
+
+            const deleteBtn = event.target.closest('.action-delete-btn');
+            if (deleteBtn) {
+                if (!ensureAdminAccess('请先回首页完成管理员认证，再删除面试八股内容。')) return;
+                const id = deleteBtn.dataset.id;
+                if (!confirm('确定要删除这道题吗？')) return;
+
+                try {
+                    deleteBtn.disabled = true;
+                    deleteBtn.textContent = '⏳';
+                    const { error } = await supabaseClient.from(TABLE_NAME).delete().eq('id', id);
+                    if (error) throw error;
+                    await fetchNotesFromCloud();
+                    setStorageStatus('删除成功，已同步云端', 'success');
+                } catch (error) {
+                    console.error('删除失败:', error);
+                    setStorageStatus('删除失败，请检查权限配置', 'error');
+                    await fetchNotesFromCloud();
+                }
+                return;
+            }
+
+            const editBtn = event.target.closest('.action-edit-btn');
+            if (editBtn) {
+                if (!ensureAdminAccess('请先回首页完成管理员认证，再编辑面试八股内容。')) return;
+                const id = editBtn.dataset.id;
+                const targetCard = currentCloudCards.find((item) => String(item.id) === String(id));
+                if (!targetCard) return;
+
+                editingCardId = id;
+                modalTitleEl.textContent = '✏️ 编辑八股题目';
+                submitBtnEl.textContent = '保存修改';
+                categoryFieldEl.value = normalizeCategory(targetCard.category);
+                updateChapterDatalist();
+                chapterFieldEl.value = cleanChapterName(targetCard.chapter);
+                titleFieldEl.value = targetCard.title || '';
+                summaryFieldEl.value = targetCard.summary || '';
+                contentFieldEl.value = targetCard.content || '';
+                iconFieldEl.value = targetCard.icon || CATEGORY_META[normalizeCategory(targetCard.category)].icon;
+                sortOrderFieldEl.value = String(parseSortOrder(targetCard.sort_order));
+                statusBoxEl.classList.add('hidden');
+                modalEl.classList.add('modal-enter');
+            }
+        });
+
+        formEl.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!ensureAdminAccess('请先回首页完成管理员认证，再提交八股内容。')) return;
+
+            const category = normalizeCategory(categoryFieldEl.value);
+            const chapter = cleanChapterName(chapterFieldEl.value);
+            const title = titleFieldEl.value.trim();
+            const summary = summaryFieldEl.value.trim();
+            const content = contentFieldEl.value.trim();
+            const icon = iconFieldEl.value.trim() || CATEGORY_META[category].icon;
+            const sortOrder = parseSortOrder(sortOrderFieldEl.value);
 
             submitBtnEl.disabled = true;
-            submitBtnEl.innerHTML = editingCardId ? '正在保存...' : '正在写入云端...';
+            submitBtnEl.textContent = editingCardId ? '正在保存...' : '正在写入云端...';
 
-            const payload = { chapter: cleanChapter, title: title, content: content, icon: icon };
+            const payload = {
+                category,
+                chapter,
+                title,
+                summary,
+                content,
+                icon,
+                sort_order: sortOrder,
+                updated_at: new Date().toISOString()
+            };
 
             try {
-                let errorObj;
+                let errorObj = null;
                 if (editingCardId) {
-                    const { error } = await supabaseClient.from('interview_notes').update(payload).eq('id', editingCardId);
+                    const { error } = await supabaseClient.from(TABLE_NAME).update(payload).eq('id', editingCardId);
                     errorObj = error;
                 } else {
-                    const { error } = await supabaseClient.from('interview_notes').insert([payload]);
+                    const { error } = await supabaseClient.from(TABLE_NAME).insert([payload]);
                     errorObj = error;
                 }
 
                 if (errorObj) throw errorObj;
-                
-                window.showFormStatus(editingCardId ? "✅ 修改已保存！" : "✅ 成功录入考点！");
-                fetchNotesFromCloud(); 
-                
-                setTimeout(() => {
-                    closeModalFn();
-                    submitBtnEl.disabled = false;
-                    
-                    const safeId = "sec-dyn-" + encodeURIComponent(cleanChapter).replace(/%/g, '');
-                    setTimeout(() => {
-                        const targetNavBtn = document.querySelector(`[data-target="${safeId}"]`);
-                        if(targetNavBtn) targetNavBtn.click();
-                    }, 100);
-                }, 1000);
 
+                showFormStatus(editingCardId ? '✅ 修改已保存' : '✅ 题目已写入云端');
+                await fetchNotesFromCloud();
+                switchSection(CATEGORY_META[category].sectionId);
+
+                setTimeout(() => {
+                    closeModal();
+                    setStorageStatus(editingCardId ? '内容已更新到云端' : '新增内容已同步到云端', 'success');
+                    submitBtnEl.disabled = false;
+                    submitBtnEl.textContent = editingCardId ? '保存修改' : '发布内容';
+                }, 700);
             } catch (error) {
-                console.error("提交失败", error);
-                window.showFormStatus("操作失败，请确认网络连接或数据表配置", true);
+                console.error('提交失败:', error);
+                showFormStatus('操作失败，请检查新表字段或 RLS 配置', true);
+                setStorageStatus('写入失败，请检查权限配置', 'error');
                 submitBtnEl.disabled = false;
-                submitBtnEl.innerHTML = editingCardId ? '保存修改' : '发布内容';
+                submitBtnEl.textContent = editingCardId ? '保存修改' : '发布内容';
             }
         });
+
+        window.addEventListener('lcq-admin-auth-changed', applyAdminEditUI);
+
+        resetModalToSetup();
+        applyAdminEditUI();
+        fetchNotesFromCloud();
     </script>
 </body>
 </html>
