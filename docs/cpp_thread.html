@@ -9,6 +9,46 @@
     <script src="../admin_auth.js?v=20260325b"></script>
     
     <style>
+        :root {
+            --accent: #3b82f6;
+            --accent-soft: #eff6ff;
+            --accent-hover: #93c5fd;
+            --accent-text: #2563eb;
+            --accent-button: #2563eb;
+            --accent-button-hover: #1d4ed8;
+            --accent-shadow: rgba(59, 130, 246, 0.18);
+        }
+
+        body[data-theme="mint"] {
+            --accent: #14b8a6;
+            --accent-soft: #f0fdfa;
+            --accent-hover: #5eead4;
+            --accent-text: #0f766e;
+            --accent-button: #0f766e;
+            --accent-button-hover: #115e59;
+            --accent-shadow: rgba(20, 184, 166, 0.22);
+        }
+
+        body[data-theme="sunset"] {
+            --accent: #f97316;
+            --accent-soft: #fff7ed;
+            --accent-hover: #fdba74;
+            --accent-text: #c2410c;
+            --accent-button: #ea580c;
+            --accent-button-hover: #c2410c;
+            --accent-shadow: rgba(249, 115, 22, 0.22);
+        }
+
+        body[data-theme="rose"] {
+            --accent: #e11d48;
+            --accent-soft: #fff1f2;
+            --accent-hover: #fda4af;
+            --accent-text: #be123c;
+            --accent-button: #e11d48;
+            --accent-button-hover: #be123c;
+            --accent-shadow: rgba(225, 29, 72, 0.22);
+        }
+
         body { background-color: #faf9f6; color: #292524; }
         
         .chart-container {
@@ -39,8 +79,8 @@
         }
         
         .tab-btn.active {
-            border-bottom-color: #3b82f6;
-            color: #3b82f6;
+            border-bottom-color: var(--accent);
+            color: var(--accent);
             font-weight: 600;
         }
 
@@ -51,8 +91,8 @@
         
         .nav-item.active {
             background-color: #f5f5f4;
-            border-left-color: #3b82f6;
-            color: #2563eb;
+            border-left-color: var(--accent);
+            color: var(--accent-text);
             font-weight: 600;
         }
 
@@ -63,13 +103,66 @@
         
         .cmd-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            border-color: #93c5fd;
+            box-shadow: 0 8px 18px -16px var(--accent-shadow), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-color: var(--accent-hover);
         }
         
         .cmd-card.active {
-            background-color: #eff6ff;
-            border-color: #3b82f6;
+            background-color: var(--accent-soft);
+            border-color: var(--accent);
+        }
+
+        .customizer-card {
+            background:
+                radial-gradient(circle at top right, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.98)),
+                linear-gradient(135deg, rgba(248, 250, 252, 0.94) 0%, rgba(255, 255, 255, 1) 100%);
+        }
+
+        .theme-swatch {
+            width: 2.4rem;
+            height: 2.4rem;
+            border-radius: 999px;
+            border: 2px solid rgba(255, 255, 255, 0.85);
+            box-shadow: 0 0 0 1px rgba(214, 211, 209, 0.95);
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .theme-swatch:hover {
+            transform: translateY(-1px);
+        }
+
+        .theme-swatch.active {
+            transform: scale(1.08);
+            box-shadow: 0 0 0 2px white, 0 0 0 5px var(--accent);
+        }
+
+        .emoji-chip {
+            transition: all 0.18s ease;
+        }
+
+        .emoji-chip.active {
+            background-color: var(--accent-soft);
+            border-color: var(--accent-hover);
+            color: var(--accent-text);
+        }
+
+        .emoji-chip:hover {
+            border-color: var(--accent-hover);
+        }
+
+        #open-modal-btn:hover,
+        #open-modal-btn-label:hover {
+            color: var(--accent-text);
+        }
+
+        #open-modal-btn-mobile,
+        #submit-btn {
+            background-color: var(--accent-button) !important;
+        }
+
+        #open-modal-btn-mobile:hover,
+        #submit-btn:hover {
+            background-color: var(--accent-button-hover) !important;
         }
 
         .section-view { display: none; animation: fadeIn 0.4s ease-out; }
@@ -99,7 +192,7 @@
     <nav class="w-full md:w-64 bg-white border-r border-stone-200 flex-shrink-0 flex flex-col h-auto md:h-full z-10 shadow-sm relative">
         <div class="p-6 border-b border-stone-100">
             <h1 class="text-xl font-bold text-stone-800 tracking-tight flex items-center gap-2">
-                <span class="text-2xl">⚙️</span> C++ 现代并发
+                <span id="cpp-page-emoji" class="text-2xl">⚙️</span> C++ 现代并发
             </h1>
             <p class="text-xs text-stone-500 mt-2 leading-relaxed">从 pthread 迁移到现代 C++ 多线程开发的核心知识体系。</p>
         </div>
@@ -134,6 +227,41 @@
     <!-- 右侧内容区 -->
     <main id="main-content-container" class="flex-1 overflow-y-auto relative scroll-smooth bg-[#faf9f6]">
         <div class="max-w-5xl mx-auto p-6 md:p-12">
+
+            <section class="customizer-card rounded-3xl border border-stone-200 shadow-sm p-6 mb-8">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                    <div class="max-w-2xl">
+                        <p class="text-[11px] uppercase tracking-[0.24em] text-stone-400 mb-2">Fresh Mode</p>
+                        <h2 class="text-2xl font-bold text-stone-800 mb-2">给这页加一点“新鲜感”</h2>
+                        <p class="text-sm text-stone-600 leading-relaxed">试试切换界面主色、标题 emoji，或者来一键随机焕肤。你的选择会保存在本地，下次打开页面会自动恢复。</p>
+                    </div>
+                    <button id="cpp-randomize-btn" class="shrink-0 px-4 py-2.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 font-medium transition-colors">
+                        随机焕肤
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div>
+                        <p class="text-sm font-semibold text-stone-700 mb-3">界面颜色</p>
+                        <div class="flex flex-wrap gap-3">
+                            <button type="button" class="theme-swatch active" data-theme-option="blue" title="经典蓝" style="background: linear-gradient(135deg, #60a5fa, #2563eb);"></button>
+                            <button type="button" class="theme-swatch" data-theme-option="mint" title="薄荷青" style="background: linear-gradient(135deg, #5eead4, #0f766e);"></button>
+                            <button type="button" class="theme-swatch" data-theme-option="sunset" title="日落橙" style="background: linear-gradient(135deg, #fdba74, #ea580c);"></button>
+                            <button type="button" class="theme-swatch" data-theme-option="rose" title="玫瑰红" style="background: linear-gradient(135deg, #fda4af, #e11d48);"></button>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-stone-700 mb-3">标题 Emoji</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" class="emoji-chip active px-3 py-2 rounded-xl border border-stone-200 bg-white text-lg" data-emoji-option="⚙️">⚙️</button>
+                            <button type="button" class="emoji-chip px-3 py-2 rounded-xl border border-stone-200 bg-white text-lg" data-emoji-option="🧵">🧵</button>
+                            <button type="button" class="emoji-chip px-3 py-2 rounded-xl border border-stone-200 bg-white text-lg" data-emoji-option="🧠">🧠</button>
+                            <button type="button" class="emoji-chip px-3 py-2 rounded-xl border border-stone-200 bg-white text-lg" data-emoji-option="🚀">🚀</button>
+                            <button type="button" class="emoji-chip px-3 py-2 rounded-xl border border-stone-200 bg-white text-lg" data-emoji-option="🛠️">🛠️</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             <!-- 静态章节 1 -->
             <section id="sec-env" class="section-view active">
@@ -455,6 +583,68 @@ int main() {
 
     <!-- 原有 UI 脚本与图表逻辑 (保持不变) -->
     <script>
+        const CPP_UI_PREFS_KEY = 'cpp_thread_ui_prefs_v1';
+        const CPP_THEME_OPTIONS = ['blue', 'mint', 'sunset', 'rose'];
+        const CPP_EMOJI_OPTIONS = ['⚙️', '🧵', '🧠', '🚀', '🛠️'];
+        const cppPageEmojiEl = document.getElementById('cpp-page-emoji');
+        const themeSwatches = Array.from(document.querySelectorAll('[data-theme-option]'));
+        const emojiChips = Array.from(document.querySelectorAll('[data-emoji-option]'));
+        const randomizeBtn = document.getElementById('cpp-randomize-btn');
+
+        const readCppUIPrefs = () => {
+            try {
+                return JSON.parse(localStorage.getItem(CPP_UI_PREFS_KEY)) || {};
+            } catch (error) {
+                return {};
+            }
+        };
+
+        const writeCppUIPrefs = (prefs) => {
+            localStorage.setItem(CPP_UI_PREFS_KEY, JSON.stringify(prefs));
+        };
+
+        const applyCppUIPrefs = (prefs = {}) => {
+            const theme = CPP_THEME_OPTIONS.includes(prefs.theme) ? prefs.theme : 'blue';
+            const emoji = CPP_EMOJI_OPTIONS.includes(prefs.emoji) ? prefs.emoji : '⚙️';
+
+            document.body.setAttribute('data-theme', theme);
+            cppPageEmojiEl.textContent = emoji;
+
+            themeSwatches.forEach((btn) => {
+                btn.classList.toggle('active', btn.dataset.themeOption === theme);
+            });
+
+            emojiChips.forEach((btn) => {
+                btn.classList.toggle('active', btn.dataset.emojiOption === emoji);
+            });
+        };
+
+        const updateCppUIPrefs = (patch) => {
+            const nextPrefs = { ...readCppUIPrefs(), ...patch };
+            writeCppUIPrefs(nextPrefs);
+            applyCppUIPrefs(nextPrefs);
+        };
+
+        themeSwatches.forEach((btn) => {
+            btn.addEventListener('click', () => {
+                updateCppUIPrefs({ theme: btn.dataset.themeOption });
+            });
+        });
+
+        emojiChips.forEach((btn) => {
+            btn.addEventListener('click', () => {
+                updateCppUIPrefs({ emoji: btn.dataset.emojiOption });
+            });
+        });
+
+        randomizeBtn.addEventListener('click', () => {
+            const randomTheme = CPP_THEME_OPTIONS[Math.floor(Math.random() * CPP_THEME_OPTIONS.length)];
+            const randomEmoji = CPP_EMOJI_OPTIONS[Math.floor(Math.random() * CPP_EMOJI_OPTIONS.length)];
+            updateCppUIPrefs({ theme: randomTheme, emoji: randomEmoji });
+        });
+
+        applyCppUIPrefs(readCppUIPrefs());
+
         const navContainer = document.getElementById('nav-menu-container');
         navContainer.addEventListener('click', (e) => {
             const item = e.target.closest('.nav-item');
