@@ -4,8 +4,8 @@
     const LEGACY_STORAGE_KEYS = ['lcq_user_auth_state_v2', 'lcq_admin_auth_state_v1'];
 
     const ROLE_META = {
-        dad: { label: '爸', passwordRequired: true, passwords: ['787304'] },
-        mom: { label: '妈', passwordRequired: true, passwords: ['787304'] },
+        dad: { label: '爸', passwordRequired: true, passwords: ['737804'] },
+        mom: { label: '妈', passwordRequired: true, passwords: ['737804'] },
         friend: { label: 'friend', passwordRequired: false, passwords: [] },
         admin: { label: '管理员', passwordRequired: true, passwords: ['lcqbr', 'fylcq'] }
     };
