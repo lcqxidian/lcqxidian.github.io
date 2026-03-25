@@ -1,6 +1,7 @@
 (function () {
-    const STORAGE_KEY = 'lcq_user_auth_state_v2';
+    const STORAGE_KEY = 'lcq_user_auth_state_v3';
     const EXPIRES_MS = 12 * 60 * 60 * 1000;
+    const LEGACY_STORAGE_KEYS = ['lcq_user_auth_state_v2', 'lcq_admin_auth_state_v1'];
 
     const ROLE_META = {
         dad: { label: '爸', passwordRequired: true, passwords: ['787304'] },
@@ -21,6 +22,10 @@
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     };
 
+    const clearLegacySessions = () => {
+        LEGACY_STORAGE_KEYS.forEach((key) => sessionStorage.removeItem(key));
+    };
+
     const normalizeRole = (role) => {
         const raw = String(role || '').trim().toLowerCase();
         if (raw === '爸' || raw === 'dad') return 'dad';
@@ -32,11 +37,16 @@
 
     const clearExpiredAuth = () => {
         const state = readSession();
-        if (!state || !state.expiresAt || state.expiresAt <= Date.now()) {
+        const role = state && normalizeRole(state.role);
+        if (!state || !role || !ROLE_META[role] || !state.expiresAt || state.expiresAt <= Date.now()) {
             sessionStorage.removeItem(STORAGE_KEY);
             return null;
         }
-        return state;
+        return {
+            ...state,
+            role,
+            roleLabel: ROLE_META[role].label
+        };
     };
 
     const emitChange = () => {
@@ -166,5 +176,6 @@
         }
     };
 
+    clearLegacySessions();
     emitChange();
 })();

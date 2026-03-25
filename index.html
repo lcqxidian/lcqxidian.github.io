@@ -235,7 +235,7 @@
 
                 <div id="admin-auth-password-wrap" class="mb-3">
                     <input type="password" id="admin-auth-input" autocomplete="off" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-center text-emerald-300 tracking-[0.08em] focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors" placeholder="输入该角色对应密码">
-                    <p id="admin-auth-password-hint" class="text-xs text-slate-500 mt-2 text-center">爸 / 妈 的密码相同，管理员支持两个口令。</p>
+                    <p id="admin-auth-password-hint" class="text-xs text-slate-500 mt-2 text-center">请输入该角色对应的密码。</p>
                 </div>
 
                 <p id="admin-auth-error" class="text-red-400 text-xs mb-4 hidden text-center">登录失败，请检查角色和密码。</p>
@@ -404,8 +404,8 @@
             const passwordRequired = selectedLoginRole !== 'friend';
             adminAuthPasswordWrap.classList.toggle('hidden', !passwordRequired);
             adminAuthPasswordHint.textContent = selectedLoginRole === 'admin'
-                ? '管理员密码支持：lcqbr 或 fylcq'
-                : '爸 / 妈 的密码相同：787304';
+                ? '请输入管理员密码。'
+                : '请输入当前角色对应的密码。';
             adminAuthInput.value = '';
         };
 
@@ -440,7 +440,7 @@
 
         const openAdminAuthModal = () => {
             const state = window.LCQAdminAuth.getState();
-            selectedLoginRole = state.role || 'friend';
+            selectedLoginRole = 'friend';
             updateRolePickerUI();
             adminAuthInput.value = '';
             adminAuthError.classList.add('hidden');
@@ -477,6 +477,7 @@
         document.getElementById('admin-auth-submit-btn').addEventListener('click', () => {
             const result = window.LCQAdminAuth.authenticate(selectedLoginRole, adminAuthInput.value);
             if (!result.ok) {
+                adminAuthError.textContent = result.message || '登录失败，请检查角色和密码。';
                 adminAuthError.classList.remove('hidden');
                 if (!adminAuthPasswordWrap.classList.contains('hidden')) {
                     adminAuthInput.classList.add('border-red-500');
@@ -484,6 +485,7 @@
                 }
                 return;
             }
+            adminAuthError.textContent = '登录失败，请检查角色和密码。';
             closeAdminAuthModal();
             updateAdminUI();
         });
