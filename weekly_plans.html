@@ -5,243 +5,379 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weekly Plans | LCQ.Space</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        body { background-color: #faf9f6; color: #292524; }
 
-        .plan-card {
-            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        .nav-item {
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
         }
 
-        .plan-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(45, 212, 191, 0.45);
-            box-shadow: 0 20px 35px -25px rgba(45, 212, 191, 0.65);
+        .nav-item.active {
+            background-color: #f5f5f4;
+            border-left-color: #14b8a6;
+            color: #0f766e;
+            font-weight: 600;
         }
 
-        .task-item input:checked + span {
-            color: #94a3b8;
-            text-decoration: line-through;
+        .section-view { display: none; animation: fadeIn 0.35s ease-out; }
+        .section-view.active { display: block; }
+
+        .workspace-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
         }
+
+        .workspace-card:hover {
+            transform: translateY(-2px);
+            border-color: #99f6e4;
+            box-shadow: 0 10px 25px -20px rgba(20, 184, 166, 0.55);
+        }
+
+        .editor-field {
+            width: 100%;
+            border: 1px solid #e7e5e4;
+            border-radius: 0.9rem;
+            background: #fafaf9;
+            color: #292524;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        }
+
+        .editor-field:focus {
+            outline: none;
+            border-color: #14b8a6;
+            box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.12);
+            background: #ffffff;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-300 font-sans antialiased min-h-screen selection:bg-teal-900 selection:text-teal-100">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
-        <div class="bg-slate-900 border border-slate-800 rounded-[28px] shadow-2xl overflow-hidden">
-            <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-sm">
-                <div class="px-5 sm:px-8 py-5 flex flex-col gap-5">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div class="flex items-center gap-3">
-                            <a href="index.html" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 rounded-lg transition-colors" title="返回主页">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                                </svg>
-                            </a>
-                            <div>
-                                <p class="text-xs uppercase tracking-[0.35em] text-teal-400/80">Weekly Plans</p>
-                                <h1 class="text-2xl sm:text-3xl font-bold text-slate-100">每周学习计划板</h1>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-wrap gap-3">
-                            <button id="focus-mode-btn" class="px-4 py-2.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 border border-teal-500/30 rounded-lg transition-all text-sm font-medium">
-                                进入专注模式
-                            </button>
-                            <button id="reset-progress-btn" class="px-4 py-2.5 bg-slate-800 hover:bg-rose-500/10 text-slate-300 hover:text-rose-300 border border-slate-700 hover:border-rose-500/30 rounded-lg transition-all text-sm font-medium">
-                                清空本周勾选
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] gap-4">
-                        <section class="rounded-2xl border border-teal-500/20 bg-gradient-to-br from-teal-500/10 via-slate-900 to-slate-900 px-5 sm:px-6 py-5 sm:py-6 relative overflow-hidden">
-                            <div class="absolute -top-10 right-0 w-40 h-40 bg-teal-400/10 rounded-full blur-3xl pointer-events-none"></div>
-                            <p class="text-sm text-teal-300 mb-3">这周先把节奏跑顺，再谈提速。</p>
-                            <h2 class="text-2xl sm:text-4xl font-bold text-slate-50 leading-tight mb-4">
-                                把知识点拆进每天，
-                                <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 via-cyan-300 to-emerald-300">把输出落到本周</span>
-                            </h2>
-                            <p class="text-slate-400 leading-relaxed max-w-2xl">
-                                这个模块会按周展示学习主题、日计划和复盘区。勾选状态与复盘内容会自动保存在当前浏览器，下次打开还能继续接着学。
-                            </p>
-                        </section>
-
-                        <section class="grid grid-cols-2 gap-4">
-                            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
-                                <p class="text-xs uppercase tracking-[0.2em] text-slate-500 mb-2">Week Range</p>
-                                <div id="week-range" class="text-lg font-semibold text-slate-100">加载中...</div>
-                                <p class="text-sm text-slate-500 mt-3">按周查看，方便和面试/项目安排对齐。</p>
-                            </div>
-                            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
-                                <p class="text-xs uppercase tracking-[0.2em] text-slate-500 mb-2">Progress</p>
-                                <div class="text-3xl font-bold text-emerald-400" id="progress-text">0%</div>
-                                <p class="text-sm text-slate-500 mt-3" id="progress-summary">0 / 0 项已完成</p>
-                            </div>
-                            <div class="col-span-2 rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
-                                <div class="flex items-center justify-between gap-4 mb-3">
-                                    <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Weekly Theme</p>
-                                    <span class="px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 text-xs border border-amber-500/20">学习主线</span>
-                                </div>
-                                <h3 class="text-xl font-bold text-slate-100 mb-2">C++ 基础巩固 + 系统面试查漏补缺 + 项目表达打磨</h3>
-                                <p class="text-sm text-slate-400 leading-relaxed">
-                                    主线不求多，重点是“输入一块，输出一块”。这周建议至少完成一轮代码练习、一轮八股整理、一次项目复盘表达。
-                                </p>
-                            </div>
-                        </section>
-                    </div>
+<body class="h-screen flex flex-col md:flex-row overflow-hidden font-sans">
+    <nav class="w-full md:w-72 bg-white border-r border-stone-200 flex-shrink-0 flex flex-col h-auto md:h-full z-10 shadow-sm relative">
+        <div class="p-6 border-b border-stone-100">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <h1 class="text-xl font-bold text-stone-800 tracking-tight flex items-center gap-2">
+                        <span class="text-2xl">🗓️</span> Weekly Plans
+                    </h1>
+                    <p class="text-xs text-stone-500 mt-2 leading-relaxed">
+                        这是一个空白周计划工作台。页面只提供结构，内容由你自己填写，并自动同步到云端。
+                    </p>
                 </div>
-            </header>
-
-            <main id="plans-root" class="p-5 sm:p-8 space-y-8 bg-[radial-gradient(circle_at_top,_rgba(20,184,166,0.08),_transparent_30%),linear-gradient(to_bottom,_rgba(15,23,42,0.98),_rgba(2,6,23,1))]">
-                <section class="grid grid-cols-1 xl:grid-cols-[1.45fr_0.55fr] gap-6">
-                    <div>
-                        <div class="flex items-center gap-3 mb-5">
-                            <div class="w-2 h-8 bg-teal-400 rounded-full"></div>
-                            <h2 class="text-2xl font-bold text-slate-100">每日执行计划</h2>
-                        </div>
-                        <div id="plans-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-5"></div>
-                    </div>
-
-                    <aside class="space-y-5">
-                        <section class="rounded-2xl border border-slate-800 bg-slate-900/80 p-5">
-                            <div class="flex items-center justify-between gap-3 mb-4">
-                                <h3 class="text-lg font-semibold text-slate-100">本周三大目标</h3>
-                                <span class="text-xs px-2.5 py-1 rounded-full bg-teal-500/10 text-teal-300 border border-teal-500/20">Must Win</span>
-                            </div>
-                            <ul class="space-y-3 text-sm text-slate-300">
-                                <li class="flex gap-3">
-                                    <span class="text-teal-300 mt-0.5">01</span>
-                                    <span>整理一份可复述的 C++ 并发知识清单，能口头讲清线程、锁和同步。</span>
-                                </li>
-                                <li class="flex gap-3">
-                                    <span class="text-teal-300 mt-0.5">02</span>
-                                    <span>补完 1 个项目复盘模板，把“背景-方案-权衡-结果”串成完整表达。</span>
-                                </li>
-                                <li class="flex gap-3">
-                                    <span class="text-teal-300 mt-0.5">03</span>
-                                    <span>至少完成 2 次手写或代码敲练，避免只看不练。</span>
-                                </li>
-                            </ul>
-                        </section>
-
-                        <section class="rounded-2xl border border-slate-800 bg-slate-900/80 p-5">
-                            <h3 class="text-lg font-semibold text-slate-100 mb-4">学习节奏建议</h3>
-                            <div class="space-y-3 text-sm">
-                                <div class="rounded-xl border border-slate-800 bg-slate-950/70 p-3">
-                                    <p class="text-slate-200 font-medium">输入</p>
-                                    <p class="text-slate-500 mt-1">每天 60-90 分钟集中啃一个主题，不要并行开太多坑。</p>
-                                </div>
-                                <div class="rounded-xl border border-slate-800 bg-slate-950/70 p-3">
-                                    <p class="text-slate-200 font-medium">输出</p>
-                                    <p class="text-slate-500 mt-1">每晚花 15 分钟写一段自己的总结，比收藏十篇文章更有效。</p>
-                                </div>
-                                <div class="rounded-xl border border-slate-800 bg-slate-950/70 p-3">
-                                    <p class="text-slate-200 font-medium">复盘</p>
-                                    <p class="text-slate-500 mt-1">周末只做两件事：补漏和总结，不再盲目加新内容。</p>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section class="rounded-2xl border border-slate-800 bg-slate-900/80 p-5">
-                            <div class="flex items-center justify-between gap-3 mb-3">
-                                <h3 class="text-lg font-semibold text-slate-100">本周复盘</h3>
-                                <span id="review-status" class="text-xs text-slate-500">自动保存</span>
-                            </div>
-                            <textarea id="weekly-review" rows="10" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors placeholder-slate-600 resize-none" placeholder="记录本周掌握了什么、卡在哪里、下周第一优先级是什么..."></textarea>
-                        </section>
-                    </aside>
-                </section>
-            </main>
+                <a href="index.html" class="shrink-0 p-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-800 transition-colors" title="返回主页">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                </a>
+            </div>
         </div>
-    </div>
+
+        <div id="nav-menu-container" class="flex-1 overflow-y-auto py-4 flex md:flex-col flex-row overflow-x-auto">
+            <button class="nav-item active text-left px-6 py-3 text-sm text-stone-600 hover:bg-stone-50 whitespace-nowrap md:whitespace-normal" data-target="sec-overview">
+                1. 本周概览
+            </button>
+            <button class="nav-item text-left px-6 py-3 text-sm text-stone-600 hover:bg-stone-50 whitespace-nowrap md:whitespace-normal" data-target="sec-goals">
+                2. 周目标拆解
+            </button>
+            <button class="nav-item text-left px-6 py-3 text-sm text-stone-600 hover:bg-stone-50 whitespace-nowrap md:whitespace-normal" data-target="sec-daily">
+                3. 每日计划
+            </button>
+            <button class="nav-item text-left px-6 py-3 text-sm text-stone-600 hover:bg-stone-50 whitespace-nowrap md:whitespace-normal" data-target="sec-resources">
+                4. 学习资料区
+            </button>
+            <button class="nav-item text-left px-6 py-3 text-sm text-stone-600 hover:bg-stone-50 whitespace-nowrap md:whitespace-normal" data-target="sec-review">
+                5. 本周复盘
+            </button>
+        </div>
+
+        <div class="p-4 border-t border-stone-100 mt-auto bg-stone-50/70">
+            <div class="grid grid-cols-1 gap-3">
+                <div class="rounded-xl border border-stone-200 bg-white px-4 py-3">
+                    <p class="text-[11px] uppercase tracking-[0.22em] text-stone-400 mb-1">Week Range</p>
+                    <p id="week-range" class="text-sm font-semibold text-stone-800">加载中...</p>
+                </div>
+                <div class="rounded-xl border border-stone-200 bg-white px-4 py-3 flex items-center justify-between gap-3">
+                    <div>
+                        <p class="text-[11px] uppercase tracking-[0.22em] text-stone-400 mb-1">Storage</p>
+                        <p id="save-status" class="text-sm font-semibold text-teal-700">正在连接云端...</p>
+                    </div>
+                    <button id="clear-all-btn" class="px-3 py-2 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors">
+                        清空全部
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-1 overflow-y-auto relative scroll-smooth bg-[#faf9f6]">
+        <div class="max-w-6xl mx-auto p-6 md:p-12">
+            <section id="sec-overview" class="section-view active">
+                <header class="mb-10">
+                    <h2 class="text-3xl font-extrabold text-stone-800 mb-4">1. 本周概览</h2>
+                    <p class="text-stone-600 leading-relaxed text-lg">
+                        这里先写这周最重要的方向、目标和背景。只保留框架，不预设任何学习内容。
+                    </p>
+                </header>
+
+                <div class="grid grid-cols-1 xl:grid-cols-[1.3fr_0.7fr] gap-6">
+                    <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                        <div class="flex items-center justify-between gap-4 mb-4">
+                            <h3 class="text-xl font-bold text-stone-800">本周标题</h3>
+                            <span class="text-xs px-3 py-1 rounded-full bg-teal-50 text-teal-700 border border-teal-100">Overview</span>
+                        </div>
+                        <input data-field="overview_title" type="text" class="editor-field px-4 py-3 text-lg font-semibold" placeholder="例如：第 12 周学习计划 / 面试冲刺周 / 项目复盘周">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <label class="block text-sm font-medium text-stone-500 mb-2">本周主线</label>
+                                <textarea data-field="overview_theme" rows="5" class="editor-field px-4 py-3 text-sm resize-none" placeholder="写这一周的主线，比如主攻哪门知识、哪个项目或哪段准备阶段。"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-stone-500 mb-2">本周背景 / 约束</label>
+                                <textarea data-field="overview_context" rows="5" class="editor-field px-4 py-3 text-sm resize-none" placeholder="比如时间安排、面试节点、课程任务、需要兼顾的事情。"></textarea>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                        <h3 class="text-xl font-bold text-stone-800 mb-4">执行提醒</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-stone-500 mb-2">本周一句话目标</label>
+                                <textarea data-field="overview_one_line" rows="3" class="editor-field px-4 py-3 text-sm resize-none" placeholder="例如：这周最重要的是把 XX 讲顺、做完、补齐。"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-stone-500 mb-2">优先级提醒</label>
+                                <textarea data-field="overview_priority" rows="6" class="editor-field px-4 py-3 text-sm resize-none" placeholder="写给自己的提醒，比如什么最重要，什么可以延后。"></textarea>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </section>
+
+            <section id="sec-goals" class="section-view">
+                <header class="mb-10">
+                    <h2 class="text-3xl font-extrabold text-stone-800 mb-4">2. 周目标拆解</h2>
+                    <p class="text-stone-600 leading-relaxed text-lg">
+                        用三个大目标把本周工作收拢起来。这里是空白模板，你可以按自己的学习方式填写。
+                    </p>
+                </header>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                        <div class="text-xs uppercase tracking-[0.22em] text-stone-400 mb-3">Goal 01</div>
+                        <input data-field="goal_1_title" type="text" class="editor-field px-4 py-3 text-base font-semibold mb-4" placeholder="目标一标题">
+                        <textarea data-field="goal_1_detail" rows="8" class="editor-field px-4 py-3 text-sm resize-none" placeholder="写清楚这个目标具体要完成什么。"></textarea>
+                    </section>
+                    <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                        <div class="text-xs uppercase tracking-[0.22em] text-stone-400 mb-3">Goal 02</div>
+                        <input data-field="goal_2_title" type="text" class="editor-field px-4 py-3 text-base font-semibold mb-4" placeholder="目标二标题">
+                        <textarea data-field="goal_2_detail" rows="8" class="editor-field px-4 py-3 text-sm resize-none" placeholder="写清楚这个目标具体要完成什么。"></textarea>
+                    </section>
+                    <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                        <div class="text-xs uppercase tracking-[0.22em] text-stone-400 mb-3">Goal 03</div>
+                        <input data-field="goal_3_title" type="text" class="editor-field px-4 py-3 text-base font-semibold mb-4" placeholder="目标三标题">
+                        <textarea data-field="goal_3_detail" rows="8" class="editor-field px-4 py-3 text-sm resize-none" placeholder="写清楚这个目标具体要完成什么。"></textarea>
+                    </section>
+                </div>
+
+                <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6 mt-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-stone-500 mb-2">完成标准</label>
+                            <textarea data-field="goals_done_definition" rows="8" class="editor-field px-4 py-3 text-sm resize-none" placeholder="当你回头看这周时，怎样算真正完成？"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-stone-500 mb-2">风险与阻塞</label>
+                            <textarea data-field="goals_risks" rows="8" class="editor-field px-4 py-3 text-sm resize-none" placeholder="提前写下可能会打断节奏的事，以及你的应对方式。"></textarea>
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <section id="sec-daily" class="section-view">
+                <header class="mb-10">
+                    <h2 class="text-3xl font-extrabold text-stone-800 mb-4">3. 每日计划</h2>
+                    <p class="text-stone-600 leading-relaxed text-lg">
+                        每天都留了独立卡片。你可以按“主题 / 要做的事 / 备注”来填，也可以直接当作每日学习日志。
+                    </p>
+                </header>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                        <div class="flex items-center justify-between gap-3 mb-4">
+                            <h3 class="text-xl font-bold text-stone-800">周一</h3>
+                            <span class="text-xs text-stone-400">Monday</span>
+                        </div>
+                        <input data-field="mon_title" type="text" class="editor-field px-4 py-3 text-base font-semibold mb-4" placeholder="今天的主题">
+                        <textarea data-field="mon_tasks" rows="6" class="editor-field px-4 py-3 text-sm resize-none mb-4" placeholder="今天要做什么？一行写一个也可以。"></textarea>
+                        <textarea data-field="mon_note" rows="4" class="editor-field px-4 py-3 text-sm resize-none" placeholder="备注 / 补充 / 今日感受"></textarea>
+                    </section>
+
+                    <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                        <div class="flex items-center justify-between gap-3 mb-4">
+                            <h3 class="text-xl font-bold text-stone-800">周二</h3>
+                            <span class="text-xs text-stone-400">Tuesday</span>
+                        </div>
+                        <input data-field="tue_title" type="text" class="editor-field px-4 py-3 text-base font-semibold mb-4" placeholder="今天的主题">
+                        <textarea data-field="tue_tasks" rows="6" class="editor-field px-4 py-3 text-sm resize-none mb-4" placeholder="今天要做什么？一行写一个也可以。"></textarea>
+                        <textarea data-field="tue_note" rows="4" class="editor-field px-4 py-3 text-sm resize-none" placeholder="备注 / 补充 / 今日感受"></textarea>
+                    </section>
+
+                    <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                        <div class="flex items-center justify-between gap-3 mb-4">
+                            <h3 class="text-xl font-bold text-stone-800">周三</h3>
+                            <span class="text-xs text-stone-400">Wednesday</span>
+                        </div>
+                        <input data-field="wed_title" type="text" class="editor-field px-4 py-3 text-base font-semibold mb-4" placeholder="今天的主题">
+                        <textarea data-field="wed_tasks" rows="6" class="editor-field px-4 py-3 text-sm resize-none mb-4" placeholder="今天要做什么？一行写一个也可以。"></textarea>
+                        <textarea data-field="wed_note" rows="4" class="editor-field px-4 py-3 text-sm resize-none" placeholder="备注 / 补充 / 今日感受"></textarea>
+                    </section>
+
+                    <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                        <div class="flex items-center justify-between gap-3 mb-4">
+                            <h3 class="text-xl font-bold text-stone-800">周四</h3>
+                            <span class="text-xs text-stone-400">Thursday</span>
+                        </div>
+                        <input data-field="thu_title" type="text" class="editor-field px-4 py-3 text-base font-semibold mb-4" placeholder="今天的主题">
+                        <textarea data-field="thu_tasks" rows="6" class="editor-field px-4 py-3 text-sm resize-none mb-4" placeholder="今天要做什么？一行写一个也可以。"></textarea>
+                        <textarea data-field="thu_note" rows="4" class="editor-field px-4 py-3 text-sm resize-none" placeholder="备注 / 补充 / 今日感受"></textarea>
+                    </section>
+
+                    <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                        <div class="flex items-center justify-between gap-3 mb-4">
+                            <h3 class="text-xl font-bold text-stone-800">周五</h3>
+                            <span class="text-xs text-stone-400">Friday</span>
+                        </div>
+                        <input data-field="fri_title" type="text" class="editor-field px-4 py-3 text-base font-semibold mb-4" placeholder="今天的主题">
+                        <textarea data-field="fri_tasks" rows="6" class="editor-field px-4 py-3 text-sm resize-none mb-4" placeholder="今天要做什么？一行写一个也可以。"></textarea>
+                        <textarea data-field="fri_note" rows="4" class="editor-field px-4 py-3 text-sm resize-none" placeholder="备注 / 补充 / 今日感受"></textarea>
+                    </section>
+
+                    <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                        <div class="flex items-center justify-between gap-3 mb-4">
+                            <h3 class="text-xl font-bold text-stone-800">周六</h3>
+                            <span class="text-xs text-stone-400">Saturday</span>
+                        </div>
+                        <input data-field="sat_title" type="text" class="editor-field px-4 py-3 text-base font-semibold mb-4" placeholder="今天的主题">
+                        <textarea data-field="sat_tasks" rows="6" class="editor-field px-4 py-3 text-sm resize-none mb-4" placeholder="今天要做什么？一行写一个也可以。"></textarea>
+                        <textarea data-field="sat_note" rows="4" class="editor-field px-4 py-3 text-sm resize-none" placeholder="备注 / 补充 / 今日感受"></textarea>
+                    </section>
+
+                    <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6 md:col-span-2">
+                        <div class="flex items-center justify-between gap-3 mb-4">
+                            <h3 class="text-xl font-bold text-stone-800">周日</h3>
+                            <span class="text-xs text-stone-400">Sunday</span>
+                        </div>
+                        <input data-field="sun_title" type="text" class="editor-field px-4 py-3 text-base font-semibold mb-4" placeholder="今天的主题">
+                        <textarea data-field="sun_tasks" rows="7" class="editor-field px-4 py-3 text-sm resize-none mb-4" placeholder="今天要做什么？一行写一个也可以。"></textarea>
+                        <textarea data-field="sun_note" rows="4" class="editor-field px-4 py-3 text-sm resize-none" placeholder="备注 / 补充 / 今日感受"></textarea>
+                    </section>
+                </div>
+            </section>
+
+            <section id="sec-resources" class="section-view">
+                <header class="mb-10">
+                    <h2 class="text-3xl font-extrabold text-stone-800 mb-4">4. 学习资料区</h2>
+                    <p class="text-stone-600 leading-relaxed text-lg">
+                        这里可以放你这周想看的文章、课程、关键字、题单或者项目文件路径。
+                    </p>
+                </header>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                        <label class="block text-sm font-medium text-stone-500 mb-2">资料清单</label>
+                        <textarea data-field="resources_list" rows="14" class="editor-field px-4 py-3 text-sm resize-none" placeholder="可以一行一条，写链接、书名、关键词、题目编号都行。"></textarea>
+                    </section>
+
+                    <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                        <label class="block text-sm font-medium text-stone-500 mb-2">随手记录</label>
+                        <textarea data-field="resources_notes" rows="14" class="editor-field px-4 py-3 text-sm resize-none" placeholder="看资料时的灵感、待查问题、临时想到的补充，都可以先丢在这里。"></textarea>
+                    </section>
+                </div>
+            </section>
+
+            <section id="sec-review" class="section-view">
+                <header class="mb-10">
+                    <h2 class="text-3xl font-extrabold text-stone-800 mb-4">5. 本周复盘</h2>
+                    <p class="text-stone-600 leading-relaxed text-lg">
+                        最后把这一周的得失收拢起来。这里也不放示例内容，只给你留空位。
+                    </p>
+                </header>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                        <label class="block text-sm font-medium text-stone-500 mb-2">本周收获</label>
+                        <textarea data-field="review_gain" rows="10" class="editor-field px-4 py-3 text-sm resize-none" placeholder="这周真正掌握了什么？"></textarea>
+                    </section>
+
+                    <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                        <label class="block text-sm font-medium text-stone-500 mb-2">卡点与问题</label>
+                        <textarea data-field="review_blockers" rows="10" class="editor-field px-4 py-3 text-sm resize-none" placeholder="哪里卡住了，为什么卡住了？"></textarea>
+                    </section>
+
+                    <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                        <label class="block text-sm font-medium text-stone-500 mb-2">下周延续项</label>
+                        <textarea data-field="review_next_week" rows="10" class="editor-field px-4 py-3 text-sm resize-none" placeholder="下周最该接着做什么？"></textarea>
+                    </section>
+
+                    <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                        <label class="block text-sm font-medium text-stone-500 mb-2">给未来自己的备注</label>
+                        <textarea data-field="review_message" rows="10" class="editor-field px-4 py-3 text-sm resize-none" placeholder="写给下周的你，或者写给准备面试/项目时的自己。"></textarea>
+                    </section>
+                </div>
+            </section>
+        </div>
+    </main>
 
     <script>
-        const weeklyPlan = [
-            {
-                day: '周一',
-                short: 'Mon',
-                focus: 'C++ 并发基础',
-                tag: '基础打牢',
-                tasks: ['复习 thread / mutex / lock_guard', '整理 5 个并发常见面试点', '手敲一个生产者消费者示例']
-            },
-            {
-                day: '周二',
-                short: 'Tue',
-                focus: '操作系统核心概念',
-                tag: '八股强化',
-                tasks: ['梳理进程与线程区别', '复盘常见锁与死锁条件', '输出一页自己的 OS 速记卡']
-            },
-            {
-                day: '周三',
-                short: 'Wed',
-                focus: '网络基础回顾',
-                tag: '知识串联',
-                tasks: ['复习 TCP 三次握手与四次挥手', '补一题粘包/拆包相关回答', '对照项目场景讲一次网络链路']
-            },
-            {
-                day: '周四',
-                short: 'Thu',
-                focus: '项目表达训练',
-                tag: '项目复盘',
-                tasks: ['写安防网关项目 STAR 提纲', '总结一个性能瓶颈与优化过程', '录一次 3 分钟口述']
-            },
-            {
-                day: '周五',
-                short: 'Fri',
-                focus: '代码实战日',
-                tag: '动手输出',
-                tasks: ['完成 1 道中等偏上的代码题', '重写 1 个常见数据结构实现', '记录实现中的边界情况']
-            },
-            {
-                day: '周六',
-                short: 'Sat',
-                focus: '查漏补缺',
-                tag: '补短板',
-                tasks: ['回看本周做错或没讲顺的点', '补 2 个薄弱知识点', '把零散笔记合并到统一结构']
-            },
-            {
-                day: '周日',
-                short: 'Sun',
-                focus: '复盘与下周预热',
-                tag: '总结迭代',
-                tasks: ['完成周复盘', '列出下周 3 个最重要任务', '清理桌面、仓库和待办']
-            }
-        ];
+        const SUPABASE_URL = "https://hlmpgjvvnezpgobgbtwy.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_QJ8O--Xo_AQLqEGmibpiGQ_iO75gSig";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const STORAGE_KEY = 'lcq_weekly_plans_progress_v1';
-        const REVIEW_KEY = 'lcq_weekly_plans_review_v1';
-        const FOCUS_MODE_KEY = 'lcq_weekly_plans_focus_mode_v1';
-
-        const plansGrid = document.getElementById('plans-grid');
-        const progressText = document.getElementById('progress-text');
-        const progressSummary = document.getElementById('progress-summary');
-        const reviewInput = document.getElementById('weekly-review');
-        const reviewStatus = document.getElementById('review-status');
-        const resetProgressBtn = document.getElementById('reset-progress-btn');
+        const TABLE_NAME = 'weekly_plans';
+        const fields = Array.from(document.querySelectorAll('[data-field]'));
+        const saveStatus = document.getElementById('save-status');
         const weekRange = document.getElementById('week-range');
-        const focusModeBtn = document.getElementById('focus-mode-btn');
-        const plansRoot = document.getElementById('plans-root');
+        const clearAllBtn = document.getElementById('clear-all-btn');
+        const navItems = Array.from(document.querySelectorAll('.nav-item'));
+        const sections = Array.from(document.querySelectorAll('.section-view'));
+        let currentWeekKey = '';
+        let currentRecord = null;
+        let isHydrating = true;
+        let saveTimer = null;
 
-        const loadProgress = () => {
-            try {
-                return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-            } catch (error) {
-                return {};
-            }
+        const updateSaveStatus = (text) => {
+            saveStatus.textContent = text;
         };
 
-        const saveProgress = (progress) => {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+        const getISOWeekInfo = () => {
+            const now = new Date();
+            const local = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const day = local.getDay() || 7;
+            local.setDate(local.getDate() + 4 - day);
+
+            const yearStart = new Date(local.getFullYear(), 0, 1);
+            const week = Math.ceil((((local - yearStart) / 86400000) + 1) / 7);
+
+            return {
+                year: local.getFullYear(),
+                week
+            };
         };
 
-        const escapeHtml = (value) => value
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
+        const getWeekKey = () => {
+            const { year, week } = getISOWeekInfo();
+            return `${year}-W${String(week).padStart(2, '0')}`;
+        };
 
         const getWeekLabel = () => {
             const now = new Date();
@@ -257,89 +393,119 @@
             return `${format(monday)} - ${format(sunday)}`;
         };
 
-        const renderPlans = () => {
-            const progress = loadProgress();
-
-            plansGrid.innerHTML = weeklyPlan.map((plan, dayIndex) => `
-                <section class="plan-card rounded-2xl border border-slate-800 bg-slate-900/80 overflow-hidden">
-                    <div class="px-5 py-4 border-b border-slate-800 bg-gradient-to-r from-slate-900 via-slate-900 to-teal-500/10">
-                        <div class="flex items-start justify-between gap-4">
-                            <div>
-                                <div class="text-xs uppercase tracking-[0.25em] text-slate-500">${plan.short}</div>
-                                <h3 class="text-xl font-bold text-slate-100 mt-1">${plan.day}</h3>
-                                <p class="text-sm text-slate-400 mt-2">${plan.focus}</p>
-                            </div>
-                            <span class="shrink-0 px-3 py-1 rounded-full text-xs border border-teal-500/20 bg-teal-500/10 text-teal-300">${plan.tag}</span>
-                        </div>
-                    </div>
-                    <div class="p-5 space-y-3">
-                        ${plan.tasks.map((task, taskIndex) => {
-                            const key = `${dayIndex}-${taskIndex}`;
-                            const checked = Boolean(progress[key]);
-                            return `
-                                <label class="task-item flex gap-3 rounded-xl border ${checked ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-slate-800 bg-slate-950/70'} px-4 py-3 cursor-pointer transition-colors">
-                                    <input data-task-key="${key}" type="checkbox" class="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900 text-emerald-400 focus:ring-emerald-500" ${checked ? 'checked' : ''}>
-                                    <span class="text-sm leading-relaxed text-slate-200">${escapeHtml(task)}</span>
-                                </label>
-                            `;
-                        }).join('')}
-                    </div>
-                </section>
-            `).join('');
-
-            updateProgressSummary();
+        const collectFormData = () => {
+            const payload = {};
+            fields.forEach((field) => {
+                payload[field.dataset.field] = field.value;
+            });
+            return payload;
         };
 
-        const updateProgressSummary = () => {
-            const progress = loadProgress();
-            const totalTasks = weeklyPlan.reduce((sum, plan) => sum + plan.tasks.length, 0);
-            const completedTasks = Object.values(progress).filter(Boolean).length;
-            const progressValue = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
-
-            progressText.textContent = `${progressValue}%`;
-            progressSummary.textContent = `${completedTasks} / ${totalTasks} 项已完成`;
+        const fillFields = (data = {}) => {
+            fields.forEach((field) => {
+                field.value = data[field.dataset.field] || '';
+            });
         };
 
-        plansGrid.addEventListener('change', (event) => {
-            const target = event.target;
-            if (!target.matches('input[type="checkbox"][data-task-key]')) return;
+        const setFieldsDisabled = (disabled) => {
+            fields.forEach((field) => {
+                field.disabled = disabled;
+            });
+            clearAllBtn.disabled = disabled;
+            clearAllBtn.classList.toggle('opacity-60', disabled);
+            clearAllBtn.classList.toggle('cursor-not-allowed', disabled);
+        };
 
-            const progress = loadProgress();
-            progress[target.dataset.taskKey] = target.checked;
-            saveProgress(progress);
-            renderPlans();
+        const saveToCloud = async () => {
+            const content = collectFormData();
+            const title = content.overview_title || '';
+
+            updateSaveStatus('云端保存中...');
+
+            const { data, error } = await supabaseClient
+                .from(TABLE_NAME)
+                .upsert(
+                    [{
+                        week_key: currentWeekKey,
+                        title,
+                        content
+                    }],
+                    { onConflict: 'week_key' }
+                )
+                .select()
+                .single();
+
+            if (error) {
+                console.error('保存 weekly plans 失败:', error);
+                updateSaveStatus('云端保存失败');
+                return;
+            }
+
+            currentRecord = data;
+            updateSaveStatus('已同步到云端');
+        };
+
+        const queueSave = () => {
+            if (isHydrating) return;
+            updateSaveStatus('等待同步...');
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(() => {
+                saveToCloud();
+            }, 500);
+        };
+
+        const loadFromCloud = async () => {
+            setFieldsDisabled(true);
+            updateSaveStatus('正在读取云端...');
+
+            const { data, error } = await supabaseClient
+                .from(TABLE_NAME)
+                .select('*')
+                .eq('week_key', currentWeekKey)
+                .maybeSingle();
+
+            if (error) {
+                console.error('读取 weekly plans 失败:', error);
+                fillFields({});
+                updateSaveStatus('云端读取失败');
+                setFieldsDisabled(false);
+                isHydrating = false;
+                return;
+            }
+
+            currentRecord = data;
+            fillFields(data?.content || {});
+            updateSaveStatus(data ? '已加载云端内容' : '新的一周，等待首次保存');
+            setFieldsDisabled(false);
+            isHydrating = false;
+        };
+
+        fields.forEach((field) => {
+            field.addEventListener('input', queueSave);
         });
 
-        resetProgressBtn.addEventListener('click', () => {
-            localStorage.removeItem(STORAGE_KEY);
-            renderPlans();
+        clearAllBtn.addEventListener('click', async () => {
+            if (isHydrating) return;
+            fields.forEach((field) => {
+                field.value = '';
+            });
+            clearTimeout(saveTimer);
+            await saveToCloud();
         });
 
-        reviewInput.addEventListener('input', () => {
-            localStorage.setItem(REVIEW_KEY, reviewInput.value);
-            reviewStatus.textContent = '已保存';
-            clearTimeout(window.reviewTimer);
-            window.reviewTimer = setTimeout(() => {
-                reviewStatus.textContent = '自动保存';
-            }, 1200);
+        navItems.forEach((item) => {
+            item.addEventListener('click', () => {
+                const targetId = item.dataset.target;
+                navItems.forEach((nav) => nav.classList.remove('active'));
+                sections.forEach((section) => section.classList.remove('active'));
+                item.classList.add('active');
+                document.getElementById(targetId).classList.add('active');
+            });
         });
 
-        focusModeBtn.addEventListener('click', () => {
-            const nextValue = plansRoot.classList.toggle('max-w-4xl');
-            plansRoot.classList.toggle('mx-auto');
-            localStorage.setItem(FOCUS_MODE_KEY, nextValue ? 'on' : 'off');
-            focusModeBtn.textContent = nextValue ? '退出专注模式' : '进入专注模式';
-        });
-
+        currentWeekKey = getWeekKey();
         weekRange.textContent = getWeekLabel();
-        reviewInput.value = localStorage.getItem(REVIEW_KEY) || '';
-
-        if (localStorage.getItem(FOCUS_MODE_KEY) === 'on') {
-            plansRoot.classList.add('max-w-4xl', 'mx-auto');
-            focusModeBtn.textContent = '退出专注模式';
-        }
-
-        renderPlans();
+        loadFromCloud();
     </script>
 </body>
 </html>
