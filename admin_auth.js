@@ -1,6 +1,6 @@
 (function () {
     const STORAGE_KEY = 'lcq_admin_auth_state_v1';
-    const ADMIN_PASSWORD = 'lcq-admin-2026';
+    const ADMIN_PASSWORD = 'lcqbr';
     const EXPIRES_MS = 12 * 60 * 60 * 1000;
 
     const readSession = () => {
