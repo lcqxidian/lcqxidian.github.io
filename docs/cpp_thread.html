@@ -19,36 +19,6 @@
             --accent-shadow: rgba(59, 130, 246, 0.18);
         }
 
-        body[data-theme="mint"] {
-            --accent: #14b8a6;
-            --accent-soft: #f0fdfa;
-            --accent-hover: #5eead4;
-            --accent-text: #0f766e;
-            --accent-button: #0f766e;
-            --accent-button-hover: #115e59;
-            --accent-shadow: rgba(20, 184, 166, 0.22);
-        }
-
-        body[data-theme="sunset"] {
-            --accent: #f97316;
-            --accent-soft: #fff7ed;
-            --accent-hover: #fdba74;
-            --accent-text: #c2410c;
-            --accent-button: #ea580c;
-            --accent-button-hover: #c2410c;
-            --accent-shadow: rgba(249, 115, 22, 0.22);
-        }
-
-        body[data-theme="rose"] {
-            --accent: #e11d48;
-            --accent-soft: #fff1f2;
-            --accent-hover: #fda4af;
-            --accent-text: #be123c;
-            --accent-button: #e11d48;
-            --accent-button-hover: #be123c;
-            --accent-shadow: rgba(225, 29, 72, 0.22);
-        }
-
         body { background-color: #faf9f6; color: #292524; }
         
         .chart-container {
@@ -112,130 +82,63 @@
             border-color: var(--accent);
         }
 
-        .customizer-shell {
-            position: relative;
-            overflow: hidden;
-            background:
-                radial-gradient(circle at top right, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.92) 40%, rgba(248, 250, 252, 0.96) 100%);
+        .reader-tools {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(250, 250, 249, 0.92));
         }
 
-        .customizer-shell::before {
-            content: "";
-            position: absolute;
-            inset: -30% auto auto 72%;
-            width: 14rem;
-            height: 14rem;
-            border-radius: 999px;
-            background: radial-gradient(circle, var(--accent-hover), transparent 68%);
-            opacity: 0.28;
-            pointer-events: none;
+        .reader-segment,
+        .reader-toggle {
+            border: 1px solid #d6d3d1;
+            background: rgba(255, 255, 255, 0.92);
+            color: #57534e;
+            transition: all 0.18s ease;
         }
 
-        .preview-panel {
-            position: relative;
-            overflow: hidden;
-            background:
-                linear-gradient(135deg, rgba(28, 25, 23, 0.96), rgba(41, 37, 36, 0.92)),
-                linear-gradient(135deg, var(--accent-soft), white);
-        }
-
-        .preview-panel::after {
-            content: "";
-            position: absolute;
-            inset: auto -15% -35% auto;
-            width: 11rem;
-            height: 11rem;
-            border-radius: 999px;
-            background: radial-gradient(circle, var(--accent-hover), transparent 70%);
-            opacity: 0.35;
-            pointer-events: none;
-        }
-
-        .theme-swatch {
-            border-radius: 1rem;
-            border: 1px solid #e7e5e4;
-            background: rgba(255, 255, 255, 0.94);
-            padding: 0.85rem;
-            text-align: left;
-            transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
-        }
-
-        .theme-swatch:hover {
-            transform: translateY(-2px);
+        .reader-segment:hover,
+        .reader-toggle:hover {
             border-color: var(--accent-hover);
-            box-shadow: 0 12px 24px -22px var(--accent-shadow);
+            color: var(--accent-text);
+            background: white;
         }
 
-        .theme-swatch.active {
+        .reader-segment.active,
+        .reader-toggle.active {
             border-color: var(--accent);
-            background: linear-gradient(135deg, white, var(--accent-soft));
-            box-shadow: 0 18px 30px -24px var(--accent-shadow);
+            background: var(--accent-soft);
+            color: var(--accent-text);
+            box-shadow: 0 10px 24px -22px var(--accent-shadow);
         }
 
-        .theme-dot {
-            width: 2.1rem;
-            height: 2.1rem;
-            border-radius: 999px;
-            border: 2px solid rgba(255, 255, 255, 0.86);
-            box-shadow: 0 0 0 1px rgba(214, 211, 209, 0.95);
-        }
-
-        .emoji-chip {
-            width: 3.25rem;
-            height: 3.25rem;
-            border-radius: 1rem;
+        .reader-status-chip {
             border: 1px solid #e7e5e4;
-            background: rgba(255, 255, 255, 0.94);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.35rem;
-            transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+            background: #fafaf9;
+            color: #57534e;
         }
 
-        .emoji-chip:hover {
-            transform: translateY(-2px);
-            border-color: var(--accent-hover);
-            box-shadow: 0 12px 22px -18px var(--accent-shadow);
+        body[data-reader-size="compact"] #main-content-container {
+            font-size: 0.96rem;
         }
 
-        .emoji-chip.active {
-            background: linear-gradient(135deg, white, var(--accent-soft));
-            border-color: var(--accent);
-            color: var(--accent-text);
-            box-shadow: 0 16px 26px -20px var(--accent-shadow);
+        body[data-reader-size="compact"] .code-block {
+            font-size: 0.82rem;
         }
 
-        .accent-mini {
-            border-color: rgba(255, 255, 255, 0.14);
-            background: rgba(255, 255, 255, 0.08);
-            color: rgba(255, 255, 255, 0.9);
+        body[data-reader-size="large"] #main-content-container {
+            font-size: 1.05rem;
         }
 
-        .accent-outline-btn {
-            border-color: var(--accent);
-            color: var(--accent-text);
-            background: rgba(255, 255, 255, 0.82);
-            transition: background-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+        body[data-reader-size="large"] .code-block {
+            font-size: 0.96rem;
         }
 
-        .accent-outline-btn:hover {
-            background-color: var(--accent-soft);
-            transform: translateY(-1px);
-            box-shadow: 0 14px 24px -24px var(--accent-shadow);
+        body[data-code-wrap="on"] .code-block {
+            white-space: pre-wrap;
+            overflow-x: visible;
+            word-break: break-word;
         }
 
-        .accent-solid-btn {
-            background: linear-gradient(135deg, var(--accent-button), var(--accent-button-hover));
-            color: white;
-            box-shadow: 0 16px 28px -22px var(--accent-shadow);
-            transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
-        }
-
-        .accent-solid-btn:hover {
-            transform: translateY(-1px);
-            filter: brightness(1.02);
-            box-shadow: 0 18px 30px -22px var(--accent-shadow);
+        body.reader-focus nav {
+            display: none;
         }
 
         #open-modal-btn:hover,
@@ -320,122 +223,28 @@
     <main id="main-content-container" class="flex-1 overflow-y-auto relative scroll-smooth bg-[#faf9f6]">
         <div class="max-w-5xl mx-auto p-6 md:p-12">
 
-            <section class="customizer-shell rounded-[2rem] border border-stone-200 shadow-sm p-4 md:p-6 mb-8">
-                <div class="grid gap-5 xl:grid-cols-[1.04fr,1.18fr]">
-                    <div class="preview-panel rounded-[1.7rem] border border-white/10 p-6 md:p-7 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-                        <div class="flex items-start justify-between gap-4">
-                            <div class="max-w-md">
-                                <p class="text-[11px] uppercase tracking-[0.3em] text-white/45">Style Console</p>
-                                <h2 class="text-2xl md:text-[2rem] font-bold leading-tight mt-3">把这页调成你更想久看的样子</h2>
-                                <p id="cpp-theme-caption" class="text-sm md:text-[15px] text-white/72 leading-relaxed mt-3">
-                                    冷静、技术感更强，适合专注阅读。
-                                </p>
-                            </div>
-                            <div class="shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-[1.35rem] border border-white/10 bg-white/8 flex items-center justify-center shadow-lg">
-                                <span id="cpp-preview-emoji" class="text-3xl md:text-4xl">⚙️</span>
-                            </div>
-                        </div>
-
-                        <div class="grid sm:grid-cols-3 gap-3 mt-6">
-                            <div class="rounded-2xl border border-white/10 bg-white/6 px-4 py-4 backdrop-blur-sm">
-                                <p class="text-[11px] uppercase tracking-[0.22em] text-white/40">Current Theme</p>
-                                <p id="cpp-theme-name" class="text-lg font-semibold mt-2">经典蓝</p>
-                            </div>
-                            <div class="rounded-2xl border border-white/10 bg-white/6 px-4 py-4 backdrop-blur-sm">
-                                <p class="text-[11px] uppercase tracking-[0.22em] text-white/40">Mode</p>
-                                <p id="cpp-theme-mood" class="text-lg font-semibold mt-2">专注阅读</p>
-                            </div>
-                            <div class="rounded-2xl border border-white/10 bg-white/6 px-4 py-4 backdrop-blur-sm">
-                                <p class="text-[11px] uppercase tracking-[0.22em] text-white/40">Storage</p>
-                                <p class="text-lg font-semibold mt-2">自动记忆</p>
-                            </div>
-                        </div>
-
-                        <div class="mt-6 flex flex-wrap gap-2">
-                            <span class="accent-mini inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-medium">导航高亮</span>
-                            <span class="accent-mini inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-medium">标签切换</span>
-                            <span class="accent-mini inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-medium">交互按钮</span>
-                            <span class="accent-mini inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-medium">本地持久化</span>
-                        </div>
+            <section class="reader-tools rounded-[1.75rem] border border-stone-200 shadow-sm p-5 md:p-6 mb-8">
+                <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5">
+                    <div class="max-w-2xl">
+                        <p class="text-[11px] uppercase tracking-[0.24em] text-stone-400 mb-2">Reading Tools</p>
+                        <h2 class="text-xl md:text-2xl font-bold text-stone-800 mb-2">只保留真正影响阅读体验的几个开关</h2>
+                        <p class="text-sm text-stone-600 leading-relaxed">这里不再换主题色和 emoji，只保留字号、代码换行和专注模式，让内容本身更干净一点。</p>
                     </div>
 
-                    <div class="grid gap-4">
-                        <div class="rounded-[1.55rem] border border-stone-200 bg-white/88 p-5 shadow-sm backdrop-blur-sm">
-                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                <div>
-                                    <p class="text-[11px] uppercase tracking-[0.24em] text-stone-400">Palette</p>
-                                    <h3 class="text-lg font-bold text-stone-800 mt-1">挑一个阅读氛围</h3>
-                                </div>
-                                <span class="text-xs text-stone-400">点一下立即生效</span>
-                            </div>
-
-                            <div class="grid sm:grid-cols-2 gap-3 mt-4">
-                                <button type="button" class="theme-swatch active" data-theme-option="blue">
-                                    <div class="flex items-center gap-3">
-                                        <span class="theme-dot" style="background: linear-gradient(135deg, #60a5fa, #2563eb);"></span>
-                                        <div>
-                                            <p class="font-semibold text-stone-800">经典蓝</p>
-                                            <p class="text-xs text-stone-500 mt-1">偏技术感，适合静下来读结构和代码。</p>
-                                        </div>
-                                    </div>
-                                </button>
-                                <button type="button" class="theme-swatch" data-theme-option="mint">
-                                    <div class="flex items-center gap-3">
-                                        <span class="theme-dot" style="background: linear-gradient(135deg, #5eead4, #0f766e);"></span>
-                                        <div>
-                                            <p class="font-semibold text-stone-800">薄荷青</p>
-                                            <p class="text-xs text-stone-500 mt-1">更轻盈，长时间浏览也不容易腻。</p>
-                                        </div>
-                                    </div>
-                                </button>
-                                <button type="button" class="theme-swatch" data-theme-option="sunset">
-                                    <div class="flex items-center gap-3">
-                                        <span class="theme-dot" style="background: linear-gradient(135deg, #fdba74, #ea580c);"></span>
-                                        <div>
-                                            <p class="font-semibold text-stone-800">日落橙</p>
-                                            <p class="text-xs text-stone-500 mt-1">更有活力，适合拿来刷重点和复习。</p>
-                                        </div>
-                                    </div>
-                                </button>
-                                <button type="button" class="theme-swatch" data-theme-option="rose">
-                                    <div class="flex items-center gap-3">
-                                        <span class="theme-dot" style="background: linear-gradient(135deg, #fda4af, #e11d48);"></span>
-                                        <div>
-                                            <p class="font-semibold text-stone-800">玫瑰红</p>
-                                            <p class="text-xs text-stone-500 mt-1">更柔和一些，让学习页没有那么硬。</p>
-                                        </div>
-                                    </div>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="rounded-[1.55rem] border border-stone-200 bg-white/88 p-5 shadow-sm backdrop-blur-sm">
-                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                <div>
-                                    <p class="text-[11px] uppercase tracking-[0.24em] text-stone-400">Emoji</p>
-                                    <h3 class="text-lg font-bold text-stone-800 mt-1">给页面一个表情标签</h3>
-                                </div>
-                                <span class="text-xs text-stone-400">标题区会同步更新</span>
-                            </div>
-
-                            <div class="flex flex-wrap gap-3 mt-4">
-                                <button type="button" class="emoji-chip active" data-emoji-option="⚙️" title="机械感">⚙️</button>
-                                <button type="button" class="emoji-chip" data-emoji-option="🧵" title="线程感">🧵</button>
-                                <button type="button" class="emoji-chip" data-emoji-option="🧠" title="思考感">🧠</button>
-                                <button type="button" class="emoji-chip" data-emoji-option="🚀" title="冲刺感">🚀</button>
-                                <button type="button" class="emoji-chip" data-emoji-option="🛠️" title="工程感">🛠️</button>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col sm:flex-row gap-3">
-                            <button id="cpp-randomize-btn" type="button" class="accent-solid-btn flex-1 rounded-2xl px-5 py-3 text-sm font-semibold">
-                                随机焕一个新感觉
-                            </button>
-                            <button id="cpp-reset-style-btn" type="button" class="accent-outline-btn flex-1 rounded-2xl border px-5 py-3 text-sm font-semibold">
-                                回到默认搭配
-                            </button>
-                        </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" class="reader-segment rounded-xl px-4 py-2.5 text-sm font-medium" data-reader-size-option="compact">紧凑</button>
+                        <button type="button" class="reader-segment active rounded-xl px-4 py-2.5 text-sm font-medium" data-reader-size-option="normal">标准</button>
+                        <button type="button" class="reader-segment rounded-xl px-4 py-2.5 text-sm font-medium" data-reader-size-option="large">大字</button>
+                        <button type="button" id="cpp-wrap-toggle" class="reader-toggle rounded-xl px-4 py-2.5 text-sm font-medium">代码换行</button>
+                        <button type="button" id="cpp-focus-toggle" class="reader-toggle rounded-xl px-4 py-2.5 text-sm font-medium">专注模式</button>
+                        <button type="button" id="cpp-reader-reset-btn" class="reader-toggle rounded-xl px-4 py-2.5 text-sm font-medium">恢复默认</button>
                     </div>
+                </div>
+
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <span id="cpp-reader-size-label" class="reader-status-chip inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium">字号：标准</span>
+                    <span id="cpp-reader-wrap-label" class="reader-status-chip inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium">代码：横向滚动</span>
+                    <span id="cpp-reader-focus-label" class="reader-status-chip inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium">布局：标准</span>
                 </div>
             </section>
 
@@ -759,105 +568,79 @@ int main() {
 
     <!-- 原有 UI 脚本与图表逻辑 (保持不变) -->
     <script>
-        const CPP_UI_PREFS_KEY = 'cpp_thread_ui_prefs_v2';
-        const CPP_THEME_OPTIONS = ['blue', 'mint', 'sunset', 'rose'];
-        const CPP_EMOJI_OPTIONS = ['⚙️', '🧵', '🧠', '🚀', '🛠️'];
-        const CPP_THEME_META = {
-            blue: {
-                name: '经典蓝',
-                caption: '冷静、技术感更强，适合专注阅读。',
-                mood: '专注阅读'
-            },
-            mint: {
-                name: '薄荷青',
-                caption: '更轻盈，适合长时间浏览内容，眼睛压力也更小一点。',
-                mood: '轻盈耐看'
-            },
-            sunset: {
-                name: '日落橙',
-                caption: '节奏更活，适合刷重点、做复习或快速过一遍知识点。',
-                mood: '高能复习'
-            },
-            rose: {
-                name: '玫瑰红',
-                caption: '柔和一点，但不会丢掉层次感，适合慢慢看细节。',
-                mood: '柔和细读'
-            }
-        };
-        const cppPageEmojiEl = document.getElementById('cpp-page-emoji');
-        const cppPreviewEmojiEl = document.getElementById('cpp-preview-emoji');
-        const cppThemeNameEl = document.getElementById('cpp-theme-name');
-        const cppThemeCaptionEl = document.getElementById('cpp-theme-caption');
-        const cppThemeMoodEl = document.getElementById('cpp-theme-mood');
-        const themeSwatches = Array.from(document.querySelectorAll('[data-theme-option]'));
-        const emojiChips = Array.from(document.querySelectorAll('[data-emoji-option]'));
-        const randomizeBtn = document.getElementById('cpp-randomize-btn');
-        const resetStyleBtn = document.getElementById('cpp-reset-style-btn');
+        const CPP_READER_PREFS_KEY = 'cpp_thread_reader_prefs_v1';
+        const READER_SIZE_OPTIONS = ['compact', 'normal', 'large'];
+        const readerSizeButtons = Array.from(document.querySelectorAll('[data-reader-size-option]'));
+        const wrapToggleBtn = document.getElementById('cpp-wrap-toggle');
+        const focusToggleBtn = document.getElementById('cpp-focus-toggle');
+        const resetReaderBtn = document.getElementById('cpp-reader-reset-btn');
+        const readerSizeLabel = document.getElementById('cpp-reader-size-label');
+        const readerWrapLabel = document.getElementById('cpp-reader-wrap-label');
+        const readerFocusLabel = document.getElementById('cpp-reader-focus-label');
 
-        const readCppUIPrefs = () => {
+        const readCppReaderPrefs = () => {
             try {
-                return JSON.parse(localStorage.getItem(CPP_UI_PREFS_KEY)) || {};
+                return JSON.parse(localStorage.getItem(CPP_READER_PREFS_KEY)) || {};
             } catch (error) {
                 return {};
             }
         };
 
-        const writeCppUIPrefs = (prefs) => {
-            localStorage.setItem(CPP_UI_PREFS_KEY, JSON.stringify(prefs));
+        const writeCppReaderPrefs = (prefs) => {
+            localStorage.setItem(CPP_READER_PREFS_KEY, JSON.stringify(prefs));
         };
 
-        const applyCppUIPrefs = (prefs = {}) => {
-            const theme = CPP_THEME_OPTIONS.includes(prefs.theme) ? prefs.theme : 'blue';
-            const emoji = CPP_EMOJI_OPTIONS.includes(prefs.emoji) ? prefs.emoji : '⚙️';
-            const meta = CPP_THEME_META[theme];
+        const applyCppReaderPrefs = (prefs = {}) => {
+            const textSize = READER_SIZE_OPTIONS.includes(prefs.textSize) ? prefs.textSize : 'normal';
+            const codeWrap = !!prefs.codeWrap;
+            const focusMode = !!prefs.focusMode;
 
-            document.body.setAttribute('data-theme', theme);
-            cppPageEmojiEl.textContent = emoji;
-            cppPreviewEmojiEl.textContent = emoji;
-            cppThemeNameEl.textContent = meta.name;
-            cppThemeCaptionEl.textContent = meta.caption;
-            cppThemeMoodEl.textContent = meta.mood;
+            document.body.setAttribute('data-reader-size', textSize);
+            document.body.setAttribute('data-code-wrap', codeWrap ? 'on' : 'off');
+            document.body.classList.toggle('reader-focus', focusMode);
 
-            themeSwatches.forEach((btn) => {
-                btn.classList.toggle('active', btn.dataset.themeOption === theme);
+            readerSizeButtons.forEach((btn) => {
+                btn.classList.toggle('active', btn.dataset.readerSizeOption === textSize);
             });
 
-            emojiChips.forEach((btn) => {
-                btn.classList.toggle('active', btn.dataset.emojiOption === emoji);
-            });
+            wrapToggleBtn.classList.toggle('active', codeWrap);
+            focusToggleBtn.classList.toggle('active', focusMode);
+
+            const sizeText = textSize === 'compact' ? '紧凑' : textSize === 'large' ? '大字' : '标准';
+            readerSizeLabel.textContent = `字号：${sizeText}`;
+            readerWrapLabel.textContent = `代码：${codeWrap ? '自动换行' : '横向滚动'}`;
+            readerFocusLabel.textContent = `布局：${focusMode ? '专注模式' : '标准'}`;
         };
 
-        const updateCppUIPrefs = (patch) => {
-            const nextPrefs = { ...readCppUIPrefs(), ...patch };
-            writeCppUIPrefs(nextPrefs);
-            applyCppUIPrefs(nextPrefs);
+        const updateCppReaderPrefs = (patch) => {
+            const nextPrefs = { ...readCppReaderPrefs(), ...patch };
+            writeCppReaderPrefs(nextPrefs);
+            applyCppReaderPrefs(nextPrefs);
         };
 
-        themeSwatches.forEach((btn) => {
+        readerSizeButtons.forEach((btn) => {
             btn.addEventListener('click', () => {
-                updateCppUIPrefs({ theme: btn.dataset.themeOption });
+                updateCppReaderPrefs({ textSize: btn.dataset.readerSizeOption });
             });
         });
 
-        emojiChips.forEach((btn) => {
-            btn.addEventListener('click', () => {
-                updateCppUIPrefs({ emoji: btn.dataset.emojiOption });
-            });
+        wrapToggleBtn.addEventListener('click', () => {
+            const prefs = readCppReaderPrefs();
+            updateCppReaderPrefs({ codeWrap: !prefs.codeWrap });
         });
 
-        randomizeBtn.addEventListener('click', () => {
-            const randomTheme = CPP_THEME_OPTIONS[Math.floor(Math.random() * CPP_THEME_OPTIONS.length)];
-            const randomEmoji = CPP_EMOJI_OPTIONS[Math.floor(Math.random() * CPP_EMOJI_OPTIONS.length)];
-            updateCppUIPrefs({ theme: randomTheme, emoji: randomEmoji });
+        focusToggleBtn.addEventListener('click', () => {
+            const prefs = readCppReaderPrefs();
+            updateCppReaderPrefs({ focusMode: !prefs.focusMode });
         });
 
-        resetStyleBtn.addEventListener('click', () => {
-            const defaultPrefs = { theme: 'blue', emoji: '⚙️' };
-            writeCppUIPrefs(defaultPrefs);
-            applyCppUIPrefs(defaultPrefs);
+        resetReaderBtn.addEventListener('click', () => {
+            const defaultPrefs = { textSize: 'normal', codeWrap: false, focusMode: false };
+            writeCppReaderPrefs(defaultPrefs);
+            applyCppReaderPrefs(defaultPrefs);
         });
 
-        applyCppUIPrefs(readCppUIPrefs());
+        applyCppReaderPrefs(readCppReaderPrefs());
 
         const navContainer = document.getElementById('nav-menu-container');
         navContainer.addEventListener('click', (e) => {
