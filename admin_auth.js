@@ -2,31 +2,53 @@
     const STORAGE_KEY = 'lcq_user_auth_state_v4';
     const EXPIRES_MS = 12 * 60 * 60 * 1000;
     const LEGACY_STORAGE_KEYS = ['lcq_user_auth_state_v3', 'lcq_user_auth_state_v2', 'lcq_admin_auth_state_v1'];
+    const STORAGE_AREAS = [localStorage, sessionStorage];
 
     const ROLE_META = {
-        dad: { label: '爸', passwordRequired: true, passwords: ['787304'] },
-        mom: { label: '妈', passwordRequired: true, passwords: ['787304'] },
+        dad: { label: '爸', passwordRequired: true, passwords: ['737804'] },
+        mom: { label: '妈', passwordRequired: true, passwords: ['737804'] },
         friend: { label: 'friend', passwordRequired: false, passwords: [] },
-        admin: { label: '管理员', passwordRequired: true, passwords: ['lcqbr'] },
+        admin: { label: '管理员', passwordRequired: true, passwords: ['lcqbr', 'fylcq'] },
         xiaobao: { label: '方小宝', passwordRequired: false, passwords: [], hidden: true }
     };
     const PRIVILEGED_ROLES = ['admin', 'xiaobao'];
     const FAMILY_VIEW_ROLES = ['dad', 'mom', 'admin', 'xiaobao'];
 
     const readSession = () => {
-        try {
-            return JSON.parse(sessionStorage.getItem(STORAGE_KEY)) || null;
-        } catch (error) {
-            return null;
+        for (const storage of STORAGE_AREAS) {
+            try {
+                const raw = storage.getItem(STORAGE_KEY);
+                if (raw) return JSON.parse(raw) || null;
+            } catch (error) {
+                continue;
+            }
         }
+        return null;
     };
 
     const writeSession = (payload) => {
-        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        const serialized = JSON.stringify(payload);
+        STORAGE_AREAS.forEach((storage) => {
+            try {
+                storage.setItem(STORAGE_KEY, serialized);
+            } catch (error) {
+                // ignore storage write failures
+            }
+        });
+    };
+
+    const clearSession = (key = STORAGE_KEY) => {
+        STORAGE_AREAS.forEach((storage) => {
+            try {
+                storage.removeItem(key);
+            } catch (error) {
+                // ignore storage removal failures
+            }
+        });
     };
 
     const clearLegacySessions = () => {
-        LEGACY_STORAGE_KEYS.forEach((key) => sessionStorage.removeItem(key));
+        LEGACY_STORAGE_KEYS.forEach((key) => clearSession(key));
     };
 
     const normalizeRole = (role) => {
@@ -50,7 +72,7 @@
         const state = readSession();
         const role = state && normalizeRole(state.role);
         if (!state || !role || !ROLE_META[role] || !state.expiresAt || state.expiresAt <= Date.now()) {
-            sessionStorage.removeItem(STORAGE_KEY);
+            clearSession();
             return null;
         }
         return {
@@ -125,7 +147,7 @@
         },
 
         logout() {
-            sessionStorage.removeItem(STORAGE_KEY);
+            clearSession();
             emitChange();
         },
 
@@ -203,5 +225,10 @@
     };
 
     clearLegacySessions();
+    window.addEventListener('storage', (event) => {
+        if (event.key === STORAGE_KEY || LEGACY_STORAGE_KEYS.includes(event.key)) {
+            emitChange();
+        }
+    });
     emitChange();
 })();
