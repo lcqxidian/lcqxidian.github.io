@@ -19,6 +19,36 @@
             --accent-shadow: rgba(59, 130, 246, 0.18);
         }
 
+        body[data-theme="mint"] {
+            --accent: #14b8a6;
+            --accent-soft: #f0fdfa;
+            --accent-hover: #5eead4;
+            --accent-text: #0f766e;
+            --accent-button: #0f766e;
+            --accent-button-hover: #115e59;
+            --accent-shadow: rgba(20, 184, 166, 0.22);
+        }
+
+        body[data-theme="sunset"] {
+            --accent: #f97316;
+            --accent-soft: #fff7ed;
+            --accent-hover: #fdba74;
+            --accent-text: #c2410c;
+            --accent-button: #ea580c;
+            --accent-button-hover: #c2410c;
+            --accent-shadow: rgba(249, 115, 22, 0.22);
+        }
+
+        body[data-theme="rose"] {
+            --accent: #e11d48;
+            --accent-soft: #fff1f2;
+            --accent-hover: #fda4af;
+            --accent-text: #be123c;
+            --accent-button: #e11d48;
+            --accent-button-hover: #be123c;
+            --accent-shadow: rgba(225, 29, 72, 0.22);
+        }
+
         body { background-color: #faf9f6; color: #292524; }
         
         .chart-container {
@@ -82,37 +112,48 @@
             border-color: var(--accent);
         }
 
-        .reader-tools {
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(250, 250, 249, 0.92));
-        }
-
-        .reader-segment,
-        .reader-toggle {
+        .tool-chip {
             border: 1px solid #d6d3d1;
             background: rgba(255, 255, 255, 0.92);
             color: #57534e;
             transition: all 0.18s ease;
         }
 
-        .reader-segment:hover,
-        .reader-toggle:hover {
+        .tool-chip:hover {
             border-color: var(--accent-hover);
             color: var(--accent-text);
             background: white;
         }
 
-        .reader-segment.active,
-        .reader-toggle.active {
+        .tool-chip.active {
             border-color: var(--accent);
             background: var(--accent-soft);
             color: var(--accent-text);
             box-shadow: 0 10px 24px -22px var(--accent-shadow);
         }
 
+        .tool-emoji {
+            width: 3rem;
+            height: 3rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
         .reader-status-chip {
             border: 1px solid #e7e5e4;
             background: #fafaf9;
             color: #57534e;
+        }
+
+        .drawer-shell.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .drawer-shell.open .drawer-panel {
+            transform: translateX(0);
         }
 
         body[data-reader-size="compact"] #main-content-container {
@@ -123,12 +164,48 @@
             font-size: 0.82rem;
         }
 
+        body[data-reader-size="compact"] .section-view > header h2,
+        body[data-reader-size="compact"] .cloud-section-title {
+            font-size: 1.8rem;
+        }
+
+        body[data-reader-size="compact"] .section-view > header p,
+        body[data-reader-size="compact"] .cloud-section-meta {
+            font-size: 0.95rem;
+        }
+
+        body[data-reader-size="compact"] .cloud-card-title {
+            font-size: 1.05rem;
+        }
+
+        body[data-reader-size="compact"] .cloud-card-content {
+            font-size: 0.82rem;
+        }
+
         body[data-reader-size="large"] #main-content-container {
             font-size: 1.05rem;
         }
 
         body[data-reader-size="large"] .code-block {
             font-size: 0.96rem;
+        }
+
+        body[data-reader-size="large"] .section-view > header h2,
+        body[data-reader-size="large"] .cloud-section-title {
+            font-size: 2.15rem;
+        }
+
+        body[data-reader-size="large"] .section-view > header p,
+        body[data-reader-size="large"] .cloud-section-meta {
+            font-size: 1.08rem;
+        }
+
+        body[data-reader-size="large"] .cloud-card-title {
+            font-size: 1.4rem;
+        }
+
+        body[data-reader-size="large"] .cloud-card-content {
+            font-size: 0.98rem;
         }
 
         body[data-code-wrap="on"] .code-block {
@@ -141,12 +218,23 @@
             display: none;
         }
 
+        #open-style-drawer-floating-btn {
+            display: none;
+        }
+
+        body.reader-focus #open-style-drawer-floating-btn {
+            display: inline-flex;
+        }
+
         #open-modal-btn:hover,
+        #open-style-drawer-btn:hover,
         #open-modal-btn-label:hover {
             color: var(--accent-text);
         }
 
-        #open-modal-btn:hover {
+        #open-modal-btn:hover,
+        #open-style-drawer-btn:hover,
+        #open-style-drawer-floating-btn:hover {
             border-color: var(--accent-hover);
         }
 
@@ -208,12 +296,75 @@
 
         <!-- 底部全局添加按钮 -->
         <div class="p-4 border-t border-stone-100 mt-auto bg-stone-50/50 hidden md:block">
+            <button id="open-style-drawer-btn" class="w-full mb-3 bg-white border border-stone-200 text-stone-600 text-sm font-bold py-2.5 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
+                <span>🎛</span> <span>阅读与样式</span>
+            </button>
             <button id="open-modal-btn" class="w-full bg-white border border-stone-200 text-stone-600 text-sm font-bold py-2.5 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
                 <span>➕</span> <span id="open-modal-btn-label">补充新章节/卡片</span>
             </button>
             <p id="admin-edit-hint" class="text-xs text-stone-400 mt-3 leading-relaxed">当前为只读模式，请先回首页右上角完成用户登录，并选择管理员角色。</p>
         </div>
     </nav>
+
+    <div id="cpp-tools-drawer" class="drawer-shell fixed inset-0 z-40 bg-stone-950/45 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <aside class="drawer-panel absolute left-0 top-0 h-full w-full max-w-sm bg-white border-r border-stone-200 shadow-2xl -translate-x-full transition-transform duration-300 overflow-y-auto">
+            <div class="p-6 border-b border-stone-200 flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-[11px] uppercase tracking-[0.24em] text-stone-400 mb-2">Reading & Style</p>
+                    <h3 class="text-xl font-bold text-stone-800">把功能都收在这里</h3>
+                    <p class="text-sm text-stone-500 mt-2 leading-relaxed">正文区不再放控制面板，阅读设置和趣味样式都放到左侧抽屉里。</p>
+                </div>
+                <button id="close-style-drawer-btn" class="shrink-0 p-2 text-stone-400 hover:text-stone-700 transition-colors" aria-label="关闭抽屉">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-6">
+                <section>
+                    <p class="text-xs font-semibold text-stone-400 uppercase tracking-[0.22em] mb-3">主题色</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" class="tool-chip active rounded-xl px-4 py-3 text-sm font-medium text-left" data-theme-option="blue">经典蓝</button>
+                        <button type="button" class="tool-chip rounded-xl px-4 py-3 text-sm font-medium text-left" data-theme-option="mint">薄荷青</button>
+                        <button type="button" class="tool-chip rounded-xl px-4 py-3 text-sm font-medium text-left" data-theme-option="sunset">日落橙</button>
+                        <button type="button" class="tool-chip rounded-xl px-4 py-3 text-sm font-medium text-left" data-theme-option="rose">玫瑰红</button>
+                    </div>
+                </section>
+
+                <section>
+                    <p class="text-xs font-semibold text-stone-400 uppercase tracking-[0.22em] mb-3">标题 Emoji</p>
+                    <div class="flex flex-wrap gap-3">
+                        <button type="button" class="tool-chip tool-emoji active rounded-xl" data-emoji-option="⚙️">⚙️</button>
+                        <button type="button" class="tool-chip tool-emoji rounded-xl" data-emoji-option="🧵">🧵</button>
+                        <button type="button" class="tool-chip tool-emoji rounded-xl" data-emoji-option="🧠">🧠</button>
+                        <button type="button" class="tool-chip tool-emoji rounded-xl" data-emoji-option="🚀">🚀</button>
+                        <button type="button" class="tool-chip tool-emoji rounded-xl" data-emoji-option="🛠️">🛠️</button>
+                    </div>
+                </section>
+
+                <section>
+                    <p class="text-xs font-semibold text-stone-400 uppercase tracking-[0.22em] mb-3">阅读体验</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" class="tool-chip rounded-xl px-4 py-2.5 text-sm font-medium" data-reader-size-option="compact">紧凑</button>
+                        <button type="button" class="tool-chip active rounded-xl px-4 py-2.5 text-sm font-medium" data-reader-size-option="normal">标准</button>
+                        <button type="button" class="tool-chip rounded-xl px-4 py-2.5 text-sm font-medium" data-reader-size-option="large">大字</button>
+                        <button type="button" id="cpp-wrap-toggle" class="tool-chip rounded-xl px-4 py-2.5 text-sm font-medium">代码换行</button>
+                        <button type="button" id="cpp-focus-toggle" class="tool-chip rounded-xl px-4 py-2.5 text-sm font-medium">专注模式</button>
+                        <button type="button" id="cpp-reader-reset-btn" class="tool-chip rounded-xl px-4 py-2.5 text-sm font-medium">恢复默认</button>
+                    </div>
+                </section>
+
+                <div class="flex flex-wrap gap-2">
+                    <span id="cpp-reader-size-label" class="reader-status-chip inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium">字号：标准</span>
+                    <span id="cpp-reader-wrap-label" class="reader-status-chip inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium">代码：横向滚动</span>
+                    <span id="cpp-reader-focus-label" class="reader-status-chip inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium">布局：标准</span>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <button id="open-style-drawer-floating-btn" class="fixed left-4 top-4 z-30 px-3 py-2 bg-white/95 border border-stone-200 text-stone-600 text-sm font-semibold rounded-lg shadow-lg items-center gap-2">
+        <span>🎛</span> 设置
+    </button>
 
     <button id="open-modal-btn-mobile" class="md:hidden fixed bottom-4 right-4 z-40 bg-blue-600 text-white w-12 h-12 rounded-full shadow-xl flex items-center justify-center text-2xl">
         +
@@ -222,31 +373,6 @@
     <!-- 右侧内容区 -->
     <main id="main-content-container" class="flex-1 overflow-y-auto relative scroll-smooth bg-[#faf9f6]">
         <div class="max-w-5xl mx-auto p-6 md:p-12">
-
-            <section class="reader-tools rounded-[1.75rem] border border-stone-200 shadow-sm p-5 md:p-6 mb-8">
-                <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5">
-                    <div class="max-w-2xl">
-                        <p class="text-[11px] uppercase tracking-[0.24em] text-stone-400 mb-2">Reading Tools</p>
-                        <h2 class="text-xl md:text-2xl font-bold text-stone-800 mb-2">只保留真正影响阅读体验的几个开关</h2>
-                        <p class="text-sm text-stone-600 leading-relaxed">这里不再换主题色和 emoji，只保留字号、代码换行和专注模式，让内容本身更干净一点。</p>
-                    </div>
-
-                    <div class="flex flex-wrap gap-2">
-                        <button type="button" class="reader-segment rounded-xl px-4 py-2.5 text-sm font-medium" data-reader-size-option="compact">紧凑</button>
-                        <button type="button" class="reader-segment active rounded-xl px-4 py-2.5 text-sm font-medium" data-reader-size-option="normal">标准</button>
-                        <button type="button" class="reader-segment rounded-xl px-4 py-2.5 text-sm font-medium" data-reader-size-option="large">大字</button>
-                        <button type="button" id="cpp-wrap-toggle" class="reader-toggle rounded-xl px-4 py-2.5 text-sm font-medium">代码换行</button>
-                        <button type="button" id="cpp-focus-toggle" class="reader-toggle rounded-xl px-4 py-2.5 text-sm font-medium">专注模式</button>
-                        <button type="button" id="cpp-reader-reset-btn" class="reader-toggle rounded-xl px-4 py-2.5 text-sm font-medium">恢复默认</button>
-                    </div>
-                </div>
-
-                <div class="mt-4 flex flex-wrap gap-2">
-                    <span id="cpp-reader-size-label" class="reader-status-chip inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium">字号：标准</span>
-                    <span id="cpp-reader-wrap-label" class="reader-status-chip inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium">代码：横向滚动</span>
-                    <span id="cpp-reader-focus-label" class="reader-status-chip inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium">布局：标准</span>
-                </div>
-            </section>
 
             <!-- 静态章节 1 -->
             <section id="sec-env" class="section-view active">
@@ -568,7 +694,16 @@ int main() {
 
     <!-- 原有 UI 脚本与图表逻辑 (保持不变) -->
     <script>
-        const CPP_READER_PREFS_KEY = 'cpp_thread_reader_prefs_v1';
+        const CPP_READER_PREFS_KEY = 'cpp_thread_reader_prefs_v2';
+        const THEME_OPTIONS = ['blue', 'mint', 'sunset', 'rose'];
+        const EMOJI_OPTIONS = ['⚙️', '🧵', '🧠', '🚀', '🛠️'];
+        const cppPageEmojiEl = document.getElementById('cpp-page-emoji');
+        const toolsDrawerEl = document.getElementById('cpp-tools-drawer');
+        const openStyleDrawerBtn = document.getElementById('open-style-drawer-btn');
+        const openStyleDrawerFloatingBtn = document.getElementById('open-style-drawer-floating-btn');
+        const closeStyleDrawerBtn = document.getElementById('close-style-drawer-btn');
+        const themeButtons = Array.from(document.querySelectorAll('[data-theme-option]'));
+        const emojiButtons = Array.from(document.querySelectorAll('[data-emoji-option]'));
         const READER_SIZE_OPTIONS = ['compact', 'normal', 'large'];
         const readerSizeButtons = Array.from(document.querySelectorAll('[data-reader-size-option]'));
         const wrapToggleBtn = document.getElementById('cpp-wrap-toggle');
@@ -591,13 +726,25 @@ int main() {
         };
 
         const applyCppReaderPrefs = (prefs = {}) => {
+            const theme = THEME_OPTIONS.includes(prefs.theme) ? prefs.theme : 'blue';
+            const emoji = EMOJI_OPTIONS.includes(prefs.emoji) ? prefs.emoji : '⚙️';
             const textSize = READER_SIZE_OPTIONS.includes(prefs.textSize) ? prefs.textSize : 'normal';
             const codeWrap = !!prefs.codeWrap;
             const focusMode = !!prefs.focusMode;
 
+            document.body.setAttribute('data-theme', theme);
             document.body.setAttribute('data-reader-size', textSize);
             document.body.setAttribute('data-code-wrap', codeWrap ? 'on' : 'off');
             document.body.classList.toggle('reader-focus', focusMode);
+            cppPageEmojiEl.textContent = emoji;
+
+            themeButtons.forEach((btn) => {
+                btn.classList.toggle('active', btn.dataset.themeOption === theme);
+            });
+
+            emojiButtons.forEach((btn) => {
+                btn.classList.toggle('active', btn.dataset.emojiOption === emoji);
+            });
 
             readerSizeButtons.forEach((btn) => {
                 btn.classList.toggle('active', btn.dataset.readerSizeOption === textSize);
@@ -624,6 +771,18 @@ int main() {
             });
         });
 
+        themeButtons.forEach((btn) => {
+            btn.addEventListener('click', () => {
+                updateCppReaderPrefs({ theme: btn.dataset.themeOption });
+            });
+        });
+
+        emojiButtons.forEach((btn) => {
+            btn.addEventListener('click', () => {
+                updateCppReaderPrefs({ emoji: btn.dataset.emojiOption });
+            });
+        });
+
         wrapToggleBtn.addEventListener('click', () => {
             const prefs = readCppReaderPrefs();
             updateCppReaderPrefs({ codeWrap: !prefs.codeWrap });
@@ -635,12 +794,25 @@ int main() {
         });
 
         resetReaderBtn.addEventListener('click', () => {
-            const defaultPrefs = { textSize: 'normal', codeWrap: false, focusMode: false };
+            const defaultPrefs = { theme: 'blue', emoji: '⚙️', textSize: 'normal', codeWrap: false, focusMode: false };
             writeCppReaderPrefs(defaultPrefs);
             applyCppReaderPrefs(defaultPrefs);
         });
 
         applyCppReaderPrefs(readCppReaderPrefs());
+
+        const openToolsDrawer = () => toolsDrawerEl.classList.add('open');
+        const closeToolsDrawer = () => toolsDrawerEl.classList.remove('open');
+
+        openStyleDrawerBtn.addEventListener('click', openToolsDrawer);
+        openStyleDrawerFloatingBtn.addEventListener('click', openToolsDrawer);
+        closeStyleDrawerBtn.addEventListener('click', closeToolsDrawer);
+        toolsDrawerEl.addEventListener('click', (event) => {
+            if (event.target === toolsDrawerEl) closeToolsDrawer();
+        });
+        window.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') closeToolsDrawer();
+        });
 
         const navContainer = document.getElementById('nav-menu-container');
         navContainer.addEventListener('click', (e) => {
@@ -858,16 +1030,16 @@ int main() {
                 let cardsHtml = '';
                 chaptersMap[chapterName].forEach(card => {
                     cardsHtml += `
-                        <div class="bg-white border border-stone-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all relative group/card">
+                        <div class="cloud-card bg-white border border-stone-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all relative group/card">
                             ${canEdit ? `<div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover/card:opacity-100 transition-opacity z-10">
                                 <button class="action-edit-btn p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 shadow-sm transition-colors" data-id="${card.id}" title="编辑这篇笔记">✏️</button>
                                 <button class="action-delete-btn p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 shadow-sm transition-colors" data-id="${card.id}" title="永久删除">🗑️</button>
                             </div>` : ''}
                             <div class="flex items-center gap-3 mb-4 pr-20">
                                 <div class="text-3xl">${card.icon}</div>
-                                <h3 class="text-xl font-bold text-stone-800">${card.title}</h3>
+                                <h3 class="cloud-card-title text-xl font-bold text-stone-800">${card.title}</h3>
                             </div>
-                            <div class="bg-stone-50 p-4 rounded-lg border border-stone-200 font-mono text-sm text-stone-700 whitespace-pre-wrap">${card.content}</div>
+                            <div class="cloud-card-content bg-stone-50 p-4 rounded-lg border border-stone-200 font-mono text-sm text-stone-700 whitespace-pre-wrap">${card.content}</div>
                         </div>
                     `;
                 });
@@ -875,8 +1047,8 @@ int main() {
                 // 核心改动 2：章节最底部加上一个专属的添加按钮
                 sectionHtml.innerHTML = `
                     <header class="mb-10 border-b border-stone-200 pb-4">
-                        <h2 class="text-3xl font-extrabold text-stone-800 mb-2">${displayTitle}</h2>
-                        <p class="text-stone-500 text-sm">社区补充节点 · 动态加载</p>
+                        <h2 class="cloud-section-title text-3xl font-extrabold text-stone-800 mb-2">${displayTitle}</h2>
+                        <p class="cloud-section-meta text-stone-500 text-sm">社区补充节点 · 动态加载</p>
                     </header>
                     <div class="grid grid-cols-1 gap-6 mb-6">
                         ${cardsHtml}
