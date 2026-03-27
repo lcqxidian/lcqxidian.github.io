@@ -1,14 +1,17 @@
 (function () {
-    const STORAGE_KEY = 'lcq_user_auth_state_v3';
+    const STORAGE_KEY = 'lcq_user_auth_state_v4';
     const EXPIRES_MS = 12 * 60 * 60 * 1000;
-    const LEGACY_STORAGE_KEYS = ['lcq_user_auth_state_v2', 'lcq_admin_auth_state_v1'];
+    const LEGACY_STORAGE_KEYS = ['lcq_user_auth_state_v3', 'lcq_user_auth_state_v2', 'lcq_admin_auth_state_v1'];
 
     const ROLE_META = {
-        dad: { label: '爸', passwordRequired: true, passwords: ['737804'] },
-        mom: { label: '妈', passwordRequired: true, passwords: ['737804'] },
+        dad: { label: '爸', passwordRequired: true, passwords: ['787304'] },
+        mom: { label: '妈', passwordRequired: true, passwords: ['787304'] },
         friend: { label: 'friend', passwordRequired: false, passwords: [] },
-        admin: { label: '管理员', passwordRequired: true, passwords: ['lcqbr', 'fylcq'] }
+        admin: { label: '管理员', passwordRequired: true, passwords: ['lcqbr'] },
+        xiaobao: { label: '方小宝', passwordRequired: false, passwords: [], hidden: true }
     };
+    const PRIVILEGED_ROLES = ['admin', 'xiaobao'];
+    const FAMILY_VIEW_ROLES = ['dad', 'mom', 'admin', 'xiaobao'];
 
     const readSession = () => {
         try {
@@ -32,8 +35,16 @@
         if (raw === '妈' || raw === 'mom') return 'mom';
         if (raw === 'friend') return 'friend';
         if (raw === '管理员' || raw === 'admin') return 'admin';
+        if (raw === '方小宝' || raw === 'xiaobao') return 'xiaobao';
         return '';
     };
+
+    const buildSessionPayload = (role) => ({
+        role,
+        roleLabel: ROLE_META[role].label,
+        authenticated: PRIVILEGED_ROLES.includes(role),
+        expiresAt: Date.now() + EXPIRES_MS
+    });
 
     const clearExpiredAuth = () => {
         const state = readSession();
@@ -79,23 +90,37 @@
                 return { ok: false, message: '请选择有效角色。' };
             }
 
+            if (meta.hidden) {
+                return { ok: false, message: '该身份不可通过普通登录入口使用。' };
+            }
+
             if (meta.passwordRequired && !meta.passwords.includes(password)) {
                 return { ok: false, message: '密码错误，请重试。' };
             }
 
-            writeSession({
-                role,
-                roleLabel: meta.label,
-                authenticated: role === 'admin',
-                expiresAt: Date.now() + EXPIRES_MS
-            });
+            writeSession(buildSessionPayload(role));
 
             emitChange();
             return {
                 ok: true,
                 role,
                 roleLabel: meta.label,
-                isAdmin: role === 'admin'
+                isAdmin: PRIVILEGED_ROLES.includes(role)
+            };
+        },
+
+        authenticateHiddenRole(secret) {
+            if (String(secret || '').trim() !== 'fylcq') {
+                return { ok: false, message: '隐藏身份口令错误。' };
+            }
+
+            writeSession(buildSessionPayload('xiaobao'));
+            emitChange();
+            return {
+                ok: true,
+                role: 'xiaobao',
+                roleLabel: ROLE_META.xiaobao.label,
+                isAdmin: true
             };
         },
 
@@ -110,7 +135,7 @@
 
         isAuthenticated() {
             const state = clearExpiredAuth();
-            return !!(state && state.role === 'admin');
+            return !!(state && PRIVILEGED_ROLES.includes(state.role));
         },
 
         hasRole(roles) {
@@ -119,15 +144,15 @@
         },
 
         canEditContent() {
-            return this.hasRole('admin');
+            return this.hasRole(PRIVILEGED_ROLES);
         },
 
         canViewFamilyMessages() {
-            return this.hasRole(['dad', 'mom', 'admin']);
+            return this.hasRole(FAMILY_VIEW_ROLES);
         },
 
         canAccessSecretBoardWithoutPassword() {
-            return this.hasRole('admin');
+            return this.hasRole(PRIVILEGED_ROLES);
         },
 
         getState() {
@@ -144,7 +169,7 @@
 
             return {
                 loggedIn: true,
-                authenticated: state.role === 'admin',
+                authenticated: PRIVILEGED_ROLES.includes(state.role),
                 role: state.role,
                 roleLabel: state.roleLabel || ROLE_META[state.role]?.label || null,
                 expiresAt: state.expiresAt
@@ -170,7 +195,8 @@
             roles: Object.fromEntries(
                 Object.entries(ROLE_META).map(([key, value]) => [key, {
                     label: value.label,
-                    passwordRequired: value.passwordRequired
+                    passwordRequired: value.passwordRequired,
+                    hidden: !!value.hidden
                 }])
             )
         }

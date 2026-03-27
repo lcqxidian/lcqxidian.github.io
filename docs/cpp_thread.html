@@ -6,7 +6,7 @@
     <title>C++多线程现代开发指南 | 交互式知识舱</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="../admin_auth.js?v=20260325b"></script>
+    <script src="../admin_auth.js?v=20260327a"></script>
     
     <style>
         :root {
@@ -112,47 +112,139 @@
             border-color: var(--accent);
         }
 
-        .customizer-card {
+        .customizer-shell {
+            position: relative;
+            overflow: hidden;
             background:
-                radial-gradient(circle at top right, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.98)),
-                linear-gradient(135deg, rgba(248, 250, 252, 0.94) 0%, rgba(255, 255, 255, 1) 100%);
+                radial-gradient(circle at top right, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.92) 40%, rgba(248, 250, 252, 0.96) 100%);
+        }
+
+        .customizer-shell::before {
+            content: "";
+            position: absolute;
+            inset: -30% auto auto 72%;
+            width: 14rem;
+            height: 14rem;
+            border-radius: 999px;
+            background: radial-gradient(circle, var(--accent-hover), transparent 68%);
+            opacity: 0.28;
+            pointer-events: none;
+        }
+
+        .preview-panel {
+            position: relative;
+            overflow: hidden;
+            background:
+                linear-gradient(135deg, rgba(28, 25, 23, 0.96), rgba(41, 37, 36, 0.92)),
+                linear-gradient(135deg, var(--accent-soft), white);
+        }
+
+        .preview-panel::after {
+            content: "";
+            position: absolute;
+            inset: auto -15% -35% auto;
+            width: 11rem;
+            height: 11rem;
+            border-radius: 999px;
+            background: radial-gradient(circle, var(--accent-hover), transparent 70%);
+            opacity: 0.35;
+            pointer-events: none;
         }
 
         .theme-swatch {
-            width: 2.4rem;
-            height: 2.4rem;
-            border-radius: 999px;
-            border: 2px solid rgba(255, 255, 255, 0.85);
-            box-shadow: 0 0 0 1px rgba(214, 211, 209, 0.95);
-            transition: transform 0.18s ease, box-shadow 0.18s ease;
+            border-radius: 1rem;
+            border: 1px solid #e7e5e4;
+            background: rgba(255, 255, 255, 0.94);
+            padding: 0.85rem;
+            text-align: left;
+            transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
         }
 
         .theme-swatch:hover {
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            border-color: var(--accent-hover);
+            box-shadow: 0 12px 24px -22px var(--accent-shadow);
         }
 
         .theme-swatch.active {
-            transform: scale(1.08);
-            box-shadow: 0 0 0 2px white, 0 0 0 5px var(--accent);
+            border-color: var(--accent);
+            background: linear-gradient(135deg, white, var(--accent-soft));
+            box-shadow: 0 18px 30px -24px var(--accent-shadow);
+        }
+
+        .theme-dot {
+            width: 2.1rem;
+            height: 2.1rem;
+            border-radius: 999px;
+            border: 2px solid rgba(255, 255, 255, 0.86);
+            box-shadow: 0 0 0 1px rgba(214, 211, 209, 0.95);
         }
 
         .emoji-chip {
-            transition: all 0.18s ease;
-        }
-
-        .emoji-chip.active {
-            background-color: var(--accent-soft);
-            border-color: var(--accent-hover);
-            color: var(--accent-text);
+            width: 3.25rem;
+            height: 3.25rem;
+            border-radius: 1rem;
+            border: 1px solid #e7e5e4;
+            background: rgba(255, 255, 255, 0.94);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
         }
 
         .emoji-chip:hover {
+            transform: translateY(-2px);
             border-color: var(--accent-hover);
+            box-shadow: 0 12px 22px -18px var(--accent-shadow);
+        }
+
+        .emoji-chip.active {
+            background: linear-gradient(135deg, white, var(--accent-soft));
+            border-color: var(--accent);
+            color: var(--accent-text);
+            box-shadow: 0 16px 26px -20px var(--accent-shadow);
+        }
+
+        .accent-mini {
+            border-color: rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .accent-outline-btn {
+            border-color: var(--accent);
+            color: var(--accent-text);
+            background: rgba(255, 255, 255, 0.82);
+            transition: background-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .accent-outline-btn:hover {
+            background-color: var(--accent-soft);
+            transform: translateY(-1px);
+            box-shadow: 0 14px 24px -24px var(--accent-shadow);
+        }
+
+        .accent-solid-btn {
+            background: linear-gradient(135deg, var(--accent-button), var(--accent-button-hover));
+            color: white;
+            box-shadow: 0 16px 28px -22px var(--accent-shadow);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+        }
+
+        .accent-solid-btn:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.02);
+            box-shadow: 0 18px 30px -22px var(--accent-shadow);
         }
 
         #open-modal-btn:hover,
         #open-modal-btn-label:hover {
             color: var(--accent-text);
+        }
+
+        #open-modal-btn:hover {
+            border-color: var(--accent-hover);
         }
 
         #open-modal-btn-mobile,
@@ -213,7 +305,7 @@
 
         <!-- 底部全局添加按钮 -->
         <div class="p-4 border-t border-stone-100 mt-auto bg-stone-50/50 hidden md:block">
-            <button id="open-modal-btn" class="w-full bg-white border border-stone-200 hover:border-blue-300 hover:text-blue-600 text-stone-600 text-sm font-bold py-2.5 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
+            <button id="open-modal-btn" class="w-full bg-white border border-stone-200 text-stone-600 text-sm font-bold py-2.5 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
                 <span>➕</span> <span id="open-modal-btn-label">补充新章节/卡片</span>
             </button>
             <p id="admin-edit-hint" class="text-xs text-stone-400 mt-3 leading-relaxed">当前为只读模式，请先回首页右上角完成用户登录，并选择管理员角色。</p>
@@ -228,36 +320,120 @@
     <main id="main-content-container" class="flex-1 overflow-y-auto relative scroll-smooth bg-[#faf9f6]">
         <div class="max-w-5xl mx-auto p-6 md:p-12">
 
-            <section class="customizer-card rounded-3xl border border-stone-200 shadow-sm p-6 mb-8">
-                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                    <div class="max-w-2xl">
-                        <p class="text-[11px] uppercase tracking-[0.24em] text-stone-400 mb-2">Fresh Mode</p>
-                        <h2 class="text-2xl font-bold text-stone-800 mb-2">给这页加一点“新鲜感”</h2>
-                        <p class="text-sm text-stone-600 leading-relaxed">试试切换界面主色、标题 emoji，或者来一键随机焕肤。你的选择会保存在本地，下次打开页面会自动恢复。</p>
-                    </div>
-                    <button id="cpp-randomize-btn" class="shrink-0 px-4 py-2.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 font-medium transition-colors">
-                        随机焕肤
-                    </button>
-                </div>
+            <section class="customizer-shell rounded-[2rem] border border-stone-200 shadow-sm p-4 md:p-6 mb-8">
+                <div class="grid gap-5 xl:grid-cols-[1.04fr,1.18fr]">
+                    <div class="preview-panel rounded-[1.7rem] border border-white/10 p-6 md:p-7 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="max-w-md">
+                                <p class="text-[11px] uppercase tracking-[0.3em] text-white/45">Style Console</p>
+                                <h2 class="text-2xl md:text-[2rem] font-bold leading-tight mt-3">把这页调成你更想久看的样子</h2>
+                                <p id="cpp-theme-caption" class="text-sm md:text-[15px] text-white/72 leading-relaxed mt-3">
+                                    冷静、技术感更强，适合专注阅读。
+                                </p>
+                            </div>
+                            <div class="shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-[1.35rem] border border-white/10 bg-white/8 flex items-center justify-center shadow-lg">
+                                <span id="cpp-preview-emoji" class="text-3xl md:text-4xl">⚙️</span>
+                            </div>
+                        </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                    <div>
-                        <p class="text-sm font-semibold text-stone-700 mb-3">界面颜色</p>
-                        <div class="flex flex-wrap gap-3">
-                            <button type="button" class="theme-swatch active" data-theme-option="blue" title="经典蓝" style="background: linear-gradient(135deg, #60a5fa, #2563eb);"></button>
-                            <button type="button" class="theme-swatch" data-theme-option="mint" title="薄荷青" style="background: linear-gradient(135deg, #5eead4, #0f766e);"></button>
-                            <button type="button" class="theme-swatch" data-theme-option="sunset" title="日落橙" style="background: linear-gradient(135deg, #fdba74, #ea580c);"></button>
-                            <button type="button" class="theme-swatch" data-theme-option="rose" title="玫瑰红" style="background: linear-gradient(135deg, #fda4af, #e11d48);"></button>
+                        <div class="grid sm:grid-cols-3 gap-3 mt-6">
+                            <div class="rounded-2xl border border-white/10 bg-white/6 px-4 py-4 backdrop-blur-sm">
+                                <p class="text-[11px] uppercase tracking-[0.22em] text-white/40">Current Theme</p>
+                                <p id="cpp-theme-name" class="text-lg font-semibold mt-2">经典蓝</p>
+                            </div>
+                            <div class="rounded-2xl border border-white/10 bg-white/6 px-4 py-4 backdrop-blur-sm">
+                                <p class="text-[11px] uppercase tracking-[0.22em] text-white/40">Mode</p>
+                                <p id="cpp-theme-mood" class="text-lg font-semibold mt-2">专注阅读</p>
+                            </div>
+                            <div class="rounded-2xl border border-white/10 bg-white/6 px-4 py-4 backdrop-blur-sm">
+                                <p class="text-[11px] uppercase tracking-[0.22em] text-white/40">Storage</p>
+                                <p class="text-lg font-semibold mt-2">自动记忆</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 flex flex-wrap gap-2">
+                            <span class="accent-mini inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-medium">导航高亮</span>
+                            <span class="accent-mini inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-medium">标签切换</span>
+                            <span class="accent-mini inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-medium">交互按钮</span>
+                            <span class="accent-mini inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-medium">本地持久化</span>
                         </div>
                     </div>
-                    <div>
-                        <p class="text-sm font-semibold text-stone-700 mb-3">标题 Emoji</p>
-                        <div class="flex flex-wrap gap-2">
-                            <button type="button" class="emoji-chip active px-3 py-2 rounded-xl border border-stone-200 bg-white text-lg" data-emoji-option="⚙️">⚙️</button>
-                            <button type="button" class="emoji-chip px-3 py-2 rounded-xl border border-stone-200 bg-white text-lg" data-emoji-option="🧵">🧵</button>
-                            <button type="button" class="emoji-chip px-3 py-2 rounded-xl border border-stone-200 bg-white text-lg" data-emoji-option="🧠">🧠</button>
-                            <button type="button" class="emoji-chip px-3 py-2 rounded-xl border border-stone-200 bg-white text-lg" data-emoji-option="🚀">🚀</button>
-                            <button type="button" class="emoji-chip px-3 py-2 rounded-xl border border-stone-200 bg-white text-lg" data-emoji-option="🛠️">🛠️</button>
+
+                    <div class="grid gap-4">
+                        <div class="rounded-[1.55rem] border border-stone-200 bg-white/88 p-5 shadow-sm backdrop-blur-sm">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                <div>
+                                    <p class="text-[11px] uppercase tracking-[0.24em] text-stone-400">Palette</p>
+                                    <h3 class="text-lg font-bold text-stone-800 mt-1">挑一个阅读氛围</h3>
+                                </div>
+                                <span class="text-xs text-stone-400">点一下立即生效</span>
+                            </div>
+
+                            <div class="grid sm:grid-cols-2 gap-3 mt-4">
+                                <button type="button" class="theme-swatch active" data-theme-option="blue">
+                                    <div class="flex items-center gap-3">
+                                        <span class="theme-dot" style="background: linear-gradient(135deg, #60a5fa, #2563eb);"></span>
+                                        <div>
+                                            <p class="font-semibold text-stone-800">经典蓝</p>
+                                            <p class="text-xs text-stone-500 mt-1">偏技术感，适合静下来读结构和代码。</p>
+                                        </div>
+                                    </div>
+                                </button>
+                                <button type="button" class="theme-swatch" data-theme-option="mint">
+                                    <div class="flex items-center gap-3">
+                                        <span class="theme-dot" style="background: linear-gradient(135deg, #5eead4, #0f766e);"></span>
+                                        <div>
+                                            <p class="font-semibold text-stone-800">薄荷青</p>
+                                            <p class="text-xs text-stone-500 mt-1">更轻盈，长时间浏览也不容易腻。</p>
+                                        </div>
+                                    </div>
+                                </button>
+                                <button type="button" class="theme-swatch" data-theme-option="sunset">
+                                    <div class="flex items-center gap-3">
+                                        <span class="theme-dot" style="background: linear-gradient(135deg, #fdba74, #ea580c);"></span>
+                                        <div>
+                                            <p class="font-semibold text-stone-800">日落橙</p>
+                                            <p class="text-xs text-stone-500 mt-1">更有活力，适合拿来刷重点和复习。</p>
+                                        </div>
+                                    </div>
+                                </button>
+                                <button type="button" class="theme-swatch" data-theme-option="rose">
+                                    <div class="flex items-center gap-3">
+                                        <span class="theme-dot" style="background: linear-gradient(135deg, #fda4af, #e11d48);"></span>
+                                        <div>
+                                            <p class="font-semibold text-stone-800">玫瑰红</p>
+                                            <p class="text-xs text-stone-500 mt-1">更柔和一些，让学习页没有那么硬。</p>
+                                        </div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="rounded-[1.55rem] border border-stone-200 bg-white/88 p-5 shadow-sm backdrop-blur-sm">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                <div>
+                                    <p class="text-[11px] uppercase tracking-[0.24em] text-stone-400">Emoji</p>
+                                    <h3 class="text-lg font-bold text-stone-800 mt-1">给页面一个表情标签</h3>
+                                </div>
+                                <span class="text-xs text-stone-400">标题区会同步更新</span>
+                            </div>
+
+                            <div class="flex flex-wrap gap-3 mt-4">
+                                <button type="button" class="emoji-chip active" data-emoji-option="⚙️" title="机械感">⚙️</button>
+                                <button type="button" class="emoji-chip" data-emoji-option="🧵" title="线程感">🧵</button>
+                                <button type="button" class="emoji-chip" data-emoji-option="🧠" title="思考感">🧠</button>
+                                <button type="button" class="emoji-chip" data-emoji-option="🚀" title="冲刺感">🚀</button>
+                                <button type="button" class="emoji-chip" data-emoji-option="🛠️" title="工程感">🛠️</button>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <button id="cpp-randomize-btn" type="button" class="accent-solid-btn flex-1 rounded-2xl px-5 py-3 text-sm font-semibold">
+                                随机焕一个新感觉
+                            </button>
+                            <button id="cpp-reset-style-btn" type="button" class="accent-outline-btn flex-1 rounded-2xl border px-5 py-3 text-sm font-semibold">
+                                回到默认搭配
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -583,13 +759,40 @@ int main() {
 
     <!-- 原有 UI 脚本与图表逻辑 (保持不变) -->
     <script>
-        const CPP_UI_PREFS_KEY = 'cpp_thread_ui_prefs_v1';
+        const CPP_UI_PREFS_KEY = 'cpp_thread_ui_prefs_v2';
         const CPP_THEME_OPTIONS = ['blue', 'mint', 'sunset', 'rose'];
         const CPP_EMOJI_OPTIONS = ['⚙️', '🧵', '🧠', '🚀', '🛠️'];
+        const CPP_THEME_META = {
+            blue: {
+                name: '经典蓝',
+                caption: '冷静、技术感更强，适合专注阅读。',
+                mood: '专注阅读'
+            },
+            mint: {
+                name: '薄荷青',
+                caption: '更轻盈，适合长时间浏览内容，眼睛压力也更小一点。',
+                mood: '轻盈耐看'
+            },
+            sunset: {
+                name: '日落橙',
+                caption: '节奏更活，适合刷重点、做复习或快速过一遍知识点。',
+                mood: '高能复习'
+            },
+            rose: {
+                name: '玫瑰红',
+                caption: '柔和一点，但不会丢掉层次感，适合慢慢看细节。',
+                mood: '柔和细读'
+            }
+        };
         const cppPageEmojiEl = document.getElementById('cpp-page-emoji');
+        const cppPreviewEmojiEl = document.getElementById('cpp-preview-emoji');
+        const cppThemeNameEl = document.getElementById('cpp-theme-name');
+        const cppThemeCaptionEl = document.getElementById('cpp-theme-caption');
+        const cppThemeMoodEl = document.getElementById('cpp-theme-mood');
         const themeSwatches = Array.from(document.querySelectorAll('[data-theme-option]'));
         const emojiChips = Array.from(document.querySelectorAll('[data-emoji-option]'));
         const randomizeBtn = document.getElementById('cpp-randomize-btn');
+        const resetStyleBtn = document.getElementById('cpp-reset-style-btn');
 
         const readCppUIPrefs = () => {
             try {
@@ -606,9 +809,14 @@ int main() {
         const applyCppUIPrefs = (prefs = {}) => {
             const theme = CPP_THEME_OPTIONS.includes(prefs.theme) ? prefs.theme : 'blue';
             const emoji = CPP_EMOJI_OPTIONS.includes(prefs.emoji) ? prefs.emoji : '⚙️';
+            const meta = CPP_THEME_META[theme];
 
             document.body.setAttribute('data-theme', theme);
             cppPageEmojiEl.textContent = emoji;
+            cppPreviewEmojiEl.textContent = emoji;
+            cppThemeNameEl.textContent = meta.name;
+            cppThemeCaptionEl.textContent = meta.caption;
+            cppThemeMoodEl.textContent = meta.mood;
 
             themeSwatches.forEach((btn) => {
                 btn.classList.toggle('active', btn.dataset.themeOption === theme);
@@ -641,6 +849,12 @@ int main() {
             const randomTheme = CPP_THEME_OPTIONS[Math.floor(Math.random() * CPP_THEME_OPTIONS.length)];
             const randomEmoji = CPP_EMOJI_OPTIONS[Math.floor(Math.random() * CPP_EMOJI_OPTIONS.length)];
             updateCppUIPrefs({ theme: randomTheme, emoji: randomEmoji });
+        });
+
+        resetStyleBtn.addEventListener('click', () => {
+            const defaultPrefs = { theme: 'blue', emoji: '⚙️' };
+            writeCppUIPrefs(defaultPrefs);
+            applyCppUIPrefs(defaultPrefs);
         });
 
         applyCppUIPrefs(readCppUIPrefs());

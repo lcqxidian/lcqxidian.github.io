@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>公开留言板 | LCQ.Space</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="admin_auth.js?v=20260325b"></script>
+    <script src="admin_auth.js?v=20260327a"></script>
     <style>
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
@@ -112,6 +112,9 @@
             if (state.role === 'admin') {
                 return { role: 'admin', roleLabel: '管理员', canViewFamilyMessages: true, defaultAuthor: '管理员' };
             }
+            if (state.role === 'xiaobao') {
+                return { role: 'xiaobao', roleLabel: '方小宝', canViewFamilyMessages: true, defaultAuthor: '方小宝' };
+            }
             if (state.role === 'friend') {
                 return { role: 'friend', roleLabel: 'friend', canViewFamilyMessages: false, defaultAuthor: 'friend' };
             }
@@ -121,7 +124,7 @@
         const applyPublicRoleUI = () => {
             const roleState = getCurrentRoleState();
             publicRoleBadge.textContent = `当前身份：${roleState.roleLabel}`;
-            publicRoleBadge.className = roleState.role === 'admin'
+            publicRoleBadge.className = roleState.role === 'admin' || roleState.role === 'xiaobao'
                 ? 'px-3 py-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-xs font-semibold text-emerald-300'
                 : roleState.role === 'dad' || roleState.role === 'mom'
                     ? 'px-3 py-2 rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-xs font-semibold text-cyan-300'
@@ -139,6 +142,8 @@
 
             publicFormHint.textContent = roleState.role === 'admin'
                 ? '当前以管理员身份留言。'
+                : roleState.role === 'xiaobao'
+                    ? '当前以方小宝身份留言。'
                 : roleState.role === 'dad' || roleState.role === 'mom'
                     ? `当前以${roleState.roleLabel}身份留言。`
                     : roleState.role === 'friend'
