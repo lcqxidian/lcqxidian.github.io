@@ -140,11 +140,11 @@
             }
 
             .lcq-ai-header {
-                padding: 18px 18px 14px;
+                padding: 18px;
                 border-bottom: 1px solid var(--lcq-ai-panel-border);
                 display: flex;
                 gap: 12px;
-                align-items: flex-start;
+                align-items: center;
                 justify-content: space-between;
             }
 
@@ -161,7 +161,7 @@
             }
 
             .lcq-ai-title {
-                font-size: 20px;
+                font-size: 18px;
                 font-weight: 800;
                 line-height: 1.2;
                 margin: 0;
@@ -280,37 +280,10 @@
             .lcq-ai-history-wrap {
                 flex: 1;
                 min-height: 0;
-                padding: 16px 18px 0;
+                padding: 18px 18px 0;
                 display: flex;
                 flex-direction: column;
-                gap: 10px;
-            }
-
-            .lcq-ai-history-head {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
                 gap: 12px;
-            }
-
-            .lcq-ai-history-title {
-                margin: 0;
-                font-size: 14px;
-                font-weight: 800;
-            }
-
-            .lcq-ai-refresh-btn {
-                border: 0;
-                background: transparent;
-                color: var(--lcq-ai-panel-muted);
-                cursor: pointer;
-                font-size: 12px;
-                font-weight: 700;
-                padding: 0;
-            }
-
-            .lcq-ai-refresh-btn:hover {
-                color: var(--lcq-ai-accent-text);
             }
 
             .lcq-ai-history-list {
@@ -319,7 +292,7 @@
                 overflow-y: auto;
                 display: flex;
                 flex-direction: column;
-                gap: 12px;
+                gap: 14px;
                 padding-bottom: 12px;
             }
 
@@ -334,38 +307,25 @@
             }
 
             .lcq-ai-entry {
-                border: 1px solid var(--lcq-ai-panel-border);
-                background: var(--lcq-ai-card-bg);
                 border-radius: 18px;
-                padding: 14px;
+                padding: 2px 0 0;
                 display: grid;
-                gap: 10px;
+                gap: 8px;
             }
 
             .lcq-ai-entry.pending {
-                border-color: var(--lcq-ai-accent);
-                box-shadow: 0 0 0 1px var(--lcq-ai-accent-soft) inset;
+                opacity: 0.92;
             }
 
-            .lcq-ai-entry-meta {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 8px;
-                align-items: center;
+            .lcq-ai-entry-time {
                 font-size: 11px;
                 color: var(--lcq-ai-panel-muted);
+                text-align: right;
             }
 
             .lcq-ai-entry-block {
                 display: grid;
-                gap: 6px;
-            }
-
-            .lcq-ai-entry-label {
-                font-size: 11px;
-                letter-spacing: 0.12em;
-                text-transform: uppercase;
-                color: var(--lcq-ai-panel-muted);
+                gap: 0;
             }
 
             .lcq-ai-entry-content {
@@ -373,13 +333,25 @@
                 line-height: 1.65;
                 white-space: pre-wrap;
                 word-break: break-word;
+                border-radius: 18px;
+                padding: 12px 14px;
+            }
+
+            .lcq-ai-entry-content.user {
+                background: var(--lcq-ai-accent-soft);
+                color: var(--lcq-ai-panel-text);
+            }
+
+            .lcq-ai-entry-content.assistant {
+                background: var(--lcq-ai-card-bg);
+                border: 1px solid var(--lcq-ai-panel-border);
             }
 
             .lcq-ai-footer {
                 border-top: 1px solid var(--lcq-ai-panel-border);
                 padding: 14px 18px 18px;
                 display: grid;
-                gap: 10px;
+                gap: 12px;
                 background: linear-gradient(180deg, rgba(255, 255, 255, 0), var(--lcq-ai-panel-bg) 24%);
             }
 
@@ -405,15 +377,7 @@
 
             .lcq-ai-footer-row {
                 display: flex;
-                justify-content: space-between;
-                align-items: center;
-                gap: 12px;
-            }
-
-            .lcq-ai-helper {
-                font-size: 12px;
-                line-height: 1.5;
-                color: var(--lcq-ai-panel-muted);
+                justify-content: flex-end;
             }
 
             .lcq-ai-send-btn {
@@ -434,8 +398,7 @@
             }
 
             .lcq-ai-send-btn:disabled,
-            .lcq-ai-action-btn:disabled,
-            .lcq-ai-refresh-btn:disabled {
+            .lcq-ai-action-btn:disabled {
                 opacity: 0.64;
                 cursor: not-allowed;
                 transform: none;
@@ -619,45 +582,18 @@
             <aside class="lcq-ai-panel" aria-label="统一 AI 学习助手">
                 <div class="lcq-ai-header">
                     <div class="lcq-ai-title-wrap">
-                        <div class="lcq-ai-kicker">Unified AI Assistant</div>
                         <h2 class="lcq-ai-title">统一 AI 学习助手</h2>
-                        <p class="lcq-ai-desc">只读取当前网站的公开学习数据，不读取私密留言、隐藏身份或管理员专属内容。</p>
                     </div>
                     <button type="button" class="lcq-ai-close" aria-label="关闭 AI 助手">✕</button>
                 </div>
 
-                <div class="lcq-ai-meta">
-                    <div class="lcq-ai-chip-row">
-                        <span class="lcq-ai-chip accent" data-role="page-chip">${escapeHtml(getPageLabel(config.pageType))}</span>
-                        <span class="lcq-ai-chip" data-role="service-chip">云端状态检测中</span>
-                    </div>
-
-                    <div class="lcq-ai-context-card">
-                        <div class="lcq-ai-section-label">当前上下文</div>
-                        <div class="lcq-ai-context-title" data-role="context-title">正在读取页面上下文...</div>
-                        <div class="lcq-ai-context-body" data-role="context-body">打开面板时会自动带上当前页面的公开上下文。</div>
-                    </div>
-
-                    <div class="lcq-ai-status-card">
-                        <div class="lcq-ai-section-label">服务端 AI</div>
-                        <div class="lcq-ai-status-body" data-role="status-body">正在检查 Edge Function 和统一配置...</div>
-                    </div>
-                </div>
-
-                <div class="lcq-ai-quick-actions" data-role="quick-actions"></div>
-
                 <div class="lcq-ai-history-wrap">
-                    <div class="lcq-ai-history-head">
-                        <h3 class="lcq-ai-history-title">最近 10 轮对话</h3>
-                        <button type="button" class="lcq-ai-refresh-btn" data-role="refresh-btn">刷新历史</button>
-                    </div>
                     <div class="lcq-ai-history-list" data-role="history-list"></div>
                 </div>
 
                 <div class="lcq-ai-footer">
-                    <textarea class="lcq-ai-input" data-role="input" placeholder="直接提问，或先点上方快捷动作。"></textarea>
+                    <textarea class="lcq-ai-input" data-role="input" placeholder="输入你的问题"></textarea>
                     <div class="lcq-ai-footer-row">
-                        <div class="lcq-ai-helper" data-role="helper-text">问题会统一记录到 Supabase，全站仅保留最近 10 轮。</div>
                         <button type="button" class="lcq-ai-send-btn" data-role="send-btn">发送</button>
                     </div>
                 </div>
@@ -671,16 +607,8 @@
             fab: shell.querySelector('.lcq-ai-fab'),
             overlay: shell.querySelector('.lcq-ai-overlay'),
             close: shell.querySelector('.lcq-ai-close'),
-            pageChip: shell.querySelector('[data-role="page-chip"]'),
-            serviceChip: shell.querySelector('[data-role="service-chip"]'),
-            contextTitle: shell.querySelector('[data-role="context-title"]'),
-            contextBody: shell.querySelector('[data-role="context-body"]'),
-            statusBody: shell.querySelector('[data-role="status-body"]'),
-            quickActions: shell.querySelector('[data-role="quick-actions"]'),
             historyList: shell.querySelector('[data-role="history-list"]'),
-            refreshBtn: shell.querySelector('[data-role="refresh-btn"]'),
             input: shell.querySelector('[data-role="input"]'),
-            helperText: shell.querySelector('[data-role="helper-text"]'),
             sendBtn: shell.querySelector('[data-role="send-btn"]')
         };
     };
@@ -704,26 +632,18 @@
             const wrapper = document.createElement('article');
             wrapper.className = `lcq-ai-entry ${entry.pending ? 'pending' : ''}`;
 
-            const pageLabel = getPageLabel(entry.page_type);
-            const contextTitle = truncate(entry.context_title || '未命名上下文', 56);
-            const metaHtml = [
-                `<span class="lcq-ai-chip">${escapeHtml(pageLabel)}</span>`,
-                contextTitle ? `<span class="lcq-ai-chip">${escapeHtml(contextTitle)}</span>` : '',
-                entry.created_at ? `<span>${escapeHtml(formatTime(entry.created_at))}</span>` : '',
-                entry.actor_role && entry.actor_role !== 'guest' ? `<span>角色：${escapeHtml(entry.actor_role)}</span>` : '',
-                entry.pending ? `<span style="color: var(--lcq-ai-accent-text);">处理中</span>` : ''
-            ].filter(Boolean).join('');
+            const timeLabel = entry.pending
+                ? '正在回复...'
+                : (entry.created_at ? formatTime(entry.created_at) : '');
 
             wrapper.innerHTML = `
-                <div class="lcq-ai-entry-meta">${metaHtml}</div>
                 <div class="lcq-ai-entry-block">
-                    <div class="lcq-ai-entry-label">问题</div>
-                    <div class="lcq-ai-entry-content">${escapeHtml(entry.user_question || '')}</div>
+                    <div class="lcq-ai-entry-content user">${escapeHtml(entry.user_question || '')}</div>
                 </div>
                 <div class="lcq-ai-entry-block">
-                    <div class="lcq-ai-entry-label">AI 回复</div>
-                    <div class="lcq-ai-entry-content">${escapeHtml(entry.ai_answer || '')}</div>
+                    <div class="lcq-ai-entry-content assistant">${escapeHtml(entry.ai_answer || '')}</div>
                 </div>
+                ${timeLabel ? `<div class="lcq-ai-entry-time">${escapeHtml(timeLabel)}</div>` : ''}
             `;
 
             refs.historyList.appendChild(wrapper);
@@ -731,32 +651,14 @@
     };
 
     const renderContextPreview = (actionMode) => {
-        const { config, refs } = state;
-        if (!config || !refs) return;
-
-        const context = buildContext(config, actionMode || 'general');
-        refs.contextTitle.textContent = context.title || '当前页面';
-        refs.contextBody.textContent = context.content
-            ? truncate(context.content, 240)
-            : '当前动作没有附加额外正文，会按页面公开结构和云端公开学习数据回答。';
+        if (!state.config) return;
+        buildContext(state.config, actionMode || 'general');
     };
 
     const renderServiceStatus = () => {
-        const { refs, serviceStatus, config } = state;
-        if (!refs) return;
+        const { serviceStatus, config } = state;
 
-        if (!serviceStatus) {
-            refs.serviceChip.textContent = '云端状态待检测';
-            refs.statusBody.textContent = '正在检查统一 AI 服务状态。';
-            return;
-        }
-
-        const configured = !!serviceStatus.configured;
-        refs.serviceChip.textContent = configured ? '统一云端 AI 已就绪' : '服务端 AI 未配置';
-        refs.serviceChip.className = configured ? 'lcq-ai-chip accent' : 'lcq-ai-chip';
-        refs.statusBody.textContent = configured
-            ? `当前通过 Supabase Edge Function 代理调用 ${serviceStatus.provider || 'DeepSeek'}，模型为 ${serviceStatus.model || '未设置'}。`
-            : '当前 Edge Function 还没有完成服务端密钥配置。前端不会保存 API key，也不会回退到浏览器本地密钥模式。';
+        if (!serviceStatus) return;
 
         if (typeof config.onServiceStatusChange === 'function') {
             config.onServiceStatusChange(serviceStatus);
@@ -772,12 +674,8 @@
         if (!refs) return;
 
         refs.sendBtn.disabled = state.sending;
-        refs.refreshBtn.disabled = state.sending;
         refs.fab.disabled = false;
         refs.sendBtn.textContent = state.sending ? '发送中...' : '发送';
-        refs.helperText.textContent = state.sending
-            ? 'AI 正在结合公开数据整理回复，请稍等。'
-            : '问题会统一记录到 Supabase，全站仅保留最近 10 轮。';
     };
 
     const loadHistory = async () => {
@@ -817,7 +715,6 @@
         const resolvedActionMode = actionMode || 'general';
 
         if (!resolvedQuestion) {
-            state.refs.helperText.textContent = '先输入问题，或点一个快捷动作。';
             state.refs.input.focus();
             return;
         }
@@ -868,9 +765,17 @@
                 history: state.history
             });
         } catch (error) {
-            state.history = previousHistory;
+            state.history = [{
+                page_type: state.config.pageType,
+                page_key: resolvePageKey(state.config),
+                actor_role: getActorRole(),
+                context_scope: context.scope,
+                context_title: context.title,
+                user_question: resolvedQuestion,
+                ai_answer: error.message || '当前无法连接统一 AI 服务，请稍后再试。',
+                created_at: new Date().toISOString()
+            }].concat(previousHistory).slice(0, 10);
             renderHistory();
-            state.refs.helperText.textContent = error.message || 'AI 请求失败。';
         } finally {
             state.sending = false;
             updateSendState();
@@ -879,30 +784,7 @@
     };
 
     const renderQuickActions = () => {
-        const { config, refs } = state;
-        if (!config || !refs) return;
-
-        const actions = typeof config.getQuickActions === 'function'
-            ? config.getQuickActions()
-            : defaultQuickActions(config.pageType);
-
-        refs.quickActions.innerHTML = '';
-
-        actions.forEach((action) => {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'lcq-ai-action-btn';
-            button.textContent = action.label;
-            button.addEventListener('click', async () => {
-                await openPanel();
-                renderContextPreview(action.actionMode || 'general');
-                await sendQuestion({
-                    question: action.prompt,
-                    actionMode: action.actionMode || 'general'
-                });
-            });
-            refs.quickActions.appendChild(button);
-        });
+        return defaultQuickActions(state.config?.pageType);
     };
 
     const closePanel = () => {
@@ -943,7 +825,6 @@
         refs.fab.addEventListener('click', () => openPanel());
         refs.close.addEventListener('click', closePanel);
         refs.overlay.addEventListener('click', closePanel);
-        refs.refreshBtn.addEventListener('click', () => loadHistory().catch(() => undefined));
         refs.sendBtn.addEventListener('click', () => sendQuestion({ actionMode: 'general' }));
         refs.input.addEventListener('keydown', (event) => {
             if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
@@ -975,7 +856,6 @@
         state.sending = false;
         state.refs = createShell(state.config);
 
-        renderQuickActions();
         renderContextPreview('general');
         renderHistory();
         renderServiceStatus();
