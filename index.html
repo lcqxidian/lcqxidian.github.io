@@ -397,12 +397,13 @@
         const sponsorUA = navigator.userAgent || '';
         const sponsorIsWeChatBrowser = /MicroMessenger/i.test(sponsorUA);
         const sponsorIsIOS = /iPad|iPhone|iPod/.test(sponsorUA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-        const sponsorIsSafari = /Safari/i.test(sponsorUA) && !/CriOS|FxiOS|EdgiOS|OPiOS|DuckDuckGo|MicroMessenger/i.test(sponsorUA);
+        const sponsorIsSafari = /Safari/i.test(sponsorUA) && !/Chrome|Chromium|CriOS|FxiOS|Firefox|Edg|EdgiOS|OPR|OPiOS|DuckDuckGo|MicroMessenger/i.test(sponsorUA);
+        const sponsorShouldAvoidDirectScheme = sponsorIsSafari && !sponsorIsWeChatBrowser;
 
         const setSponsorModalMode = (mode) => {
-            if (mode === 'manual-ios-safari') {
-                sponsorStatusNote.textContent = '当前是 iPhone / iPad 的 Safari，系统不会直接打开个人微信收款码链接，所以这里改为安全模式：你可以直接扫码充电。';
-                sponsorHintNote.textContent = '如果你一定想走微信内支付跳转，需要接入微信支付商户 H5 支付；个人收款码在 Safari 里通常不能稳定一键直达。';
+            if (mode === 'manual-safari') {
+                sponsorStatusNote.textContent = '当前浏览器是 Safari，系统通常不会直接打开个人微信收款码链接，所以这里改为安全模式：你可以直接扫码充电。';
+                sponsorHintNote.textContent = '如果你想在 Safari 里稳定一键拉起微信支付，需要接入微信支付商户 H5 支付；个人收款码方案通常做不到。';
                 sponsorRetryBtnLabel.textContent = '继续尝试打开微信';
                 return;
             }
@@ -436,8 +437,8 @@
 
         const attemptOpenWeChatPay = () => {
             clearSponsorFallback();
-            if (sponsorIsIOS && sponsorIsSafari && !sponsorIsWeChatBrowser) {
-                setSponsorModalMode('manual-ios-safari');
+            if (sponsorShouldAvoidDirectScheme) {
+                setSponsorModalMode('manual-safari');
                 openSponsorModal();
                 return;
             }
