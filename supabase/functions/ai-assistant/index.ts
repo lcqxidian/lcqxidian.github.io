@@ -397,11 +397,17 @@ const buildUserPrompt = ({
       contextBlock,
       datasetBlock,
       `用户需求：${question}`,
-      "请把当前周学习内容拆成周一到周日的真实每日安排。",
+      "请根据当前周公开内容，一次性补全 Weekly Plans 的四个章节：本周概览、周目标拆解、每日计划、学习资料区。",
+      "本次不要生成本周复盘区内容，也不要填写 AI 周总结区。",
       "只返回 JSON，不要添加解释说明。",
       "JSON 结构必须严格为：",
-      '{"daily_plan":{"monday":{"title":"","tasks":["",""],"note":""},"tuesday":{"title":"","tasks":["",""],"note":""},"wednesday":{"title":"","tasks":["",""],"note":""},"thursday":{"title":"","tasks":["",""],"note":""},"friday":{"title":"","tasks":["",""],"note":""},"saturday":{"title":"","tasks":["",""],"note":""},"sunday":{"title":"","tasks":["",""],"note":""}}}',
-      "要求：tasks 必须是 2 到 5 条可执行事项；如果上下文没有足够信息，就基于当前公开周计划做谨慎拆解，不要编造私密安排。",
+      '{"overview":{"title":"","theme":"","context":"","one_line":"","priority":""},"goals":{"goal_1":{"title":"","detail":""},"goal_2":{"title":"","detail":""},"goal_3":{"title":"","detail":""},"done_definition":"","risks":""},"daily_plan":{"monday":{"title":"","tasks":["",""],"note":""},"tuesday":{"title":"","tasks":["",""],"note":""},"wednesday":{"title":"","tasks":["",""],"note":""},"thursday":{"title":"","tasks":["",""],"note":""},"friday":{"title":"","tasks":["",""],"note":""},"saturday":{"title":"","tasks":["",""],"note":""},"sunday":{"title":"","tasks":["",""],"note":""}},"resources":{"list":["",""],"notes":["",""]}}',
+      "要求：",
+      "- overview 要围绕“本周要学的大概内容”和“时间约束/节奏偏好”生成，语气自然、可直接回填。",
+      "- goals 需要给出 3 个清晰目标，并补充完成标准与主要风险。",
+      "- daily_plan 的 tasks 每天必须是 2 到 5 条可执行事项。",
+      "- resources.list 填这周建议查看的资料、关键词、题目或文章；resources.notes 填使用建议、注意点或待查问题。",
+      "- 如果上下文没有足够信息，就基于当前公开周计划做谨慎拆解，不要编造私密安排。",
     ].join("\n\n");
   }
 
@@ -519,6 +525,49 @@ const normalizeDailyPlan = (raw: Record<string, unknown>) => {
   return { dailyPlan };
 };
 
+const normalizeWeeklyWorkbook = (raw: Record<string, unknown>) => {
+  const overviewSource = raw.overview && typeof raw.overview === "object"
+    ? raw.overview as Record<string, unknown>
+    : {};
+  const goalsSource = raw.goals && typeof raw.goals === "object"
+    ? raw.goals as Record<string, unknown>
+    : {};
+  const resourcesSource = raw.resources && typeof raw.resources === "object"
+    ? raw.resources as Record<string, unknown>
+    : {};
+  const normalizedDailyPlan = normalizeDailyPlan(raw);
+
+  const normalizeGoal = (value: unknown, fallbackTitle: string) => {
+    const source = value && typeof value === "object" ? value as Record<string, unknown> : {};
+    return {
+      title: compactText(source.title) || fallbackTitle,
+      detail: compactText(source.detail),
+    };
+  };
+
+  return {
+    overview: {
+      title: compactText(overviewSource.title),
+      theme: compactText(overviewSource.theme),
+      context: compactText(overviewSource.context),
+      oneLine: compactText(overviewSource.one_line),
+      priority: compactText(overviewSource.priority),
+    },
+    goals: {
+      goal1: normalizeGoal(goalsSource.goal_1, "目标一"),
+      goal2: normalizeGoal(goalsSource.goal_2, "目标二"),
+      goal3: normalizeGoal(goalsSource.goal_3, "目标三"),
+      doneDefinition: compactText(goalsSource.done_definition),
+      risks: compactText(goalsSource.risks),
+    },
+    dailyPlan: normalizedDailyPlan.dailyPlan,
+    resources: {
+      list: toBulletLines(resourcesSource.list),
+      notes: toBulletLines(resourcesSource.notes),
+    },
+  };
+};
+
 const normalizeWeeklySummary = (raw: Record<string, unknown>) => ({
   overallSummary: compactText(raw.overall_summary),
   progressPoints: toBulletLines(raw.progress_points),
@@ -544,6 +593,40 @@ const formatDailyPlanAnswer = (dailyPlan: ReturnType<typeof normalizeDailyPlan>[
       const noteLine = item.note ? `备注：${item.note}` : "备注：无";
       return `\n${labelMap[key]}：${item.title}\n${taskLines}\n${noteLine}`;
     }),
+  ].join("\n");
+};
+
+const formatWeeklyWorkbookAnswer = (workbook: ReturnType<typeof normalizeWeeklyWorkbook>) => {
+  const dailyHighlights = Object.entries(workbook.dailyPlan).map(([key, item]) => {
+    const labelMap: Record<string, string> = {
+      monday: "周一",
+      tuesday: "周二",
+      wednesday: "周三",
+      thursday: "周四",
+      friday: "周五",
+      saturday: "周六",
+      sunday: "周日",
+    };
+    return `${labelMap[key]}：${item.title}`;
+  }).join("\n");
+
+  return [
+    "已根据当前公开周计划自动补全以下四个章节：",
+    "",
+    "1. 本周概览",
+    workbook.overview.title || "已生成",
+    workbook.overview.oneLine || workbook.overview.theme || "已补充概览信息",
+    "",
+    "2. 周目标拆解",
+    `- ${workbook.goals.goal1.title}`,
+    `- ${workbook.goals.goal2.title}`,
+    `- ${workbook.goals.goal3.title}`,
+    "",
+    "3. 每日计划",
+    dailyHighlights,
+    "",
+    "4. 学习资料区",
+    workbook.resources.list.length ? workbook.resources.list.map((item) => `- ${item}`).join("\n") : "已补充资料建议",
   ].join("\n");
 };
 
@@ -736,9 +819,9 @@ Deno.serve(async (request) => {
 
     if (actionMode === "weekly_plan") {
       const parsed = extractJson(rawContent);
-      const normalized = normalizeDailyPlan(parsed);
+      const normalized = normalizeWeeklyWorkbook(parsed);
       structuredData = normalized;
-      answer = sanitizeAssistantAnswer(formatDailyPlanAnswer(normalized.dailyPlan));
+      answer = sanitizeAssistantAnswer(formatWeeklyWorkbookAnswer(normalized));
     } else if (actionMode === "weekly_summary") {
       const parsed = extractJson(rawContent);
       const normalized = normalizeWeeklySummary(parsed);

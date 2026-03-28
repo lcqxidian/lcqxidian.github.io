@@ -219,11 +219,11 @@
                             <div class="inline-flex items-center gap-2 rounded-full bg-teal-50 border border-teal-100 px-3 py-1 text-xs font-semibold text-teal-700 mb-3">
                                 <span>AI Planner</span>
                                 <span class="text-teal-300">•</span>
-                                <span>Daily Breakdown</span>
+                                <span>Full Workbook</span>
                             </div>
-                            <h3 class="text-2xl font-bold text-stone-800">把本周学习内容交给 AI 拆成每日计划</h3>
+                            <h3 class="text-2xl font-bold text-stone-800">把本周学习内容交给 AI 一次性自动填表</h3>
                             <p class="text-sm text-stone-500 mt-2 leading-relaxed">
-                                你只要写下这周大概要学什么、有哪些时间约束或偏好，AI 会按周一到周日自动拆解，并直接写入下方每日计划卡片。
+                                你只要写下这周大概要学什么、有哪些时间约束或偏好，AI 就会自动补完整个 Weekly Plans 工作台：本周概览、周目标拆解、每日计划、学习资料区都会一起生成。
                             </p>
                         </div>
                         <div class="rounded-2xl border border-teal-100 bg-teal-50/70 px-4 py-3 text-xs leading-relaxed text-teal-800 max-w-md">
@@ -260,7 +260,7 @@
 
                                 <div class="flex flex-wrap gap-3 pt-4">
                                     <button id="ai-generate-daily-btn" class="px-4 py-3 bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-teal-500/15 transition-colors">
-                                        通过统一 AI 拆解每日计划
+                                        通过统一 AI 自动填表
                                     </button>
                                     <button id="ai-generate-summary-btn" class="px-4 py-3 bg-white hover:bg-teal-50 text-teal-700 text-sm font-semibold rounded-xl border border-teal-200 transition-colors">
                                         AI 总结本周进度
@@ -268,7 +268,7 @@
                                 </div>
 
                                 <p id="ai-plan-status" class="text-sm text-stone-500 leading-relaxed pt-4">
-                                    统一 AI 助手待命中。拆解每日计划时会覆盖下方周一到周日的标题、任务和备注；本周总结只基于当前周内容。
+                                    统一 AI 助手待命中。自动填表时会一次性覆盖本周概览、周目标拆解、每日计划、学习资料区四个章节；本周总结只基于当前周内容。
                                 </p>
                             </section>
                         </div>
@@ -437,7 +437,7 @@
         </div>
     </main>
 
-    <script src="ai_assistant.js?v=20260328g"></script>
+    <script src="ai_assistant.js?v=20260328h"></script>
     <script>
         const SUPABASE_URL = "https://hlmpgjvvnezpgobgbtwy.supabase.co";
         const SUPABASE_KEY = "sb_publishable_QJ8O--Xo_AQLqEGmibpiGQ_iO75gSig";
@@ -470,6 +470,19 @@
             { key: 'friday', label: '周五', prefix: 'fri' },
             { key: 'saturday', label: '周六', prefix: 'sat' },
             { key: 'sunday', label: '周日', prefix: 'sun' }
+        ];
+        const WEEKLY_AUTOFILL_FIELD_NAMES = [
+            'overview_title', 'overview_theme', 'overview_context', 'overview_one_line', 'overview_priority',
+            'goal_1_title', 'goal_1_detail', 'goal_2_title', 'goal_2_detail', 'goal_3_title', 'goal_3_detail',
+            'goals_done_definition', 'goals_risks',
+            'resources_list', 'resources_notes',
+            'mon_title', 'mon_tasks', 'mon_note',
+            'tue_title', 'tue_tasks', 'tue_note',
+            'wed_title', 'wed_tasks', 'wed_note',
+            'thu_title', 'thu_tasks', 'thu_note',
+            'fri_title', 'fri_tasks', 'fri_note',
+            'sat_title', 'sat_tasks', 'sat_note',
+            'sun_title', 'sun_tasks', 'sun_note'
         ];
         const SUMMARY_FIELD_NAMES = ['ai_weekly_summary', 'ai_weekly_progress', 'ai_weekly_gaps', 'ai_next_actions', 'ai_summary_updated_at'];
 
@@ -716,9 +729,28 @@
             return entries.join('\n\n');
         };
 
-        const applyAIDailyPlan = async (plan) => {
+        const applyAIWeeklyWorkbook = async (workbook) => {
+            const overview = workbook?.overview || {};
+            const goals = workbook?.goals || {};
+            const resources = workbook?.resources || {};
+
+            setFieldValue('overview_title', normalizeText(overview.title));
+            setFieldValue('overview_theme', normalizeText(overview.theme));
+            setFieldValue('overview_context', normalizeText(overview.context));
+            setFieldValue('overview_one_line', normalizeText(overview.oneLine));
+            setFieldValue('overview_priority', normalizeText(overview.priority));
+
+            setFieldValue('goal_1_title', normalizeText(goals.goal1?.title));
+            setFieldValue('goal_1_detail', normalizeText(goals.goal1?.detail));
+            setFieldValue('goal_2_title', normalizeText(goals.goal2?.title));
+            setFieldValue('goal_2_detail', normalizeText(goals.goal2?.detail));
+            setFieldValue('goal_3_title', normalizeText(goals.goal3?.title));
+            setFieldValue('goal_3_detail', normalizeText(goals.goal3?.detail));
+            setFieldValue('goals_done_definition', normalizeText(goals.doneDefinition));
+            setFieldValue('goals_risks', normalizeText(goals.risks));
+
             DAILY_PLAN_FIELDS.forEach(({ key, prefix, label }) => {
-                const dayPlan = plan?.[key] || {};
+                const dayPlan = workbook?.dailyPlan?.[key] || {};
                 const title = normalizeText(dayPlan.title) || `${label}学习安排`;
                 const tasks = normalizeTasks(dayPlan.tasks);
                 const note = normalizeText(dayPlan.note);
@@ -728,9 +760,12 @@
                 setFieldValue(`${prefix}_note`, note);
             });
 
-            updateSaveStatus('AI 写入完成，正在同步云端...');
+            setFieldValue('resources_list', normalizeTasks(resources.list).join('\n'));
+            setFieldValue('resources_notes', normalizeTasks(resources.notes).join('\n'));
+
+            updateSaveStatus('AI 自动填表完成，正在同步云端...');
             const saved = await saveToCloud();
-            setAIPlanStatus(saved ? 'AI 已拆解完成，并同步到 Supabase 云端。' : 'AI 已写入页面，但 Supabase 同步失败了，请稍后重试。', !saved);
+            setAIPlanStatus(saved ? 'AI 已自动补完整个 Weekly Plans 工作台，并同步到 Supabase 云端。' : 'AI 已写入页面，但 Supabase 同步失败了，请稍后重试。', !saved);
         };
 
         const applyAIWeeklySummary = async (summary) => {
@@ -746,23 +781,19 @@
             setAIPlanStatus(saved ? 'AI 已生成本周学习进度总结，并同步到 Supabase 云端。' : 'AI 总结已写入页面，但 Supabase 同步失败了，请稍后重试。', !saved);
         };
 
-        const hasExistingDailyContent = () => DAILY_PLAN_FIELDS.some(({ prefix }) => (
-            normalizeText(fieldMap[`${prefix}_title`]?.value) ||
-            normalizeText(fieldMap[`${prefix}_tasks`]?.value) ||
-            normalizeText(fieldMap[`${prefix}_note`]?.value)
-        ));
+        const hasExistingWeeklyAutofillContent = () => WEEKLY_AUTOFILL_FIELD_NAMES.some((fieldName) => normalizeText(fieldMap[fieldName]?.value));
 
         const openUnifiedAIForDailyPlan = () => {
             const brief = normalizeText(fieldMap.ai_week_brief?.value);
             if (!brief) {
-                setAIPlanStatus('请先填写“本周要学的大概内容”，再让统一 AI 帮你拆解。', true);
+                setAIPlanStatus('请先填写“本周要学的大概内容”，再让统一 AI 帮你自动补全。', true);
                 fieldMap.ai_week_brief?.focus();
                 return;
             }
 
-            setAIPlanStatus('统一 AI 正在拆解本周计划，请稍等...');
+            setAIPlanStatus('统一 AI 正在自动补全本周工作台，请稍等...');
             window.LCQAiAssistant.open({
-                prompt: '请把当前周学习内容拆成周一到周日的每日计划。',
+                prompt: '请根据当前周学习内容，自动补全本周概览、周目标拆解、每日计划、学习资料区四个章节。',
                 actionMode: 'weekly_plan',
                 sendNow: true
             });
@@ -816,16 +847,16 @@
             try {
                 if (detail.actionMode === 'weekly_plan' && detail.structuredData?.dailyPlan) {
                     if (!hasAdminAccess()) {
-                        setAIPlanStatus('统一 AI 已生成每日计划，但当前为只读模式，所以没有回写到 Weekly Plans。', true);
+                        setAIPlanStatus('统一 AI 已生成整套填表内容，但当前为只读模式，所以没有回写到 Weekly Plans。', true);
                         return;
                     }
 
-                    if (hasExistingDailyContent() && !confirm('统一 AI 已生成新的每日计划，是否覆盖当前周一到周日内容并同步到云端？')) {
-                        setAIPlanStatus('已保留当前页面内容，新的每日计划仍可在统一 AI 面板历史里查看。');
+                    if (hasExistingWeeklyAutofillContent() && !confirm('统一 AI 已生成新的周计划工作台内容，是否覆盖“本周概览 / 周目标拆解 / 每日计划 / 学习资料区”并同步到云端？')) {
+                        setAIPlanStatus('已保留当前页面内容，新的自动填表结果仍可在统一 AI 面板历史里查看。');
                         return;
                     }
 
-                    await applyAIDailyPlan(detail.structuredData.dailyPlan);
+                    await applyAIWeeklyWorkbook(detail.structuredData);
                     return;
                 }
 

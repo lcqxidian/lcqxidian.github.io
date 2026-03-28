@@ -658,7 +658,7 @@
 
         if (pageType === 'weekly_plans') {
             return [
-                { label: '拆解本周计划', prompt: '请把当前周学习内容拆成周一到周日的每日计划。', actionMode: 'weekly_plan' },
+                { label: '自动填本周计划', prompt: '请根据当前周学习内容，自动补全本周概览、周目标拆解、每日计划、学习资料区四个章节。', actionMode: 'weekly_plan' },
                 { label: '总结本周进度', prompt: '请只基于当前周 Weekly Plans 内容，总结本周学习进度。', actionMode: 'weekly_summary' },
                 { label: '找风险点', prompt: '请基于当前周计划帮我找出可能拖慢进度的风险点，并给出调整建议。' },
                 { label: '整理下周重点', prompt: '请根据当前周内容，帮我整理下周最值得延续的重点。' }
