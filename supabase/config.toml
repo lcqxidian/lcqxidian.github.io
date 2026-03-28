@@ -2,3 +2,6 @@ project_id = "hlmpgjvvnezpgobgbtwy"
 
 [functions.ai-assistant]
 verify_jwt = false
+
+[functions.secret-companion]
+verify_jwt = false
