@@ -213,6 +213,66 @@
                     </p>
                 </header>
 
+                <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6 mb-6">
+                    <div class="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4 mb-6">
+                        <div>
+                            <div class="inline-flex items-center gap-2 rounded-full bg-teal-50 border border-teal-100 px-3 py-1 text-xs font-semibold text-teal-700 mb-3">
+                                <span>AI Planner</span>
+                                <span class="text-teal-300">•</span>
+                                <span>Daily Breakdown</span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-stone-800">把本周学习内容交给 AI 拆成每日计划</h3>
+                            <p class="text-sm text-stone-500 mt-2 leading-relaxed">
+                                你只要写下这周大概要学什么、有哪些时间约束或偏好，AI 会按周一到周日自动拆解，并直接写入下方每日计划卡片。
+                            </p>
+                        </div>
+                        <div class="rounded-2xl border border-teal-100 bg-teal-50/70 px-4 py-3 text-xs leading-relaxed text-teal-800 max-w-md">
+                            提示：你的周学习摘要和生成后的每日安排会跟 Weekly Plans 一起保存到 Supabase 云端；API Key 只保存在当前浏览器 localStorage，不会上云。默认已切到 DeepSeek 兼容配置。
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-stone-500 mb-2">本周要学的大概内容</label>
+                                <textarea data-field="ai_week_brief" rows="8" class="editor-field px-4 py-3 text-sm resize-none" placeholder="例如：这周要复习 C++ 八股里的内存管理、线程池、锁；刷 10 道 Linux 题；顺手补一下 Jetson Nano 项目复盘。"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-stone-500 mb-2">时间约束 / 节奏偏好 / 特殊安排</label>
+                                <textarea data-field="ai_week_constraints" rows="6" class="editor-field px-4 py-3 text-sm resize-none" placeholder="例如：周二晚上和周四下午没空；周末适合做项目复盘；每天控制在 2~3 小时；更希望先难后易。"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-stone-500 mb-2">AI Endpoint</label>
+                                <input id="ai-api-endpoint" type="text" class="editor-field px-4 py-3 text-sm" value="https://api.deepseek.com/chat/completions" placeholder="默认使用 DeepSeek 官方接口">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-stone-500 mb-2">Model</label>
+                                <input id="ai-model" type="text" class="editor-field px-4 py-3 text-sm" value="deepseek-chat" placeholder="例如：deepseek-chat">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-stone-500 mb-2">API Key</label>
+                                <input id="ai-api-key" type="password" class="editor-field px-4 py-3 text-sm" placeholder="输入你的 DeepSeek API Key，仅保存在当前浏览器">
+                            </div>
+
+                            <div class="flex flex-wrap gap-3 pt-2">
+                                <button id="ai-generate-daily-btn" class="px-4 py-3 bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-teal-500/15 transition-colors">
+                                    AI 拆解并写入每日计划
+                                </button>
+                                <button id="ai-clear-api-key-btn" class="px-4 py-3 bg-stone-100 hover:bg-stone-200 text-stone-700 text-sm font-semibold rounded-xl border border-stone-200 transition-colors">
+                                    清除本地 Key
+                                </button>
+                            </div>
+
+                            <p id="ai-plan-status" class="text-sm text-stone-500 leading-relaxed">
+                                AI 助手待命中。生成时会覆盖下方周一到周日的标题、任务和备注。
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <section class="workspace-card bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
                         <div class="flex items-center justify-between gap-3 mb-4">
@@ -347,16 +407,35 @@
 
         const TABLE_NAME = 'weekly_plans';
         const fields = Array.from(document.querySelectorAll('[data-field]'));
+        const fieldMap = Object.fromEntries(fields.map((field) => [field.dataset.field, field]));
         const saveStatus = document.getElementById('save-status');
         const weekRange = document.getElementById('week-range');
         const clearAllBtn = document.getElementById('clear-all-btn');
         const navItems = Array.from(document.querySelectorAll('.nav-item'));
         const sections = Array.from(document.querySelectorAll('.section-view'));
         const authModeText = document.getElementById('auth-mode-text');
+        const aiApiEndpointInput = document.getElementById('ai-api-endpoint');
+        const aiModelInput = document.getElementById('ai-model');
+        const aiApiKeyInput = document.getElementById('ai-api-key');
+        const aiGenerateDailyBtn = document.getElementById('ai-generate-daily-btn');
+        const aiClearApiKeyBtn = document.getElementById('ai-clear-api-key-btn');
+        const aiPlanStatus = document.getElementById('ai-plan-status');
         let currentWeekKey = '';
         let currentRecord = null;
         let isHydrating = true;
         let saveTimer = null;
+        let isGeneratingAIPlan = false;
+
+        const AI_CONFIG_STORAGE_KEY = 'lcq_weekly_ai_config_v1';
+        const DAILY_PLAN_FIELDS = [
+            { key: 'monday', label: '周一', prefix: 'mon' },
+            { key: 'tuesday', label: '周二', prefix: 'tue' },
+            { key: 'wednesday', label: '周三', prefix: 'wed' },
+            { key: 'thursday', label: '周四', prefix: 'thu' },
+            { key: 'friday', label: '周五', prefix: 'fri' },
+            { key: 'saturday', label: '周六', prefix: 'sat' },
+            { key: 'sunday', label: '周日', prefix: 'sun' }
+        ];
 
         const hasAdminAccess = () => window.LCQAdminAuth.isAuthenticated();
         const ensureAdminAccess = (message) => window.LCQAdminAuth.requireAuth(message || '请先回首页右上角完成用户登录，并选择管理员角色后再修改 Weekly Plans。');
@@ -413,6 +492,12 @@
             });
         };
 
+        const setFieldValue = (name, value) => {
+            if (fieldMap[name]) {
+                fieldMap[name].value = value || '';
+            }
+        };
+
         const setFieldsDisabled = (disabled) => {
             fields.forEach((field) => {
                 field.disabled = disabled;
@@ -420,6 +505,46 @@
             clearAllBtn.disabled = disabled;
             clearAllBtn.classList.toggle('opacity-60', disabled);
             clearAllBtn.classList.toggle('cursor-not-allowed', disabled);
+        };
+
+        const setAIPlanStatus = (text, isError = false) => {
+            aiPlanStatus.textContent = text;
+            aiPlanStatus.className = isError
+                ? 'text-sm text-rose-600 leading-relaxed'
+                : 'text-sm text-stone-500 leading-relaxed';
+        };
+
+        const loadAIConfig = () => {
+            try {
+                const raw = localStorage.getItem(AI_CONFIG_STORAGE_KEY);
+                if (!raw) return;
+                const config = JSON.parse(raw);
+                aiApiEndpointInput.value = config.endpoint || aiApiEndpointInput.value;
+                aiModelInput.value = config.model || aiModelInput.value;
+                aiApiKeyInput.value = config.apiKey || '';
+            } catch (error) {
+                console.error('读取 AI 配置失败:', error);
+            }
+        };
+
+        const persistAIConfig = () => {
+            const payload = {
+                endpoint: aiApiEndpointInput.value.trim(),
+                model: aiModelInput.value.trim(),
+                apiKey: aiApiKeyInput.value.trim()
+            };
+            localStorage.setItem(AI_CONFIG_STORAGE_KEY, JSON.stringify(payload));
+        };
+
+        const updateAIControlState = () => {
+            const canGenerate = !isHydrating && !isGeneratingAIPlan && hasAdminAccess();
+            aiGenerateDailyBtn.disabled = !canGenerate;
+            aiGenerateDailyBtn.classList.toggle('opacity-60', !canGenerate);
+            aiGenerateDailyBtn.classList.toggle('cursor-not-allowed', !canGenerate);
+
+            aiClearApiKeyBtn.disabled = isGeneratingAIPlan;
+            aiClearApiKeyBtn.classList.toggle('opacity-60', isGeneratingAIPlan);
+            aiClearApiKeyBtn.classList.toggle('cursor-not-allowed', isGeneratingAIPlan);
         };
 
         const applyAdminEditState = () => {
@@ -434,12 +559,14 @@
             if (!isHydrating && !authed) {
                 updateSaveStatus('只读模式');
             }
+
+            updateAIControlState();
         };
 
         const saveToCloud = async () => {
             if (!ensureAdminAccess()) {
                 updateSaveStatus('只读模式');
-                return;
+                return false;
             }
 
             const content = collectFormData();
@@ -463,11 +590,12 @@
             if (error) {
                 console.error('保存 weekly plans 失败:', error);
                 updateSaveStatus('云端保存失败');
-                return;
+                return false;
             }
 
             currentRecord = data;
             updateSaveStatus('已同步到云端');
+            return true;
         };
 
         const queueSave = () => {
@@ -499,6 +627,7 @@
                 updateSaveStatus('云端读取失败');
                 isHydrating = false;
                 applyAdminEditState();
+                setAIPlanStatus('云端读取失败，AI 助手暂时无法结合本周数据生成。', true);
                 return;
             }
 
@@ -509,8 +638,169 @@
             applyAdminEditState();
         };
 
+        const extractJSON = (text) => {
+            const source = (text || '').trim();
+            if (!source) throw new Error('AI 没有返回可解析的内容。');
+
+            const fenced = source.match(/```json\s*([\s\S]*?)```/i) || source.match(/```\s*([\s\S]*?)```/i);
+            const raw = (fenced ? fenced[1] : source).trim();
+
+            try {
+                return JSON.parse(raw);
+            } catch (error) {
+                const start = raw.indexOf('{');
+                const end = raw.lastIndexOf('}');
+                if (start === -1 || end === -1 || end <= start) {
+                    throw error;
+                }
+                return JSON.parse(raw.slice(start, end + 1));
+            }
+        };
+
+        const normalizeText = (value) => String(value || '').trim();
+
+        const normalizeTasks = (value) => {
+            if (Array.isArray(value)) {
+                return value.map((item) => normalizeText(item)).filter(Boolean);
+            }
+            return normalizeText(value)
+                .split(/\n+/)
+                .map((item) => item.replace(/^[-*•\d.\s]+/, '').trim())
+                .filter(Boolean);
+        };
+
+        const applyAIDailyPlan = async (plan) => {
+            DAILY_PLAN_FIELDS.forEach(({ key, prefix, label }) => {
+                const dayPlan = plan?.[key] || {};
+                const title = normalizeText(dayPlan.title) || `${label}学习安排`;
+                const tasks = normalizeTasks(dayPlan.tasks);
+                const note = normalizeText(dayPlan.note);
+
+                setFieldValue(`${prefix}_title`, title);
+                setFieldValue(`${prefix}_tasks`, tasks.join('\n'));
+                setFieldValue(`${prefix}_note`, note);
+            });
+
+            updateSaveStatus('AI 写入完成，正在同步云端...');
+            const saved = await saveToCloud();
+            setAIPlanStatus(saved ? 'AI 已拆解完成，并同步到 Supabase 云端。' : 'AI 已写入页面，但 Supabase 同步失败了，请稍后重试。', !saved);
+        };
+
+        const buildAIPrompt = () => {
+            const brief = normalizeText(fieldMap.ai_week_brief?.value);
+            const constraints = normalizeText(fieldMap.ai_week_constraints?.value);
+            const overviewTitle = normalizeText(fieldMap.overview_title?.value);
+            const overviewTheme = normalizeText(fieldMap.overview_theme?.value);
+            const resourcesList = normalizeText(fieldMap.resources_list?.value);
+
+            return [
+                '你是一位会做学习拆解的中文学习规划助手。',
+                `当前周次：${currentWeekKey}`,
+                `本周日期范围：${weekRange.textContent}`,
+                overviewTitle ? `已有周标题：${overviewTitle}` : '',
+                overviewTheme ? `已有周主线：${overviewTheme}` : '',
+                resourcesList ? `已有资料清单：${resourcesList}` : '',
+                `本周要学的大概内容：${brief}`,
+                constraints ? `时间约束与偏好：${constraints}` : '时间约束与偏好：无特别限制',
+                '请把学习内容拆成周一到周日的计划，保持节奏真实，不要假大空。',
+                '每一天输出三个字段：title、tasks、note。',
+                'tasks 必须是字符串数组，2 到 5 条，内容具体、可执行。',
+                '请只返回 JSON，不要加解释。',
+                'JSON 结构必须严格如下：',
+                '{"daily_plan":{"monday":{"title":"","tasks":["",""],"note":""},"tuesday":{"title":"","tasks":["",""],"note":""},"wednesday":{"title":"","tasks":["",""],"note":""},"thursday":{"title":"","tasks":["",""],"note":""},"friday":{"title":"","tasks":["",""],"note":""},"saturday":{"title":"","tasks":["",""],"note":""},"sunday":{"title":"","tasks":["",""],"note":""}}}'
+            ].filter(Boolean).join('\n');
+        };
+
+        const hasExistingDailyContent = () => DAILY_PLAN_FIELDS.some(({ prefix }) => (
+            normalizeText(fieldMap[`${prefix}_title`]?.value) ||
+            normalizeText(fieldMap[`${prefix}_tasks`]?.value) ||
+            normalizeText(fieldMap[`${prefix}_note`]?.value)
+        ));
+
+        const generateAIDailyPlan = async () => {
+            if (!ensureAdminAccess('请先回首页右上角完成用户登录，并选择管理员角色后再使用 AI 自动拆解 Weekly Plans。')) {
+                setAIPlanStatus('当前为只读模式，AI 拆解功能仅管理员可用。', true);
+                return;
+            }
+
+            const apiKey = aiApiKeyInput.value.trim();
+            const endpoint = aiApiEndpointInput.value.trim();
+            const model = aiModelInput.value.trim();
+            const brief = normalizeText(fieldMap.ai_week_brief?.value);
+
+            if (!brief) {
+                setAIPlanStatus('请先填写“本周要学的大概内容”，再让 AI 帮你拆解。', true);
+                fieldMap.ai_week_brief?.focus();
+                return;
+            }
+
+            if (!apiKey || !endpoint || !model) {
+                setAIPlanStatus('请先补全 AI Endpoint、Model 和 API Key。', true);
+                return;
+            }
+
+            if (hasExistingDailyContent() && !confirm('AI 会覆盖当前周一到周日的标题、任务和备注，确定继续吗？')) {
+                return;
+            }
+
+            isGeneratingAIPlan = true;
+            updateAIControlState();
+            setAIPlanStatus('AI 正在拆解本周计划，请稍等...');
+
+            try {
+                persistAIConfig();
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model,
+                        temperature: 0.7,
+                        response_format: { type: 'json_object' },
+                        messages: [
+                            {
+                                role: 'system',
+                                content: '你擅长把一周学习主题拆成真实、细致、可执行的每日学习计划。'
+                            },
+                            {
+                                role: 'user',
+                                content: buildAIPrompt()
+                            }
+                        ]
+                    })
+                });
+
+                const payload = await response.json();
+                if (!response.ok) {
+                    const message = payload?.error?.message || `AI 请求失败（HTTP ${response.status}）`;
+                    throw new Error(message);
+                }
+
+                const content = payload?.choices?.[0]?.message?.content;
+                const parsed = extractJSON(content);
+                if (!parsed?.daily_plan) {
+                    throw new Error('AI 返回格式不对，缺少 daily_plan。');
+                }
+
+                await applyAIDailyPlan(parsed.daily_plan);
+            } catch (error) {
+                console.error('AI 生成 Weekly Plans 失败:', error);
+                setAIPlanStatus(`AI 生成失败：${error.message}`, true);
+            } finally {
+                isGeneratingAIPlan = false;
+                updateAIControlState();
+            }
+        };
+
         fields.forEach((field) => {
             field.addEventListener('input', queueSave);
+        });
+
+        [aiApiEndpointInput, aiModelInput, aiApiKeyInput].forEach((input) => {
+            input.addEventListener('input', persistAIConfig);
         });
 
         clearAllBtn.addEventListener('click', async () => {
@@ -521,6 +811,13 @@
             });
             clearTimeout(saveTimer);
             await saveToCloud();
+        });
+
+        aiGenerateDailyBtn.addEventListener('click', generateAIDailyPlan);
+        aiClearApiKeyBtn.addEventListener('click', () => {
+            aiApiKeyInput.value = '';
+            persistAIConfig();
+            setAIPlanStatus('已清除当前浏览器保存的 API Key。');
         });
 
         navItems.forEach((item) => {
@@ -535,6 +832,7 @@
 
         currentWeekKey = getWeekKey();
         weekRange.textContent = getWeekLabel();
+        loadAIConfig();
         window.addEventListener('lcq-admin-auth-changed', applyAdminEditState);
         loadFromCloud();
     </script>
