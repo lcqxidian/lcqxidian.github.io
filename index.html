@@ -262,20 +262,20 @@
                 感谢充电
             </h3>
             
-            <p class="text-sm text-slate-400 mb-4 relative z-10">正在尝试拉起微信充值。如果没有自动跳转，可以点击下方按钮重试，或者直接扫码充电。</p>
+            <p id="sponsor-status-note" class="text-sm text-slate-400 mb-4 relative z-10">正在尝试拉起微信充值。如果没有自动跳转，可以点击下方按钮重试，或者直接扫码充电。</p>
 
-            <a id="open-wechat-pay-btn" href="wxp://f2f0dDtrs0NspOQAE5bjb6MNLbjmwejZrL54VabIJTlsxqjoSK0yeAdBPIcuK0K9XKQN" class="mb-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-300 transition-all hover:bg-emerald-500/20 relative z-10">
+            <button type="button" id="open-wechat-pay-btn" class="mb-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-300 transition-all hover:bg-emerald-500/20 relative z-10">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                 </svg>
-                再次打开微信充值
-            </a>
+                <span id="open-wechat-pay-btn-label">再次打开微信充值</span>
+            </button>
             
             <div class="bg-white p-2 rounded-xl border-2 border-slate-700 shadow-xl mb-6 relative z-10">
                 <img src="WechatIMG1300.jpg" alt="微信收款码" class="w-full rounded-lg">
             </div>
 
-            <p class="text-xs text-slate-500 mb-6 relative z-10">如果你正在电脑浏览器打开本站，系统可能会拦截应用唤起；这时直接用手机微信扫码会更稳定。</p>
+            <p id="sponsor-hint-note" class="text-xs text-slate-500 mb-6 relative z-10">如果你正在电脑浏览器打开本站，系统可能会拦截应用唤起；这时直接用手机微信扫码会更稳定。</p>
             
             <button id="close-sponsor-btn" class="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-lg transition-all w-full relative z-10">
                 关闭窗口
@@ -389,7 +389,35 @@
         const sponsorModal = document.getElementById('sponsor-modal');
         const sponsorBtn = document.getElementById('sponsor-btn');
         const sponsorWechatLink = sponsorBtn.dataset.wechatPayUrl;
+        const sponsorStatusNote = document.getElementById('sponsor-status-note');
+        const sponsorHintNote = document.getElementById('sponsor-hint-note');
+        const sponsorRetryBtn = document.getElementById('open-wechat-pay-btn');
+        const sponsorRetryBtnLabel = document.getElementById('open-wechat-pay-btn-label');
         let sponsorFallbackTimer = null;
+        const sponsorUA = navigator.userAgent || '';
+        const sponsorIsWeChatBrowser = /MicroMessenger/i.test(sponsorUA);
+        const sponsorIsIOS = /iPad|iPhone|iPod/.test(sponsorUA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const sponsorIsSafari = /Safari/i.test(sponsorUA) && !/CriOS|FxiOS|EdgiOS|OPiOS|DuckDuckGo|MicroMessenger/i.test(sponsorUA);
+
+        const setSponsorModalMode = (mode) => {
+            if (mode === 'manual-ios-safari') {
+                sponsorStatusNote.textContent = '当前是 iPhone / iPad 的 Safari，系统不会直接打开个人微信收款码链接，所以这里改为安全模式：你可以直接扫码充电。';
+                sponsorHintNote.textContent = '如果你一定想走微信内支付跳转，需要接入微信支付商户 H5 支付；个人收款码在 Safari 里通常不能稳定一键直达。';
+                sponsorRetryBtnLabel.textContent = '继续尝试打开微信';
+                return;
+            }
+
+            if (mode === 'fallback') {
+                sponsorStatusNote.textContent = '这台设备这次没有成功拉起微信。你可以再试一次，或者直接扫码充电。';
+                sponsorHintNote.textContent = '如果你正在电脑浏览器打开本站，系统可能会拦截应用唤起；这时直接用手机微信扫码会更稳定。';
+                sponsorRetryBtnLabel.textContent = '再次打开微信充值';
+                return;
+            }
+
+            sponsorStatusNote.textContent = '正在尝试拉起微信充值。如果没有自动跳转，可以点击下方按钮重试，或者直接扫码充电。';
+            sponsorHintNote.textContent = '如果你正在电脑浏览器打开本站，系统可能会拦截应用唤起；这时直接用手机微信扫码会更稳定。';
+            sponsorRetryBtnLabel.textContent = '再次打开微信充值';
+        };
 
         const openSponsorModal = () => {
             sponsorModal.classList.add('modal-enter');
@@ -408,12 +436,20 @@
 
         const attemptOpenWeChatPay = () => {
             clearSponsorFallback();
+            if (sponsorIsIOS && sponsorIsSafari && !sponsorIsWeChatBrowser) {
+                setSponsorModalMode('manual-ios-safari');
+                openSponsorModal();
+                return;
+            }
+
+            setSponsorModalMode('trying');
             const startedAt = Date.now();
 
             sponsorFallbackTimer = setTimeout(() => {
                 const pageStayedVisible = document.visibilityState === 'visible';
                 const elapsed = Date.now() - startedAt;
                 if (pageStayedVisible && elapsed >= 900) {
+                    setSponsorModalMode('fallback');
                     openSponsorModal();
                 }
             }, 1200);
@@ -426,8 +462,9 @@
             attemptOpenWeChatPay();
         });
 
-        document.getElementById('open-wechat-pay-btn').addEventListener('click', () => {
+        sponsorRetryBtn.addEventListener('click', () => {
             clearSponsorFallback();
+            attemptOpenWeChatPay();
         });
 
         document.getElementById('close-sponsor-btn').addEventListener('click', () => { 
