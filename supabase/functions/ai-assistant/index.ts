@@ -16,12 +16,13 @@ type HistoryRow = {
 };
 
 type ChatRequest = {
-  action?: "chat" | "history" | "config-status";
+  action?: "chat" | "history" | "config-status" | "delete-history";
   actionMode?: ActionMode;
   pageType?: string;
   pageKey?: string;
   actorRole?: string;
   question?: string;
+  historyId?: number;
   context?: {
     scope?: string;
     title?: string;
@@ -44,6 +45,7 @@ const DEEPSEEK_API_ENDPOINT = Deno.env.get("DEEPSEEK_API_ENDPOINT") || DEFAULT_D
 const DEEPSEEK_MODEL = Deno.env.get("DEEPSEEK_MODEL") || DEFAULT_DEEPSEEK_MODEL;
 const ALLOWED_PAGE_TYPES = new Set<PageType>(["index_home", "cpp_thread", "interview_guide", "weekly_plans"]);
 const ALLOWED_ROLES = new Set(["guest", "friend", "dad", "mom", "admin", "xiaobao"]);
+const MANAGE_HISTORY_ROLES = new Set(["admin", "xiaobao"]);
 
 const json = (payload: unknown, status = 200) =>
   new Response(JSON.stringify(payload), {
@@ -91,6 +93,11 @@ const normalizePageType = (value: unknown): PageType => {
 const normalizeActorRole = (value: unknown) => {
   const role = String(value || "").trim().toLowerCase();
   return ALLOWED_ROLES.has(role) ? role : "guest";
+};
+
+const normalizeHistoryId = (value: unknown) => {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 0;
 };
 
 const normalizeActionMode = (value: unknown): ActionMode => {
@@ -589,6 +596,24 @@ const insertHistory = async (
   }
 };
 
+const deleteHistory = async (
+  supabase: ReturnType<typeof createServiceClient>,
+  historyId: number,
+) => {
+  if (!supabase) {
+    throw new Error("服务端数据库连接未配置，无法删除 AI 历史。");
+  }
+
+  const { error } = await supabase
+    .from("ai_learning_logs")
+    .delete()
+    .eq("id", historyId);
+
+  if (error) {
+    throw new Error(error.message || "删除 AI 历史失败。");
+  }
+};
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -629,6 +654,36 @@ Deno.serve(async (request) => {
         history: [],
         error: error instanceof Error ? error.message : "读取历史失败。",
       });
+    }
+  }
+
+  if (action === "delete-history") {
+    const actorRole = normalizeActorRole(payload.actorRole);
+    const historyId = normalizeHistoryId(payload.historyId);
+
+    if (!MANAGE_HISTORY_ROLES.has(actorRole)) {
+      return json({
+        ...configPayload,
+        error: "当前只有管理员可以删除 AI 历史。",
+      }, 403);
+    }
+
+    if (!historyId) {
+      return json({
+        ...configPayload,
+        error: "缺少有效的历史记录 ID。",
+      }, 400);
+    }
+
+    try {
+      await deleteHistory(serviceClient, historyId);
+      const history = await fetchHistory(serviceClient);
+      return json({ ...configPayload, history });
+    } catch (error) {
+      return json({
+        ...configPayload,
+        error: error instanceof Error ? error.message : "删除 AI 历史失败。",
+      }, 500);
     }
   }
 

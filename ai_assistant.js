@@ -30,7 +30,10 @@
         refs: null,
         history: [],
         serviceStatus: null,
-        sending: false
+        sending: false,
+        settingsOpen: false,
+        settingsLoading: false,
+        deletingHistoryId: null
     };
 
     const injectStyles = () => {
@@ -150,6 +153,31 @@
 
             .lcq-ai-title-wrap {
                 min-width: 0;
+            }
+
+            .lcq-ai-header-actions {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-shrink: 0;
+            }
+
+            .lcq-ai-header-btn {
+                border: 1px solid var(--lcq-ai-panel-border);
+                background: var(--lcq-ai-card-bg);
+                color: var(--lcq-ai-panel-muted);
+                border-radius: 999px;
+                padding: 8px 12px;
+                font-size: 12px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+            }
+
+            .lcq-ai-header-btn:hover {
+                color: var(--lcq-ai-accent-text);
+                border-color: var(--lcq-ai-accent);
+                background: var(--lcq-ai-accent-soft);
             }
 
             .lcq-ai-kicker {
@@ -296,6 +324,98 @@
                 padding-bottom: 12px;
             }
 
+            .lcq-ai-hidden {
+                display: none !important;
+            }
+
+            .lcq-ai-settings-pane {
+                flex: 1;
+                min-height: 0;
+                overflow-y: auto;
+                display: grid;
+                gap: 14px;
+                padding-bottom: 12px;
+            }
+
+            .lcq-ai-settings-card {
+                border: 1px solid var(--lcq-ai-panel-border);
+                background: var(--lcq-ai-card-bg);
+                border-radius: 20px;
+                padding: 16px;
+                display: grid;
+                gap: 12px;
+            }
+
+            .lcq-ai-settings-head {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .lcq-ai-settings-kicker {
+                font-size: 11px;
+                letter-spacing: 0.16em;
+                text-transform: uppercase;
+                color: var(--lcq-ai-panel-muted);
+            }
+
+            .lcq-ai-settings-title {
+                margin: 6px 0 0;
+                font-size: 16px;
+                font-weight: 800;
+                line-height: 1.4;
+            }
+
+            .lcq-ai-settings-pill {
+                padding: 6px 10px;
+                border-radius: 999px;
+                border: 1px solid var(--lcq-ai-panel-border);
+                font-size: 12px;
+                font-weight: 700;
+                color: var(--lcq-ai-panel-muted);
+                white-space: nowrap;
+            }
+
+            .lcq-ai-settings-pill.ready {
+                color: var(--lcq-ai-accent-text);
+                background: var(--lcq-ai-accent-soft);
+                border-color: transparent;
+            }
+
+            .lcq-ai-settings-pill.warn {
+                color: #f59e0b;
+                background: rgba(245, 158, 11, 0.12);
+                border-color: rgba(245, 158, 11, 0.18);
+            }
+
+            .lcq-ai-settings-text,
+            .lcq-ai-settings-meta,
+            .lcq-ai-settings-note {
+                font-size: 13px;
+                line-height: 1.65;
+                color: var(--lcq-ai-panel-muted);
+                white-space: pre-wrap;
+            }
+
+            .lcq-ai-settings-meta {
+                display: grid;
+                gap: 4px;
+            }
+
+            .lcq-ai-settings-pre {
+                margin: 0;
+                padding: 14px;
+                border-radius: 16px;
+                border: 1px solid var(--lcq-ai-panel-border);
+                background: rgba(2, 6, 23, 0.78);
+                color: #cbd5f5;
+                font-size: 12px;
+                line-height: 1.7;
+                overflow-x: auto;
+                white-space: pre;
+            }
+
             .lcq-ai-empty {
                 border: 1px dashed var(--lcq-ai-panel-border);
                 border-radius: 18px;
@@ -315,6 +435,32 @@
 
             .lcq-ai-entry.pending {
                 opacity: 0.92;
+            }
+
+            .lcq-ai-entry-tools {
+                display: flex;
+                justify-content: flex-end;
+                margin-bottom: -2px;
+            }
+
+            .lcq-ai-entry-delete {
+                border: 0;
+                background: transparent;
+                color: var(--lcq-ai-panel-muted);
+                font-size: 12px;
+                font-weight: 700;
+                cursor: pointer;
+                padding: 0;
+                transition: color 0.2s ease;
+            }
+
+            .lcq-ai-entry-delete:hover {
+                color: #ef4444;
+            }
+
+            .lcq-ai-entry-delete:disabled {
+                opacity: 0.56;
+                cursor: not-allowed;
             }
 
             .lcq-ai-entry-time {
@@ -576,6 +722,42 @@
         return data;
     };
 
+    const canShowSettingsEntry = () => {
+        const config = state.config || {};
+
+        if (typeof config.canShowSettingsEntry === 'function') {
+            return !!config.canShowSettingsEntry();
+        }
+
+        if (typeof config.showSettingsEntry === 'boolean') {
+            return config.showSettingsEntry;
+        }
+
+        try {
+            return !!window.LCQAdminAuth?.isAuthenticated?.();
+        } catch (error) {
+            return false;
+        }
+    };
+
+    const canManageHistory = () => {
+        const config = state.config || {};
+
+        if (typeof config.canManageHistory === 'function') {
+            return !!config.canManageHistory();
+        }
+
+        if (typeof config.manageHistory === 'boolean') {
+            return config.manageHistory;
+        }
+
+        try {
+            return !!window.LCQAdminAuth?.isAuthenticated?.();
+        } catch (error) {
+            return false;
+        }
+    };
+
     const createShell = (config) => {
         injectStyles();
 
@@ -595,16 +777,51 @@
             <aside class="lcq-ai-panel" aria-label="统一 AI 学习助手">
                 <div class="lcq-ai-header">
                     <div class="lcq-ai-title-wrap">
-                        <h2 class="lcq-ai-title">统一 AI 学习助手</h2>
+                        <h2 class="lcq-ai-title" data-role="title">统一 AI 学习助手</h2>
                     </div>
-                    <button type="button" class="lcq-ai-close" aria-label="关闭 AI 助手">✕</button>
+                    <div class="lcq-ai-header-actions">
+                        <button type="button" class="lcq-ai-header-btn lcq-ai-hidden" data-role="settings-btn">配置</button>
+                        <button type="button" class="lcq-ai-close" aria-label="关闭 AI 助手">✕</button>
+                    </div>
                 </div>
 
                 <div class="lcq-ai-history-wrap">
+                    <div class="lcq-ai-settings-pane lcq-ai-hidden" data-role="settings-pane">
+                        <section class="lcq-ai-settings-card">
+                            <div class="lcq-ai-settings-head">
+                                <div>
+                                    <div class="lcq-ai-settings-kicker">Server Config</div>
+                                    <h3 class="lcq-ai-settings-title">统一 AI 服务配置</h3>
+                                </div>
+                                <span class="lcq-ai-settings-pill" data-role="settings-status-pill">未检查</span>
+                            </div>
+                            <div class="lcq-ai-settings-text" data-role="settings-status-text">正在检查统一 AI 服务状态...</div>
+                            <div class="lcq-ai-settings-meta" data-role="settings-meta">
+                                <div>Provider：DeepSeek</div>
+                                <div>Storage：Supabase Edge Function 环境变量</div>
+                            </div>
+                        </section>
+
+                        <section class="lcq-ai-settings-card">
+                            <div>
+                                <div class="lcq-ai-settings-kicker">Deploy Guide</div>
+                                <h3 class="lcq-ai-settings-title">安全部署方式</h3>
+                            </div>
+                            <div class="lcq-ai-settings-note">为了避免把 DeepSeek Key 暴露到前端源码、localStorage 或普通可读表里，这里只展示服务端配置状态和部署说明。真正的 Key 需要放到 Supabase Edge Function 环境变量。</div>
+                            <pre class="lcq-ai-settings-pre">supabase functions secrets set \
+DEEPSEEK_API_KEY=&lt;你的_key&gt; \
+DEEPSEEK_API_ENDPOINT=https://api.deepseek.com/chat/completions \
+DEEPSEEK_MODEL=deepseek-chat \
+SUPABASE_SERVICE_ROLE_KEY=&lt;service_role_key&gt;
+
+supabase functions deploy ai-assistant</pre>
+                            <div class="lcq-ai-settings-note">仓库内已补好 `supabase/functions/ai-assistant/index.ts`、`supabase/config.toml` 和 `supabase/migrations/20260328110000_ai_assistant.sql`。</div>
+                        </section>
+                    </div>
                     <div class="lcq-ai-history-list" data-role="history-list"></div>
                 </div>
 
-                <div class="lcq-ai-footer">
+                <div class="lcq-ai-footer" data-role="footer">
                     <textarea class="lcq-ai-input" data-role="input" placeholder="输入你的问题"></textarea>
                     <div class="lcq-ai-footer-row">
                         <button type="button" class="lcq-ai-send-btn" data-role="send-btn">发送</button>
@@ -619,8 +836,15 @@
             shell,
             fab: shell.querySelector('.lcq-ai-fab'),
             overlay: shell.querySelector('.lcq-ai-overlay'),
+            title: shell.querySelector('[data-role="title"]'),
+            settingsBtn: shell.querySelector('[data-role="settings-btn"]'),
             close: shell.querySelector('.lcq-ai-close'),
+            settingsPane: shell.querySelector('[data-role="settings-pane"]'),
+            settingsStatusPill: shell.querySelector('[data-role="settings-status-pill"]'),
+            settingsStatusText: shell.querySelector('[data-role="settings-status-text"]'),
+            settingsMeta: shell.querySelector('[data-role="settings-meta"]'),
             historyList: shell.querySelector('[data-role="history-list"]'),
+            footer: shell.querySelector('[data-role="footer"]'),
             input: shell.querySelector('[data-role="input"]'),
             sendBtn: shell.querySelector('[data-role="send-btn"]')
         };
@@ -648,8 +872,21 @@
             const timeLabel = entry.pending
                 ? '正在回复...'
                 : (entry.created_at ? formatTime(entry.created_at) : '');
+            const canDelete = canManageHistory() && !!entry.id && !entry.pending;
+            const deleting = state.deletingHistoryId === entry.id;
 
             wrapper.innerHTML = `
+                ${canDelete ? `
+                    <div class="lcq-ai-entry-tools">
+                        <button
+                            type="button"
+                            class="lcq-ai-entry-delete"
+                            data-action="delete-history"
+                            data-history-id="${escapeHtml(entry.id)}"
+                            ${deleting ? 'disabled' : ''}
+                        >${deleting ? '删除中...' : '删除'}</button>
+                    </div>
+                ` : ''}
                 <div class="lcq-ai-entry-block">
                     <div class="lcq-ai-entry-content user">${escapeHtml(entry.user_question || '')}</div>
                 </div>
@@ -668,8 +905,91 @@
         buildContext(state.config, actionMode || 'general');
     };
 
+    const renderShellMode = () => {
+        const { refs } = state;
+        if (!refs) return;
+
+        const settingsVisible = canShowSettingsEntry();
+        if (!settingsVisible) {
+            state.settingsOpen = false;
+        }
+
+        refs.settingsBtn.classList.toggle('lcq-ai-hidden', !settingsVisible);
+        refs.settingsBtn.textContent = state.settingsOpen ? '返回' : '配置';
+        refs.title.textContent = state.settingsOpen ? 'AI 服务配置' : '统一 AI 学习助手';
+        refs.settingsPane.classList.toggle('lcq-ai-hidden', !state.settingsOpen);
+        refs.historyList.classList.toggle('lcq-ai-hidden', state.settingsOpen);
+        refs.footer.classList.toggle('lcq-ai-hidden', state.settingsOpen);
+    };
+
+    const renderSettingsStatus = () => {
+        const { refs, serviceStatus } = state;
+        if (!refs) return;
+
+        if (state.settingsLoading) {
+            refs.settingsStatusPill.textContent = '检查中';
+            refs.settingsStatusPill.className = 'lcq-ai-settings-pill';
+            refs.settingsStatusText.textContent = '正在检查 Supabase Edge Function 与统一模型配置状态...';
+            refs.settingsMeta.innerHTML = '<div>Provider：DeepSeek</div><div>Storage：Supabase Edge Function 环境变量</div>';
+            return;
+        }
+
+        if (!serviceStatus) {
+            refs.settingsStatusPill.textContent = '未检查';
+            refs.settingsStatusPill.className = 'lcq-ai-settings-pill';
+            refs.settingsStatusText.textContent = '这里会显示统一 AI 服务端代理的当前状态。';
+            refs.settingsMeta.innerHTML = '<div>Provider：DeepSeek</div><div>Storage：Supabase Edge Function 环境变量</div>';
+            return;
+        }
+
+        const configured = !!serviceStatus.configured;
+        refs.settingsStatusPill.textContent = configured ? '已配置' : '未配置';
+        refs.settingsStatusPill.className = configured
+            ? 'lcq-ai-settings-pill ready'
+            : 'lcq-ai-settings-pill warn';
+        refs.settingsStatusText.textContent = configured
+            ? '统一 AI 服务端代理已可用。现在全站右下角统一 AI 按钮会共用这一套云端配置，普通用户不需要再输入任何 API Key。'
+            : (serviceStatus.error || '当前 Edge Function 还没有完成服务端密钥配置。为了安全，前端不会提供本地 key 录入回退方案。');
+        refs.settingsMeta.innerHTML = `
+            <div>Provider：${escapeHtml(serviceStatus.provider || 'DeepSeek')}</div>
+            <div>Model：${escapeHtml(serviceStatus.model || 'deepseek-chat')}</div>
+            <div>Endpoint：${escapeHtml(serviceStatus.endpointDisplay || 'https://api.deepseek.com/chat/completions')}</div>
+            <div>Storage：${escapeHtml(serviceStatus.storage || 'Supabase Edge Function 环境变量')}</div>
+        `;
+    };
+
+    const fetchServiceStatusInternal = async ({ panelLoading = false } = {}) => {
+        if (!state.config) return null;
+
+        if (panelLoading) {
+            state.settingsLoading = true;
+            renderSettingsStatus();
+        }
+
+        try {
+            const data = await requestService(state.config, { action: 'config-status' });
+            state.serviceStatus = data;
+            renderServiceStatus();
+            return data;
+        } catch (error) {
+            state.serviceStatus = {
+                configured: false,
+                error: error.message || '服务检测失败。'
+            };
+            renderServiceStatus();
+            throw error;
+        } finally {
+            if (panelLoading) {
+                state.settingsLoading = false;
+                renderSettingsStatus();
+            }
+        }
+    };
+
     const renderServiceStatus = () => {
         const { serviceStatus, config } = state;
+
+        renderSettingsStatus();
 
         if (!serviceStatus) return;
 
@@ -718,6 +1038,34 @@
         window.dispatchEvent(new CustomEvent('lcq-ai-assistant-response', { detail }));
         if (typeof state.config?.onResponse === 'function') {
             state.config.onResponse(detail);
+        }
+    };
+
+    const deleteHistoryEntry = async (historyId) => {
+        if (!state.config || !historyId || !canManageHistory() || state.sending || state.deletingHistoryId) return;
+
+        const confirmed = window.confirm('确定删除这条 AI 历史对话吗？删除后不能恢复。');
+        if (!confirmed) return;
+
+        state.deletingHistoryId = historyId;
+        renderHistory();
+
+        try {
+            const data = await requestService(state.config, {
+                action: 'delete-history',
+                historyId,
+                actorRole: getActorRole()
+            });
+
+            state.serviceStatus = data;
+            state.history = Array.isArray(data.history) ? data.history : state.history.filter((entry) => entry.id !== historyId);
+            renderServiceStatus();
+            renderHistory();
+        } catch (error) {
+            window.alert(error.message || '删除 AI 历史失败，请稍后重试。');
+        } finally {
+            state.deletingHistoryId = null;
+            renderHistory();
         }
     };
 
@@ -800,6 +1148,24 @@
         return defaultQuickActions(state.config?.pageType);
     };
 
+    const toggleSettingsPanel = async () => {
+        if (!canShowSettingsEntry()) return;
+
+        state.settingsOpen = !state.settingsOpen;
+        renderShellMode();
+
+        if (state.settingsOpen) {
+            try {
+                await fetchServiceStatusInternal({ panelLoading: true });
+            } catch (error) {
+                // status text is already updated in renderSettingsStatus
+            }
+            return;
+        }
+
+        setTimeout(() => state.refs?.input?.focus(), 40);
+    };
+
     const closePanel = () => {
         state.refs?.shell.classList.remove('open');
     };
@@ -807,6 +1173,8 @@
     const openPanel = async (options = {}) => {
         if (!state.refs || !state.config) return;
 
+        state.settingsOpen = false;
+        renderShellMode();
         state.refs.shell.classList.add('open');
         if (options.prompt) {
             state.refs.input.value = options.prompt;
@@ -838,12 +1206,26 @@
         refs.fab.addEventListener('click', () => openPanel());
         refs.close.addEventListener('click', closePanel);
         refs.overlay.addEventListener('click', closePanel);
+        refs.settingsBtn.addEventListener('click', () => toggleSettingsPanel());
         refs.sendBtn.addEventListener('click', () => sendQuestion({ actionMode: 'general' }));
+        refs.historyList.addEventListener('click', (event) => {
+            if (!(event.target instanceof Element)) return;
+            const trigger = event.target.closest('[data-action="delete-history"]');
+            if (!trigger) return;
+
+            const historyId = Number(trigger.dataset.historyId || 0);
+            if (!historyId) return;
+            deleteHistoryEntry(historyId);
+        });
         refs.input.addEventListener('keydown', (event) => {
             if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
                 event.preventDefault();
                 sendQuestion({ actionMode: 'general' });
             }
+        });
+        window.addEventListener('lcq-admin-auth-changed', () => {
+            renderShellMode();
+            renderHistory();
         });
         window.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') closePanel();
@@ -867,26 +1249,23 @@
         state.history = [];
         state.serviceStatus = null;
         state.sending = false;
+        state.settingsOpen = false;
+        state.settingsLoading = false;
+        state.deletingHistoryId = null;
         state.refs = createShell(state.config);
 
         renderContextPreview('general');
+        renderShellMode();
         renderHistory();
         renderServiceStatus();
         bindEvents();
         updateSendState();
 
-        requestService(state.config, { action: 'config-status' })
+        fetchServiceStatusInternal()
             .then((data) => {
-                state.serviceStatus = data;
-                renderServiceStatus();
+                return data;
             })
-            .catch((error) => {
-                state.serviceStatus = {
-                    configured: false,
-                    error: error.message || '服务检测失败。'
-                };
-                renderServiceStatus();
-            });
+            .catch(() => undefined);
 
         window.dispatchEvent(new CustomEvent('lcq-ai-assistant-ready', {
             detail: {
@@ -907,18 +1286,15 @@
             return loadHistory();
         },
         async fetchServiceStatus() {
-            if (!state.config) return null;
-            const data = await requestService(state.config, { action: 'config-status' });
-            state.serviceStatus = data;
-            renderServiceStatus();
-            return data;
+            return fetchServiceStatusInternal({ panelLoading: state.settingsOpen });
         },
         getState() {
             return {
                 pageType: state.config?.pageType || null,
                 history: state.history.slice(),
                 serviceStatus: state.serviceStatus,
-                initialized: state.initialized
+                initialized: state.initialized,
+                deletingHistoryId: state.deletingHistoryId
             };
         }
     };
