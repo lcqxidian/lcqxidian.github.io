@@ -825,6 +825,7 @@ int main() {
                 if (sec.id === targetId) sec.classList.add('active');
                 else sec.classList.remove('active');
             });
+            window.LCQAiAssistant?.refreshContext();
         });
 
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -837,6 +838,7 @@ int main() {
                     if (content.id === target) { content.classList.remove('hidden'); content.classList.add('block'); }
                     else { content.classList.remove('block'); content.classList.add('hidden'); }
                 });
+                window.LCQAiAssistant?.refreshContext();
             });
         });
 
@@ -864,6 +866,7 @@ int main() {
                     if (detail.id === target) { detail.classList.remove('hidden'); detail.classList.add('block'); }
                     else { detail.classList.remove('block'); detail.classList.add('hidden'); }
                 });
+                window.LCQAiAssistant?.refreshContext();
             });
         });
 
@@ -911,6 +914,7 @@ int main() {
         window.addEventListener('DOMContentLoaded', initChart);
     </script>
 
+    <script src="../ai_assistant.js?v=20260328a"></script>
     <!-- ========================================== -->
     <!-- Supabase 优化版逻辑：编号连续、追加卡片 -->
     <!-- ========================================== -->
@@ -980,6 +984,32 @@ int main() {
         const SUPABASE_URL = "https://hlmpgjvvnezpgobgbtwy.supabase.co";
         const SUPABASE_KEY = "sb_publishable_QJ8O--Xo_AQLqEGmibpiGQ_iO75gSig";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const getCppAIContext = () => {
+            const activeSection = document.querySelector('.section-view.active');
+            const sectionTitle = activeSection?.querySelector('h2, .cloud-section-title')?.innerText?.trim() || 'C++ 学习页';
+            const parts = [`当前章节：${sectionTitle}`];
+            const activeTab = activeSection?.querySelector('.tab-btn.active');
+            const activeTabContent = activeSection?.querySelector('.tab-content.block, .tab-content:not(.hidden)');
+            const activeDetail = activeSection?.querySelector('.detail-content.block, .detail-content:not(.hidden)');
+
+            if (activeTab?.innerText?.trim()) {
+                parts.push(`当前子标签：${activeTab.innerText.trim()}`);
+            }
+
+            if (activeDetail?.innerText?.trim()) {
+                parts.push(activeDetail.innerText.trim());
+            } else if (activeTabContent?.innerText?.trim()) {
+                parts.push(activeTabContent.innerText.trim());
+            } else if (activeSection?.innerText?.trim()) {
+                parts.push(activeSection.innerText.trim());
+            }
+
+            return {
+                scope: 'current_section',
+                title: sectionTitle,
+                content: parts.join('\n\n')
+            };
+        };
 
         const renderDynamicChapters = (cardsData) => {
             const mainContainer = document.querySelector('#main-content-container > div');
@@ -1128,6 +1158,20 @@ int main() {
         });
 
         fetchNotesFromCloud();
+        window.LCQAiAssistant.init({
+            pageType: 'cpp_thread',
+            pageKey: 'cpp_thread',
+            supabaseUrl: SUPABASE_URL,
+            supabaseAnonKey: SUPABASE_KEY,
+            theme: {
+                surface: 'light',
+                accent: '#2563eb',
+                accentStrong: '#1d4ed8',
+                accentSoft: 'rgba(59, 130, 246, 0.16)',
+                accentText: '#2563eb'
+            },
+            getContext: () => getCppAIContext()
+        });
 
         // 提交表单（智能识别：新建 还是 修改，并清洗章节名）
         formEl.addEventListener('submit', async (e) => {

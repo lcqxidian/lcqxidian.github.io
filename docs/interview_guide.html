@@ -43,6 +43,11 @@
             border-color: #c7d2fe;
         }
 
+        .topic-card.ai-context-active {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.14);
+        }
+
         .editor-field {
             width: 100%;
             border: 1px solid #c7d2fe;
@@ -318,6 +323,7 @@
         </div>
     </div>
 
+    <script src="../ai_assistant.js?v=20260328a"></script>
     <script>
         const CATEGORY_META = {
             cpp: {
@@ -360,6 +366,7 @@
         let editingCardId = null;
         let currentCloudCards = [];
         let currentChapterView = null;
+        let currentAITopicId = null;
 
         const navContainer = document.getElementById('nav-menu-container');
         const modalEl = document.getElementById('add-modal');
@@ -445,6 +452,7 @@
             document.querySelectorAll('.section-view').forEach((section) => {
                 section.classList.toggle('active', section.id === targetId);
             });
+            window.LCQAiAssistant?.refreshContext();
         };
 
         const getCardsForCategory = (categoryKey) => currentCloudCards
@@ -457,6 +465,53 @@
                 if (orderDiff !== 0) return orderDiff;
                 return new Date(a.created_at || 0) - new Date(b.created_at || 0);
             });
+
+        const findTopicById = (id) => currentCloudCards.find((item) => String(item.id) === String(id)) || null;
+
+        const refreshAITopicSelection = () => {
+            chapterDetailListEl.querySelectorAll('[data-ai-topic-id]').forEach((node) => {
+                node.classList.toggle('ai-context-active', String(node.dataset.aiTopicId) === String(currentAITopicId));
+            });
+            window.LCQAiAssistant?.refreshContext();
+        };
+
+        const getInterviewAIContext = () => {
+            if (currentChapterView) {
+                const topic = findTopicById(currentAITopicId);
+                if (topic) {
+                    return {
+                        scope: 'current_topic',
+                        title: `${cleanChapterName(topic.chapter)} / ${topic.title || '未命名题目'}`,
+                        content: [
+                            `所属模块：${CATEGORY_META[normalizeCategory(topic.category)].label}`,
+                            `当前章节：${cleanChapterName(topic.chapter)}`,
+                            `当前题目：${topic.title || '未命名题目'}`,
+                            topic.summary ? `一句话摘要：${topic.summary}` : '',
+                            topic.content ? `标准答案 / 内容：${topic.content}` : ''
+                        ].filter(Boolean).join('\n\n')
+                    };
+                }
+
+                const chapterCards = getCardsForChapter(currentChapterView.category, currentChapterView.chapter);
+                return {
+                    scope: 'current_chapter',
+                    title: `${CATEGORY_META[currentChapterView.category].label} / ${currentChapterView.chapter}`,
+                    content: [
+                        `当前模块：${CATEGORY_META[currentChapterView.category].label}`,
+                        `当前章节：${currentChapterView.chapter}`,
+                        chapterCards.length ? `本章节题目：\n- ${chapterCards.map((item) => item.title || '未命名题目').join('\n- ')}` : ''
+                    ].filter(Boolean).join('\n\n')
+                };
+            }
+
+            const activeSection = document.querySelector('.section-view.active');
+            const title = activeSection?.querySelector('h2')?.innerText?.trim() || '面试八股';
+            return {
+                scope: 'current_module',
+                title,
+                content: activeSection?.innerText?.trim() || '当前展示的是面试八股分类页。'
+            };
+        };
 
         const updateChapterDatalist = () => {
             const currentCategory = normalizeCategory(categoryFieldEl.value);
@@ -513,6 +568,9 @@
 
         const closeChapterDetail = () => {
             chapterDetailModalEl.classList.remove('modal-enter');
+            currentChapterView = null;
+            currentAITopicId = null;
+            window.LCQAiAssistant?.refreshContext();
         };
 
         const openChapterDetail = (categoryKey, chapterName) => {
@@ -530,6 +588,7 @@
                 ? 'px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm font-semibold'
                 : 'px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-sm font-semibold';
             chapterDetailAddBtnEl.classList.toggle('hidden', !canEdit);
+            currentAITopicId = cards[0]?.id || null;
 
             if (!cards.length) {
                 chapterDetailListEl.innerHTML = `
@@ -551,7 +610,7 @@
                         : '';
 
                     return `
-                        <article class="topic-card relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm group/card">
+                        <article class="topic-card relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm group/card cursor-pointer" data-ai-topic-id="${card.id}" title="点击后，统一 AI 会默认带上这道题作为当前上下文">
                             ${canEdit ? `
                                 <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover/card:opacity-100 transition-opacity">
                                     <button class="action-edit-btn p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 shadow-sm transition-colors" data-id="${card.id}" title="编辑">✏️</button>
@@ -578,6 +637,7 @@
             }
 
             chapterDetailModalEl.classList.add('modal-enter');
+            refreshAITopicSelection();
         };
 
         const createEmptyCategoryHtml = (categoryKey, canEdit) => {
@@ -789,6 +849,12 @@
         });
 
         const handleTopicActionClick = async (event) => {
+            const topicCard = event.target.closest('[data-ai-topic-id]');
+            if (topicCard && !event.target.closest('button')) {
+                currentAITopicId = topicCard.dataset.aiTopicId;
+                refreshAITopicSelection();
+            }
+
             const addInCategoryBtn = event.target.closest('.action-add-in-category-btn');
             if (addInCategoryBtn) {
                 if (!ensureAdminAccess()) return;
@@ -925,6 +991,20 @@
         resetModalToSetup();
         applyAdminEditUI();
         fetchNotesFromCloud();
+        window.LCQAiAssistant.init({
+            pageType: 'interview_guide',
+            pageKey: 'interview_guide',
+            supabaseUrl: SUPABASE_URL,
+            supabaseAnonKey: SUPABASE_KEY,
+            theme: {
+                surface: 'light',
+                accent: '#6366f1',
+                accentStrong: '#4f46e5',
+                accentSoft: 'rgba(99, 102, 241, 0.16)',
+                accentText: '#4338ca'
+            },
+            getContext: () => getInterviewAIContext()
+        });
     </script>
 </body>
 </html>
