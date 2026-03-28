@@ -337,7 +337,7 @@ const buildPublicDatasetSummary = (dataset: Awaited<ReturnType<typeof fetchAllow
         "最近一周公开 Weekly Plans：",
         `- 周次：${compactText(dataset.weeklyPlan.week_key) || "未知"}`,
         dataset.weeklyPlan.title ? `- 标题：${compactText(dataset.weeklyPlan.title)}` : "",
-        summary ? `- 摘要：${truncate(summary, 520)}` : "",
+        summary ? `- 摘要：${truncate(summary, 2600)}` : "",
       ]
         .filter(Boolean)
         .join("\n"),

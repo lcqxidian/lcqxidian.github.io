@@ -814,7 +814,7 @@
 DEEPSEEK_API_KEY=&lt;你的_key&gt; \
 DEEPSEEK_API_ENDPOINT=https://api.deepseek.com/chat/completions \
 DEEPSEEK_MODEL=deepseek-chat \
-SUPABASE_SERVICE_ROLE_KEY=&lt;service_role_key&gt;
+SERVICE_ROLE_KEY=&lt;service_role_key&gt;
 
 supabase functions deploy ai-assistant</pre>
                             <div class="lcq-ai-settings-note">仓库内已补好 <code>supabase/functions/ai-assistant/index.ts</code>、<code>supabase/config.toml</code> 和 <code>supabase/migrations/20260328110000_ai_assistant.sql</code>。</div>

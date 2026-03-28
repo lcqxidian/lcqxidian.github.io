@@ -53,12 +53,12 @@ supabase functions secrets set \
 DEEPSEEK_API_KEY=<你的_key> \
 DEEPSEEK_API_ENDPOINT=https://api.deepseek.com/chat/completions \
 DEEPSEEK_MODEL=deepseek-chat \
-SUPABASE_SERVICE_ROLE_KEY=<你的_service_role_key>
+SERVICE_ROLE_KEY=<你的_service_role_key>
 ```
 
 说明：
 
-- `SUPABASE_SERVICE_ROLE_KEY` 用于函数读取公开表和写入 `ai_learning_logs`
+- `SERVICE_ROLE_KEY` 用于函数读取公开表和写入 `ai_learning_logs`
 - `DEEPSEEK_API_ENDPOINT` 和 `DEEPSEEK_MODEL` 可以不改，默认就是 DeepSeek 官方兼容值
 
 ### 4.3 部署 Edge Function
