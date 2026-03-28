@@ -638,6 +638,9 @@ Deno.serve(async (request) => {
     endpointDisplay: DEEPSEEK_API_ENDPOINT || DEFAULT_DEEPSEEK_ENDPOINT,
     model: DEEPSEEK_MODEL || DEFAULT_DEEPSEEK_MODEL,
     storage: "Supabase Edge Function 环境变量",
+    capabilities: {
+      deleteHistory: true,
+    },
   };
 
   if (action === "config-status") {

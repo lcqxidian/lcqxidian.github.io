@@ -758,6 +758,8 @@
         }
     };
 
+    const supportsHistoryDeletion = () => !!state.serviceStatus?.capabilities?.deleteHistory;
+
     const createShell = (config) => {
         injectStyles();
 
@@ -872,7 +874,7 @@ supabase functions deploy ai-assistant</pre>
             const timeLabel = entry.pending
                 ? '正在回复...'
                 : (entry.created_at ? formatTime(entry.created_at) : '');
-            const canDelete = canManageHistory() && !!entry.id && !entry.pending;
+            const canDelete = canManageHistory() && supportsHistoryDeletion() && !!entry.id && !entry.pending;
             const deleting = state.deletingHistoryId === entry.id;
 
             wrapper.innerHTML = `
@@ -1042,7 +1044,12 @@ supabase functions deploy ai-assistant</pre>
     };
 
     const deleteHistoryEntry = async (historyId) => {
-        if (!state.config || !historyId || !canManageHistory() || state.sending || state.deletingHistoryId) return;
+        if (!state.config || !historyId || !canManageHistory() || !supportsHistoryDeletion() || state.sending || state.deletingHistoryId) {
+            if (!supportsHistoryDeletion()) {
+                window.alert('当前线上 AI 后端还是旧版本，删除历史接口还没部署。请先重新部署 Supabase Edge Function `ai-assistant`。');
+            }
+            return;
+        }
 
         const confirmed = window.confirm('确定删除这条 AI 历史对话吗？删除后不能恢复。');
         if (!confirmed) return;
@@ -1062,7 +1069,10 @@ supabase functions deploy ai-assistant</pre>
             renderServiceStatus();
             renderHistory();
         } catch (error) {
-            window.alert(error.message || '删除 AI 历史失败，请稍后重试。');
+            const message = error.message === '问题不能为空。'
+                ? '当前线上 AI 后端还是旧版本，删除历史接口还没部署。请先重新部署 Supabase Edge Function `ai-assistant`。'
+                : (error.message || '删除 AI 历史失败，请稍后重试。');
+            window.alert(message);
         } finally {
             state.deletingHistoryId = null;
             renderHistory();
