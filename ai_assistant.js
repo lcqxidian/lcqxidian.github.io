@@ -444,6 +444,19 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 
+    const stripMarkdownForDisplay = (value) => compactText(String(value || '')
+        .replace(/```(?:[\w+-]+)?\s*([\s\S]*?)```/g, '\n$1\n')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
+        .replace(/(^|\n)#{1,6}\s+/g, '$1')
+        .replace(/(^|\n)>\s?/g, '$1')
+        .replace(/^\s*[*+]\s+/gm, '- ')
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/__([^_]+)__/g, '$1')
+        .replace(/(^|[^\*])\*([^*\n]+)\*(?!\*)/g, '$1$2')
+        .replace(/(^|[^_])_([^_\n]+)_(?!_)/g, '$1$2')
+        .replace(/\n{3,}/g, '\n\n'));
+
     const formatTime = (value) => {
         if (!value) return '';
         const date = new Date(value);
@@ -641,7 +654,7 @@
                     <div class="lcq-ai-entry-content user">${escapeHtml(entry.user_question || '')}</div>
                 </div>
                 <div class="lcq-ai-entry-block">
-                    <div class="lcq-ai-entry-content assistant">${escapeHtml(entry.ai_answer || '')}</div>
+                    <div class="lcq-ai-entry-content assistant">${escapeHtml(stripMarkdownForDisplay(entry.ai_answer || ''))}</div>
                 </div>
                 ${timeLabel ? `<div class="lcq-ai-entry-time">${escapeHtml(timeLabel)}</div>` : ''}
             `;

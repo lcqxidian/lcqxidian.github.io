@@ -61,6 +61,22 @@ const compactText = (value: unknown) =>
     .replace(/[ \t]{2,}/g, " ")
     .trim();
 
+const stripMarkdownSyntax = (value: unknown) =>
+  compactText(
+    String(value || "")
+      .replace(/```(?:[\w+-]+)?\s*([\s\S]*?)```/g, "\n$1\n")
+      .replace(/`([^`]+)`/g, "$1")
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1")
+      .replace(/(^|\n)#{1,6}\s+/g, "$1")
+      .replace(/(^|\n)>\s?/g, "$1")
+      .replace(/^\s*[*+]\s+/gm, "- ")
+      .replace(/\*\*([^*]+)\*\*/g, "$1")
+      .replace(/__([^_]+)__/g, "$1")
+      .replace(/(^|[^\*])\*([^*\n]+)\*(?!\*)/g, "$1$2")
+      .replace(/(^|[^_])_([^_\n]+)_(?!_)/g, "$1$2")
+      .replace(/\n{3,}/g, "\n\n"),
+  );
+
 const truncate = (value: unknown, max = 3200) => {
   const text = compactText(value);
   if (text.length <= max) return text;
@@ -121,25 +137,75 @@ const toBulletLines = (value: unknown) => {
     .filter(Boolean);
 };
 
+const WEEKLY_TEXT_FIELDS: Array<[string, string, number]> = [
+  ["overview_title", "本周标题", 160],
+  ["overview_theme", "本周主线", 180],
+  ["overview_context", "背景约束", 220],
+  ["overview_one_line", "一句话目标", 180],
+  ["overview_priority", "优先级提醒", 180],
+  ["goal_1_title", "目标 1", 120],
+  ["goal_1_detail", "目标 1 说明", 180],
+  ["goal_2_title", "目标 2", 120],
+  ["goal_2_detail", "目标 2 说明", 180],
+  ["goal_3_title", "目标 3", 120],
+  ["goal_3_detail", "目标 3 说明", 180],
+  ["goals_done_definition", "完成标准", 180],
+  ["goals_risks", "风险与阻塞", 180],
+  ["ai_week_brief", "本周要学的大概内容", 220],
+  ["ai_week_constraints", "时间约束", 160],
+  ["resources_list", "资料清单", 220],
+  ["resources_notes", "资料备注", 180],
+  ["ai_weekly_summary", "AI 本周总结", 320],
+  ["ai_weekly_progress", "AI 已推进重点", 360],
+  ["ai_weekly_gaps", "AI 待补齐部分", 260],
+  ["ai_next_actions", "AI 下周建议", 260],
+  ["review_gain", "本周收获", 180],
+  ["review_blockers", "卡点问题", 180],
+  ["review_next_week", "下周延续项", 180],
+  ["review_message", "给未来自己的备注", 180],
+];
+
+const WEEKLY_DAILY_FIELDS = [
+  ["mon", "周一"],
+  ["tue", "周二"],
+  ["wed", "周三"],
+  ["thu", "周四"],
+  ["fri", "周五"],
+  ["sat", "周六"],
+  ["sun", "周日"],
+] as const;
+
 const summarizeWeeklyPlanContent = (content: Record<string, unknown> | null | undefined) => {
   if (!content || typeof content !== "object") return "";
 
-  const sectionLines = [
-    content.overview_title ? `本周标题：${compactText(content.overview_title)}` : "",
-    content.overview_theme ? `本周主线：${compactText(content.overview_theme)}` : "",
-    content.overview_context ? `背景约束：${truncate(content.overview_context, 220)}` : "",
-    content.overview_one_line ? `一句话目标：${compactText(content.overview_one_line)}` : "",
-    content.goal_1_title ? `目标 1：${compactText(content.goal_1_title)} / ${truncate(content.goal_1_detail, 160)}` : "",
-    content.goal_2_title ? `目标 2：${compactText(content.goal_2_title)} / ${truncate(content.goal_2_detail, 160)}` : "",
-    content.goal_3_title ? `目标 3：${compactText(content.goal_3_title)} / ${truncate(content.goal_3_detail, 160)}` : "",
-    content.resources_list ? `资料清单：${truncate(content.resources_list, 220)}` : "",
-    content.review_gain ? `本周收获：${truncate(content.review_gain, 180)}` : "",
-    content.review_blockers ? `卡点问题：${truncate(content.review_blockers, 180)}` : "",
-    content.review_next_week ? `下周延续项：${truncate(content.review_next_week, 180)}` : "",
-  ].filter(Boolean);
+  const sectionLines = WEEKLY_TEXT_FIELDS
+    .map(([key, label, maxLength]) => {
+      const value = truncate(content[key], maxLength);
+      return value ? `${label}：${value}` : "";
+    })
+    .filter(Boolean);
+
+  WEEKLY_DAILY_FIELDS.forEach(([prefix, label]) => {
+    const title = truncate(content[`${prefix}_title`], 120);
+    const tasks = truncate(content[`${prefix}_tasks`], 220);
+    const note = truncate(content[`${prefix}_note`], 140);
+
+    if (!title && !tasks && !note) return;
+
+    sectionLines.push([
+      `${label}：${title || "未写标题"}`,
+      tasks ? `任务：${tasks}` : "",
+      note ? `备注：${note}` : "",
+    ].filter(Boolean).join("；"));
+  });
 
   return sectionLines.join("\n");
 };
+
+const hasMeaningfulWeeklyPlanContent = (content: Record<string, unknown> | null | undefined) =>
+  Boolean(summarizeWeeklyPlanContent(content));
+
+const sanitizeAssistantAnswer = (value: unknown) => stripMarkdownSyntax(value);
 
 const fetchAllowedPublicData = async (supabase: ReturnType<typeof createServiceClient>) => {
   const result = {
@@ -176,8 +242,7 @@ const fetchAllowedPublicData = async (supabase: ReturnType<typeof createServiceC
       .from("weekly_plans")
       .select("week_key, title, content")
       .order("week_key", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+      .limit(3),
   ]);
 
   const [knowledgeCardsResult, cppNotesResult, interviewTopicsResult, weeklyPlanResult] = tasks;
@@ -201,7 +266,11 @@ const fetchAllowedPublicData = async (supabase: ReturnType<typeof createServiceC
   }
 
   if (weeklyPlanResult.status === "fulfilled" && !weeklyPlanResult.value.error) {
-    result.weeklyPlan = weeklyPlanResult.value.data || null;
+    const weeklyPlans = weeklyPlanResult.value.data || [];
+    result.weeklyPlan =
+      weeklyPlans.find((item) => hasMeaningfulWeeklyPlanContent(item.content as Record<string, unknown>)) ||
+      weeklyPlans[0] ||
+      null;
   } else {
     result.warnings.push("读取 Weekly Plans 公开数据失败。");
   }
@@ -285,6 +354,7 @@ const buildSystemPrompt = () => [
   "你绝对不能访问、引用或假装知道以下内容：私密留言板、爸妈历史留言、隐藏身份数据、管理员专属内容、未公开草稿、任何密钥或内部配置。",
   "如果用户追问了你拿不到的私密信息，必须直接说明“基于当前公开数据我无法访问这部分内容”。",
   "回答必须用简体中文，尽量准确、克制、贴近当前学习场景。",
+  "默认输出纯文本，不要使用 Markdown 标题、粗体、代码围栏、反引号；如果需要分点，直接用简洁短句或普通短横线。",
   "当你是在 C++ 或八股页面回答时，应优先围绕当前章节/题目讲解，而不是泛泛而谈。",
   "当信息不足时，请明确标注“基于当前公开数据推断”。",
 ].join("\n");
@@ -603,19 +673,19 @@ Deno.serve(async (request) => {
       structured: actionMode === "weekly_plan" || actionMode === "weekly_summary",
     });
 
-    let answer = compactText(rawContent);
+    let answer = sanitizeAssistantAnswer(rawContent);
     let structuredData: Record<string, unknown> | null = null;
 
     if (actionMode === "weekly_plan") {
       const parsed = extractJson(rawContent);
       const normalized = normalizeDailyPlan(parsed);
       structuredData = normalized;
-      answer = formatDailyPlanAnswer(normalized.dailyPlan);
+      answer = sanitizeAssistantAnswer(formatDailyPlanAnswer(normalized.dailyPlan));
     } else if (actionMode === "weekly_summary") {
       const parsed = extractJson(rawContent);
       const normalized = normalizeWeeklySummary(parsed);
       structuredData = normalized;
-      answer = formatWeeklySummaryAnswer(normalized);
+      answer = sanitizeAssistantAnswer(formatWeeklySummaryAnswer(normalized));
     }
 
     await insertHistory(serviceClient, {
