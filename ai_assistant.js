@@ -815,7 +815,7 @@ DEEPSEEK_MODEL=deepseek-chat \
 SUPABASE_SERVICE_ROLE_KEY=&lt;service_role_key&gt;
 
 supabase functions deploy ai-assistant</pre>
-                            <div class="lcq-ai-settings-note">仓库内已补好 `supabase/functions/ai-assistant/index.ts`、`supabase/config.toml` 和 `supabase/migrations/20260328110000_ai_assistant.sql`。</div>
+                            <div class="lcq-ai-settings-note">仓库内已补好 <code>supabase/functions/ai-assistant/index.ts</code>、<code>supabase/config.toml</code> 和 <code>supabase/migrations/20260328110000_ai_assistant.sql</code>。</div>
                         </section>
                     </div>
                     <div class="lcq-ai-history-list" data-role="history-list"></div>
