@@ -811,9 +811,100 @@ const buildRetrievedContextSummary = ({
   return sections.join("\n\n");
 };
 
+const selectRelevantHistory = ({
+  history,
+  question,
+  pageType,
+  pageKey,
+  contextTitle,
+}: {
+  history: HistoryRow[];
+  question: string;
+  pageType: PageType;
+  pageKey: string;
+  contextTitle: string;
+}) => {
+  const questionTerms = extractSearchTerms(question, 18);
+  const contextTerms = extractSearchTerms(contextTitle, 8);
+
+  return history
+    .map((item, index) => {
+      const searchableText = [
+        item.page_type,
+        item.page_key,
+        item.context_title || "",
+        item.user_question,
+        item.ai_answer,
+      ].join("\n").toLowerCase();
+
+      let score = Math.max(0, 10 - index);
+      if (item.page_type === pageType) score += 8;
+      if (item.page_key === pageKey) score += 8;
+
+      questionTerms.forEach((term) => {
+        if (searchableText.includes(term)) score += 4;
+      });
+
+      contextTerms.forEach((term) => {
+        if (searchableText.includes(term)) score += 2;
+      });
+
+      return { ...item, score };
+    })
+    .sort((left, right) =>
+      right.score - left.score ||
+      String(right.created_at).localeCompare(String(left.created_at))
+    )
+    .slice(0, 6)
+    .sort((left, right) =>
+      String(left.created_at).localeCompare(String(right.created_at))
+    );
+};
+
+const buildHistorySummary = ({
+  history,
+  question,
+  pageType,
+  pageKey,
+  contextTitle,
+}: {
+  history: HistoryRow[];
+  question: string;
+  pageType: PageType;
+  pageKey: string;
+  contextTitle: string;
+}) => {
+  if (!history.length) {
+    return "最近没有可复用的历史对话。";
+  }
+
+  const selectedHistory = selectRelevantHistory({
+    history,
+    question,
+    pageType,
+    pageKey,
+    contextTitle,
+  });
+
+  if (!selectedHistory.length) {
+    return "最近没有可复用的历史对话。";
+  }
+
+  return [
+    "最近相关历史对话：",
+    ...selectedHistory.map((item, index) => [
+      `[历史 ${index + 1}] 页面：${item.page_type} / ${item.page_key}`,
+      item.context_title ? `上下文：${truncate(item.context_title, 120)}` : "",
+      `用户：${truncate(item.user_question, 220)}`,
+      `AI：${truncate(item.ai_answer, 320)}`,
+    ].filter(Boolean).join("\n")),
+  ].join("\n\n");
+};
+
 const buildSystemPrompt = () => [
   "你是 LCQ.Space 的统一 AI 学习助手。",
   "你在引用站点内容时，只能使用当前请求附带的页面公开上下文，以及服务端检索出的站点公开学习片段。",
+  "你可以参考系统提供的最近历史对话来延续上下文、记住用户刚刚问过什么、避免前后矛盾，但不要把历史对话当作站点公开事实来源。",
   "你可以使用自己的通用知识和经验做解释、教学、举例和方法建议，但必须和站点公开数据严格区分，不能把通用知识伪装成站内事实。",
   "你绝对不能访问、引用或假装知道以下内容：私密留言板、爸妈历史留言、隐藏身份数据、管理员专属内容、未公开草稿、任何密钥或内部配置。",
   "如果用户追问站内事实、个人状态或私密信息，而公开数据里没有，必须直接说明“基于当前公开数据我无法确认这部分站内信息”。",
@@ -830,6 +921,7 @@ const buildUserPrompt = ({
   contextScope,
   contextTitle,
   retrievedContextSummary,
+  historySummary,
 }: {
   pageType: PageType;
   actionMode: ActionMode;
@@ -837,17 +929,20 @@ const buildUserPrompt = ({
   contextScope: string;
   contextTitle: string;
   retrievedContextSummary: string;
+  historySummary: string;
 }) => {
   const pageLine = `当前页面：${pageType}`;
   const contextLine = `上下文范围：${contextScope || "未指定"}`;
   const titleLine = `上下文标题：${contextTitle || "未命名上下文"}`;
   const retrievalBlock = `站点公开数据检索结果：\n${retrievedContextSummary}`;
+  const historyBlock = `最近历史对话参考：\n${historySummary}`;
 
   if (actionMode === "weekly_plan") {
     return [
       pageLine,
       contextLine,
       titleLine,
+      historyBlock,
       retrievalBlock,
       `用户需求：${question}`,
       "请根据当前周公开内容，一次性补全 Weekly Plans 的四个章节：本周概览、周目标拆解、每日计划、学习资料区。",
@@ -869,6 +964,7 @@ const buildUserPrompt = ({
       pageLine,
       contextLine,
       titleLine,
+      historyBlock,
       retrievalBlock,
       `用户需求：${question}`,
       "请只基于当前周 Weekly Plans 的公开内容，总结本周学习进度。",
@@ -884,6 +980,7 @@ const buildUserPrompt = ({
       pageLine,
       contextLine,
       titleLine,
+      historyBlock,
       retrievalBlock,
       `用户需求：${question}`,
       "请以面试官身份继续追问，默认输出 5 个循序渐进的问题。",
@@ -896,6 +993,7 @@ const buildUserPrompt = ({
     pageLine,
     contextLine,
     titleLine,
+    historyBlock,
     retrievalBlock,
     `用户问题：${question}`,
     "请优先基于上述公开片段回答。",
@@ -1174,6 +1272,7 @@ Deno.serve(async (request) => {
     storage: "Supabase Edge Function 环境变量",
     capabilities: {
       deleteHistory: true,
+      historyContext: "relevant-last-6",
       generalKnowledgeFallback: true,
       retrievalMode: "chunk-search-v1",
     },
@@ -1251,6 +1350,7 @@ Deno.serve(async (request) => {
 
   try {
     const publicDataset = await fetchAllowedPublicData(serviceClient);
+    const existingHistory = await fetchHistory(serviceClient);
     const retrieval = selectRelevantChunks({
       question,
       pageType,
@@ -1263,6 +1363,13 @@ Deno.serve(async (request) => {
       selectedChunks: retrieval.selectedChunks,
       warnings: publicDataset.warnings,
     });
+    const historySummary = buildHistorySummary({
+      history: existingHistory,
+      question,
+      pageType,
+      pageKey,
+      contextTitle,
+    });
     const prompt = buildUserPrompt({
       pageType,
       actionMode,
@@ -1270,6 +1377,7 @@ Deno.serve(async (request) => {
       contextScope,
       contextTitle,
       retrievedContextSummary,
+      historySummary,
     });
 
     const rawContent = await callDeepSeek({
