@@ -23,6 +23,10 @@ type ChatRequest = {
   actorRole?: string;
   question?: string;
   historyId?: number;
+  knowledgeOptions?: {
+    siteKnowledge?: boolean;
+    modelKnowledge?: boolean;
+  };
   context?: {
     scope?: string;
     title?: string;
@@ -61,6 +65,14 @@ type RankedChunk = RetrievalChunk & {
   titleHits: number;
   contextHits: number;
   wholeQuestionMatch: boolean;
+};
+
+type KnowledgeMode = "site_only" | "model_only" | "hybrid";
+
+type ResolvedKnowledgeOptions = {
+  siteKnowledge: boolean;
+  modelKnowledge: boolean;
+  mode: KnowledgeMode;
 };
 
 const corsHeaders = {
@@ -193,6 +205,29 @@ const normalizeActionMode = (value: unknown): ActionMode => {
     return mode;
   }
   return "general";
+};
+
+const normalizeKnowledgeOptions = (value: unknown): ResolvedKnowledgeOptions => {
+  const source = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  let siteKnowledge = source.siteKnowledge !== false;
+  let modelKnowledge = source.modelKnowledge !== false;
+
+  if (!siteKnowledge && !modelKnowledge) {
+    siteKnowledge = true;
+    modelKnowledge = true;
+  }
+
+  const mode: KnowledgeMode = siteKnowledge && modelKnowledge
+    ? "hybrid"
+    : siteKnowledge
+    ? "site_only"
+    : "model_only";
+
+  return {
+    siteKnowledge,
+    modelKnowledge,
+    mode,
+  };
 };
 
 const extractJson = (value: string) => {
@@ -439,6 +474,14 @@ const hasMeaningfulWeeklyPlanContent = (content: Record<string, unknown> | null 
   Boolean(summarizeWeeklyPlanContent(content));
 
 const sanitizeAssistantAnswer = (value: unknown) => stripMarkdownSyntax(value);
+
+const createEmptyPublicDataset = (): PublicDataset => ({
+  knowledgeCards: [],
+  cppNotes: [],
+  interviewTopics: [],
+  weeklyPlans: [],
+  warnings: [],
+});
 
 const fetchAllowedPublicData = async (supabase: ReturnType<typeof createServiceClient>): Promise<PublicDataset> => {
   const result: PublicDataset = {
@@ -780,16 +823,18 @@ const selectRelevantChunks = ({
 const buildRetrievedContextSummary = ({
   selectedChunks,
   warnings,
+  siteKnowledgeEnabled,
 }: {
   selectedChunks: RankedChunk[];
   warnings: string[];
+  siteKnowledgeEnabled: boolean;
 }) => {
   const sections: string[] = [];
 
   if (selectedChunks.length) {
     sections.push(
       [
-        "与本次问题最相关的站点公开片段：",
+        "与本次问题最相关的当前上下文与公开片段：",
         ...selectedChunks.map((chunk, index) => {
           const lines = [
             `[片段 ${index + 1}] ${chunk.sourceLabel}`,
@@ -801,10 +846,14 @@ const buildRetrievedContextSummary = ({
       ].join("\n\n"),
     );
   } else {
-    sections.push("本次没有检索到足够相关的站点公开片段。");
+    sections.push(
+      siteKnowledgeEnabled
+        ? "本次没有检索到足够相关的公开片段。"
+        : "本次未启用站点公开知识库检索，且当前页面没有足够可用的上下文片段。",
+    );
   }
 
-  if (warnings.length) {
+  if (siteKnowledgeEnabled && warnings.length) {
     sections.push(`公开数据读取提示：${warnings.join("；")}`);
   }
 
@@ -901,18 +950,48 @@ const buildHistorySummary = ({
   ].join("\n\n");
 };
 
-const buildSystemPrompt = () => [
-  "你是 LCQ.Space 的统一 AI 学习助手。",
-  "你在引用站点内容时，只能使用当前请求附带的页面公开上下文，以及服务端检索出的站点公开学习片段。",
-  "你可以参考系统提供的最近历史对话来延续上下文、记住用户刚刚问过什么、避免前后矛盾，但不要把历史对话当作站点公开事实来源。",
-  "你可以使用自己的通用知识和经验做解释、教学、举例和方法建议，但必须和站点公开数据严格区分，不能把通用知识伪装成站内事实。",
-  "你绝对不能访问、引用或假装知道以下内容：私密留言板、爸妈历史留言、隐藏身份数据、管理员专属内容、未公开草稿、任何密钥或内部配置。",
-  "如果用户追问站内事实、个人状态或私密信息，而公开数据里没有，必须直接说明“基于当前公开数据我无法确认这部分站内信息”。",
-  "回答必须用简体中文，尽量准确、克制、贴近当前学习场景。",
-  "默认输出纯文本，不要使用 Markdown 标题、粗体、代码围栏、反引号；如果需要分点，直接用简洁短句或普通短横线。",
-  "当你是在 C++ 或八股页面回答时，应优先围绕当前章节/题目讲解，而不是泛泛而谈。",
-  "当站点公开片段不足以支撑结论时：如果你给的是站内推断，请明确标注“基于当前公开数据推断”；如果你给的是通用解释，请明确标注“补充说明（通用知识）”。",
-].join("\n");
+const buildSystemPrompt = ({
+  knowledgeOptions,
+}: {
+  knowledgeOptions: ResolvedKnowledgeOptions;
+}) => {
+  const baseLines = [
+    "你是 LCQ.Space 的统一 AI 学习助手。",
+    "你可以参考系统提供的最近历史对话来延续上下文、记住用户刚刚问过什么、避免前后矛盾，但不要把历史对话当作站点公开事实来源。",
+    "你绝对不能访问、引用或假装知道以下内容：私密留言板、爸妈历史留言、隐藏身份数据、管理员专属内容、未公开草稿、任何密钥或内部配置。",
+    "回答必须用简体中文，尽量准确、克制、贴近当前学习场景。",
+    "默认输出纯文本，不要使用 Markdown 标题、粗体、代码围栏、反引号；如果需要分点，直接用简洁短句或普通短横线。",
+    "当你是在 C++ 或八股页面回答时，应优先围绕当前章节/题目讲解，而不是泛泛而谈。",
+  ];
+
+  if (knowledgeOptions.mode === "site_only") {
+    return [
+      ...baseLines,
+      "本次回答模式：仅基于已有知识库回答。",
+      "你只能使用当前请求附带的页面公开上下文、服务端检索到的站点公开学习片段，以及最近历史对话里的上下文线索来作答。",
+      "不要使用模型自带的额外通用知识来补全答案，不要凭经验延展到站点公开数据之外。",
+      "如果公开内容不足以支撑答案，必须明确说明“基于当前公开数据我无法确认这部分站内信息”或“当前公开内容暂未覆盖这个问题”。",
+    ].join("\n");
+  }
+
+  if (knowledgeOptions.mode === "model_only") {
+    return [
+      ...baseLines,
+      "本次回答模式：仅基于 DeepSeek 知识库回答。",
+      "你可以直接使用自己的通用知识、经验和推理回答问题，并参考最近历史对话保持上下文连贯。",
+      "当前页面上下文只用于理解用户正在讨论的主题和场景，不要求你受站点公开知识库限制，也不要反复强调公开数据不足。",
+      "只有在用户追问站内事实、个人状态、私密信息、管理员信息或隐藏信息，而当前上下文又不能确认时，才明确说明无法确认。",
+    ].join("\n");
+  }
+
+  return [
+    ...baseLines,
+    "本次回答模式：站点公开知识库与 DeepSeek 知识库共同回答。",
+    "你应优先吸收当前请求附带的页面公开上下文，以及服务端检索到的站点公开学习片段，再使用自己的通用知识补足解释、举例、方法建议和延展说明。",
+    "涉及站内事实时，以公开片段为准；涉及通用解释时，可以直接回答，但要和站内事实区分开。",
+    "如果站点公开片段不足以支撑站内结论：站内推断请明确标注“基于当前公开数据推断”；通用解释请明确标注“补充说明（通用知识）”。",
+  ].join("\n");
+};
 
 const buildUserPrompt = ({
   pageType,
@@ -920,29 +999,50 @@ const buildUserPrompt = ({
   question,
   contextScope,
   contextTitle,
+  contextText,
   retrievedContextSummary,
   historySummary,
+  knowledgeOptions,
 }: {
   pageType: PageType;
   actionMode: ActionMode;
   question: string;
   contextScope: string;
   contextTitle: string;
+  contextText: string;
   retrievedContextSummary: string;
   historySummary: string;
+  knowledgeOptions: ResolvedKnowledgeOptions;
 }) => {
   const pageLine = `当前页面：${pageType}`;
   const contextLine = `上下文范围：${contextScope || "未指定"}`;
   const titleLine = `上下文标题：${contextTitle || "未命名上下文"}`;
+  const currentContextBlock = `当前页面公开上下文摘要：\n${contextText ? truncate(contextText, 1400) : "当前没有额外页面上下文。"}`;
   const retrievalBlock = `站点公开数据检索结果：\n${retrievedContextSummary}`;
   const historyBlock = `最近历史对话参考：\n${historySummary}`;
+  const knowledgeBlock = knowledgeOptions.mode === "site_only"
+    ? [
+      "回答来源模式：仅基于已有知识库回答。",
+      "本次只允许依赖当前页面公开上下文、检索到的站点公开片段和最近历史对话；不要补充模型自带的额外知识。",
+    ].join("\n")
+    : knowledgeOptions.mode === "model_only"
+    ? [
+      "回答来源模式：仅基于 DeepSeek 知识库回答。",
+      "本次不要求受站点知识库约束，你可以直接用 DeepSeek 的通用知识回答；最近历史对话仍然要参考。",
+    ].join("\n")
+    : [
+      "回答来源模式：站点公开知识库 + DeepSeek 知识库共同回答。",
+      "请优先参考当前页面公开上下文和检索片段，再结合 DeepSeek 的通用知识补充解释、方法和例子。",
+    ].join("\n");
 
   if (actionMode === "weekly_plan") {
     return [
       pageLine,
       contextLine,
       titleLine,
+      knowledgeBlock,
       historyBlock,
+      currentContextBlock,
       retrievalBlock,
       `用户需求：${question}`,
       "请根据当前周公开内容，一次性补全 Weekly Plans 的四个章节：本周概览、周目标拆解、每日计划、学习资料区。",
@@ -964,7 +1064,9 @@ const buildUserPrompt = ({
       pageLine,
       contextLine,
       titleLine,
+      knowledgeBlock,
       historyBlock,
+      currentContextBlock,
       retrievalBlock,
       `用户需求：${question}`,
       "请只基于当前周 Weekly Plans 的公开内容，总结本周学习进度。",
@@ -980,7 +1082,9 @@ const buildUserPrompt = ({
       pageLine,
       contextLine,
       titleLine,
+      knowledgeBlock,
       historyBlock,
+      currentContextBlock,
       retrievalBlock,
       `用户需求：${question}`,
       "请以面试官身份继续追问，默认输出 5 个循序渐进的问题。",
@@ -993,27 +1097,33 @@ const buildUserPrompt = ({
     pageLine,
     contextLine,
     titleLine,
+    knowledgeBlock,
     historyBlock,
+    currentContextBlock,
     retrievalBlock,
     `用户问题：${question}`,
-    "请优先基于上述公开片段回答。",
-    "如果公开片段不足以回答通用知识问题，可以直接给出你的通用解释、经验或做法建议，并在开头明确写“补充说明（通用知识）”。",
-    "如果用户问的是站内事实、个人状态、私密内容或公开数据中不存在的具体站内细节，而公开片段不足，则必须明确说“基于当前公开数据我无法确认这部分站内信息”。",
+    knowledgeOptions.mode === "site_only"
+      ? "请严格只基于上述上下文与公开片段回答；如果公开内容不足，就直接说明当前公开内容未覆盖。"
+      : knowledgeOptions.mode === "model_only"
+      ? "请直接给出清晰、有帮助的回答。除非用户追问站内私密或无法确认的站内事实，否则不要反复强调公开数据限制。"
+      : "请优先基于上述公开片段回答；如果还需要补足解释、经验、做法建议或举例，可以结合 DeepSeek 的通用知识继续回答。",
   ].join("\n\n");
 };
 
 const callDeepSeek = async ({
   prompt,
   structured,
+  knowledgeOptions,
 }: {
   prompt: string;
   structured: boolean;
+  knowledgeOptions: ResolvedKnowledgeOptions;
 }) => {
   const body: Record<string, unknown> = {
     model: DEEPSEEK_MODEL,
     temperature: structured ? 0.45 : 0.6,
     messages: [
-      { role: "system", content: buildSystemPrompt() },
+      { role: "system", content: buildSystemPrompt({ knowledgeOptions }) },
       { role: "user", content: prompt },
     ],
   };
@@ -1264,6 +1374,7 @@ Deno.serve(async (request) => {
 
   const action = payload.action || "chat";
   const serviceClient = createServiceClient();
+  const knowledgeOptions = normalizeKnowledgeOptions(payload.knowledgeOptions);
   const configPayload = {
     configured: isConfigured(),
     provider: "DeepSeek",
@@ -1275,6 +1386,13 @@ Deno.serve(async (request) => {
       historyContext: "relevant-last-6",
       generalKnowledgeFallback: true,
       retrievalMode: "chunk-search-v1",
+      answerModes: ["site_only", "model_only", "hybrid"],
+    },
+    knowledgeOptions,
+    defaultKnowledgeOptions: {
+      siteKnowledge: true,
+      modelKnowledge: true,
+      mode: "hybrid",
     },
   };
 
@@ -1349,7 +1467,9 @@ Deno.serve(async (request) => {
   }
 
   try {
-    const publicDataset = await fetchAllowedPublicData(serviceClient);
+    const publicDataset = knowledgeOptions.siteKnowledge
+      ? await fetchAllowedPublicData(serviceClient)
+      : createEmptyPublicDataset();
     const existingHistory = await fetchHistory(serviceClient);
     const retrieval = selectRelevantChunks({
       question,
@@ -1362,6 +1482,7 @@ Deno.serve(async (request) => {
     const retrievedContextSummary = buildRetrievedContextSummary({
       selectedChunks: retrieval.selectedChunks,
       warnings: publicDataset.warnings,
+      siteKnowledgeEnabled: knowledgeOptions.siteKnowledge,
     });
     const historySummary = buildHistorySummary({
       history: existingHistory,
@@ -1376,13 +1497,16 @@ Deno.serve(async (request) => {
       question,
       contextScope,
       contextTitle,
+      contextText,
       retrievedContextSummary,
       historySummary,
+      knowledgeOptions,
     });
 
     const rawContent = await callDeepSeek({
       prompt,
       structured: actionMode === "weekly_plan" || actionMode === "weekly_summary",
+      knowledgeOptions,
     });
 
     let answer = sanitizeAssistantAnswer(rawContent);

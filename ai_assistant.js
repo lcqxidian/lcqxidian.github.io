@@ -1,5 +1,6 @@
 (function () {
     const STYLE_ID = 'lcq-ai-assistant-style';
+    const ANSWER_MODE_STORAGE_KEY = 'lcq-ai-answer-mode-v1';
     const PAGE_LABELS = {
         index_home: '首页',
         cpp_thread: 'C++ 学习',
@@ -24,6 +25,11 @@
         }
     };
 
+    const DEFAULT_KNOWLEDGE_OPTIONS = Object.freeze({
+        siteKnowledge: true,
+        modelKnowledge: true
+    });
+
     const state = {
         initialized: false,
         config: null,
@@ -33,7 +39,9 @@
         sending: false,
         settingsOpen: false,
         settingsLoading: false,
-        deletingHistoryId: null
+        deletingHistoryId: null,
+        answerSources: { ...DEFAULT_KNOWLEDGE_OPTIONS },
+        answerSettingsOpen: false
     };
 
     const injectStyles = () => {
@@ -523,7 +531,136 @@
 
             .lcq-ai-footer-row {
                 display: flex;
-                justify-content: flex-end;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                position: relative;
+            }
+
+            .lcq-ai-answer-settings {
+                position: relative;
+                display: flex;
+                align-items: center;
+                flex-shrink: 0;
+            }
+
+            .lcq-ai-answer-settings-btn {
+                border: 1px solid var(--lcq-ai-panel-border);
+                background: var(--lcq-ai-card-bg);
+                color: var(--lcq-ai-panel-text);
+                border-radius: 999px;
+                padding: 10px 14px;
+                font-size: 12px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+            }
+
+            .lcq-ai-answer-settings-btn:hover,
+            .lcq-ai-answer-settings-btn.active {
+                border-color: var(--lcq-ai-accent);
+                color: var(--lcq-ai-accent-text);
+                background: var(--lcq-ai-accent-soft);
+            }
+
+            .lcq-ai-answer-settings-popover {
+                position: absolute;
+                left: 0;
+                bottom: calc(100% + 10px);
+                width: min(290px, calc(100vw - 72px));
+                border: 1px solid var(--lcq-ai-panel-border);
+                background: var(--lcq-ai-panel-bg);
+                border-radius: 18px;
+                padding: 14px;
+                box-shadow: 0 24px 40px -24px rgba(15, 23, 42, 0.45);
+                display: grid;
+                gap: 10px;
+                z-index: 4;
+            }
+
+            .lcq-ai-answer-settings-title {
+                font-size: 13px;
+                font-weight: 800;
+                line-height: 1.4;
+            }
+
+            .lcq-ai-answer-settings-desc,
+            .lcq-ai-answer-settings-summary {
+                font-size: 12px;
+                line-height: 1.6;
+                color: var(--lcq-ai-panel-muted);
+            }
+
+            .lcq-ai-answer-settings-options {
+                display: grid;
+                gap: 8px;
+            }
+
+            .lcq-ai-answer-option {
+                width: 100%;
+                border: 1px solid var(--lcq-ai-panel-border);
+                background: var(--lcq-ai-card-bg);
+                color: var(--lcq-ai-panel-text);
+                border-radius: 14px;
+                padding: 11px 12px;
+                cursor: pointer;
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 12px;
+                text-align: left;
+                transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+            }
+
+            .lcq-ai-answer-option:hover {
+                border-color: var(--lcq-ai-accent);
+            }
+
+            .lcq-ai-answer-option.active {
+                border-color: var(--lcq-ai-accent);
+                background: var(--lcq-ai-accent-soft);
+                color: var(--lcq-ai-accent-text);
+            }
+
+            .lcq-ai-answer-option-main {
+                display: grid;
+                gap: 4px;
+            }
+
+            .lcq-ai-answer-option-title {
+                font-size: 13px;
+                font-weight: 800;
+                line-height: 1.35;
+            }
+
+            .lcq-ai-answer-option-note {
+                font-size: 12px;
+                line-height: 1.5;
+                color: var(--lcq-ai-panel-muted);
+            }
+
+            .lcq-ai-answer-option.active .lcq-ai-answer-option-note {
+                color: var(--lcq-ai-accent-text);
+            }
+
+            .lcq-ai-answer-option-check {
+                width: 22px;
+                height: 22px;
+                border-radius: 999px;
+                border: 1px solid var(--lcq-ai-panel-border);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 11px;
+                font-weight: 800;
+                flex-shrink: 0;
+                margin-top: 1px;
+            }
+
+            .lcq-ai-answer-option.active .lcq-ai-answer-option-check {
+                border-color: transparent;
+                background: var(--lcq-ai-accent);
+                color: #fff;
             }
 
             .lcq-ai-send-btn {
@@ -565,6 +702,12 @@
 
                 .lcq-ai-title {
                     font-size: 18px;
+                }
+
+                .lcq-ai-answer-settings-popover {
+                    left: 0;
+                    right: auto;
+                    width: min(290px, calc(100vw - 48px));
                 }
             }
         `;
@@ -758,6 +901,52 @@
         }
     };
 
+    const normalizeKnowledgeOptions = (value) => {
+        const source = value && typeof value === 'object' ? value : {};
+        let siteKnowledge = source.siteKnowledge !== false;
+        let modelKnowledge = source.modelKnowledge !== false;
+
+        if (!siteKnowledge && !modelKnowledge) {
+            siteKnowledge = true;
+            modelKnowledge = true;
+        }
+
+        return {
+            siteKnowledge,
+            modelKnowledge
+        };
+    };
+
+    const readStoredKnowledgeOptions = () => {
+        try {
+            return normalizeKnowledgeOptions(JSON.parse(window.localStorage.getItem(ANSWER_MODE_STORAGE_KEY) || '{}'));
+        } catch (error) {
+            return { ...DEFAULT_KNOWLEDGE_OPTIONS };
+        }
+    };
+
+    const persistKnowledgeOptions = () => {
+        try {
+            window.localStorage.setItem(ANSWER_MODE_STORAGE_KEY, JSON.stringify(state.answerSources));
+        } catch (error) {
+            // ignore storage write failures
+        }
+    };
+
+    const getKnowledgeModeSummary = (options = state.answerSources) => {
+        const resolved = normalizeKnowledgeOptions(options);
+
+        if (resolved.siteKnowledge && resolved.modelKnowledge) {
+            return '当前：已有知识库 + DeepSeek';
+        }
+
+        if (resolved.siteKnowledge) {
+            return '当前：仅已有知识库';
+        }
+
+        return '当前：仅 DeepSeek';
+    };
+
     const supportsHistoryDeletion = () => !!state.serviceStatus?.capabilities?.deleteHistory;
 
     const createShell = (config) => {
@@ -826,6 +1015,30 @@ supabase functions deploy ai-assistant</pre>
                 <div class="lcq-ai-footer" data-role="footer">
                     <textarea class="lcq-ai-input" data-role="input" placeholder="输入你的问题"></textarea>
                     <div class="lcq-ai-footer-row">
+                        <div class="lcq-ai-answer-settings" data-role="answer-settings">
+                            <button type="button" class="lcq-ai-answer-settings-btn" data-role="answer-settings-btn">设置</button>
+                            <div class="lcq-ai-answer-settings-popover lcq-ai-hidden" data-role="answer-settings-popover">
+                                <div class="lcq-ai-answer-settings-title">回答来源</div>
+                                <div class="lcq-ai-answer-settings-desc">你可以控制统一学习 AI 回答时是否使用网站公开知识库、DeepSeek 自身知识，历史对话会始终保留在上下文里。</div>
+                                <div class="lcq-ai-answer-settings-options">
+                                    <button type="button" class="lcq-ai-answer-option" data-action="toggle-answer-source" data-source-key="siteKnowledge">
+                                        <span class="lcq-ai-answer-option-main">
+                                            <span class="lcq-ai-answer-option-title">基于已有知识库回答</span>
+                                            <span class="lcq-ai-answer-option-note">优先参考网站公开学习数据和当前页面公开上下文。</span>
+                                        </span>
+                                        <span class="lcq-ai-answer-option-check" data-role="site-check">开</span>
+                                    </button>
+                                    <button type="button" class="lcq-ai-answer-option" data-action="toggle-answer-source" data-source-key="modelKnowledge">
+                                        <span class="lcq-ai-answer-option-main">
+                                            <span class="lcq-ai-answer-option-title">基于 DeepSeek 知识库回答</span>
+                                            <span class="lcq-ai-answer-option-note">直接使用 DeepSeek 的通用知识、经验和推理能力回答。</span>
+                                        </span>
+                                        <span class="lcq-ai-answer-option-check" data-role="model-check">开</span>
+                                    </button>
+                                </div>
+                                <div class="lcq-ai-answer-settings-summary" data-role="answer-settings-summary">当前：已有知识库 + DeepSeek</div>
+                            </div>
+                        </div>
                         <button type="button" class="lcq-ai-send-btn" data-role="send-btn">发送</button>
                     </div>
                 </div>
@@ -848,7 +1061,15 @@ supabase functions deploy ai-assistant</pre>
             historyList: shell.querySelector('[data-role="history-list"]'),
             footer: shell.querySelector('[data-role="footer"]'),
             input: shell.querySelector('[data-role="input"]'),
-            sendBtn: shell.querySelector('[data-role="send-btn"]')
+            sendBtn: shell.querySelector('[data-role="send-btn"]'),
+            answerSettings: shell.querySelector('[data-role="answer-settings"]'),
+            answerSettingsBtn: shell.querySelector('[data-role="answer-settings-btn"]'),
+            answerSettingsPopover: shell.querySelector('[data-role="answer-settings-popover"]'),
+            answerSettingsSummary: shell.querySelector('[data-role="answer-settings-summary"]'),
+            siteOptionBtn: shell.querySelector('[data-source-key="siteKnowledge"]'),
+            modelOptionBtn: shell.querySelector('[data-source-key="modelKnowledge"]'),
+            siteCheck: shell.querySelector('[data-role="site-check"]'),
+            modelCheck: shell.querySelector('[data-role="model-check"]')
         };
     };
 
@@ -907,6 +1128,23 @@ supabase functions deploy ai-assistant</pre>
         buildContext(state.config, actionMode || 'general');
     };
 
+    const renderAnswerSettings = () => {
+        const { refs } = state;
+        if (!refs) return;
+
+        const options = normalizeKnowledgeOptions(state.answerSources);
+        state.answerSources = options;
+
+        refs.answerSettingsBtn.classList.toggle('active', state.answerSettingsOpen);
+        refs.answerSettingsPopover.classList.toggle('lcq-ai-hidden', !state.answerSettingsOpen);
+        refs.answerSettingsSummary.textContent = getKnowledgeModeSummary(options);
+
+        refs.siteOptionBtn.classList.toggle('active', options.siteKnowledge);
+        refs.modelOptionBtn.classList.toggle('active', options.modelKnowledge);
+        refs.siteCheck.textContent = options.siteKnowledge ? '开' : '关';
+        refs.modelCheck.textContent = options.modelKnowledge ? '开' : '关';
+    };
+
     const renderShellMode = () => {
         const { refs } = state;
         if (!refs) return;
@@ -922,6 +1160,11 @@ supabase functions deploy ai-assistant</pre>
         refs.settingsPane.classList.toggle('lcq-ai-hidden', !state.settingsOpen);
         refs.historyList.classList.toggle('lcq-ai-hidden', state.settingsOpen);
         refs.footer.classList.toggle('lcq-ai-hidden', state.settingsOpen);
+
+        if (state.settingsOpen) {
+            state.answerSettingsOpen = false;
+        }
+        renderAnswerSettings();
     };
 
     const renderSettingsStatus = () => {
@@ -1092,6 +1335,7 @@ supabase functions deploy ai-assistant</pre>
 
         const previousHistory = state.history.slice();
         const context = buildContext(state.config, resolvedActionMode);
+        const knowledgeOptions = normalizeKnowledgeOptions(state.answerSources);
 
         state.history = [{
             page_type: state.config.pageType,
@@ -1100,11 +1344,13 @@ supabase functions deploy ai-assistant</pre>
             context_scope: context.scope,
             context_title: context.title,
             user_question: resolvedQuestion,
-            ai_answer: 'AI 正在整理当前页面的公开内容，请稍等...',
+            ai_answer: 'AI 正在整理当前上下文和历史对话，请稍等...',
             created_at: new Date().toISOString(),
             pending: true
         }].concat(previousHistory).slice(0, 10);
 
+        state.answerSettingsOpen = false;
+        renderAnswerSettings();
         state.sending = true;
         renderHistory();
         updateSendState();
@@ -1117,6 +1363,7 @@ supabase functions deploy ai-assistant</pre>
                 pageKey: resolvePageKey(state.config),
                 actorRole: getActorRole(),
                 question: resolvedQuestion,
+                knowledgeOptions,
                 context
             });
 
@@ -1133,7 +1380,8 @@ supabase functions deploy ai-assistant</pre>
                 question: resolvedQuestion,
                 answer: data.answer || '',
                 structuredData: data.structuredData || null,
-                history: state.history
+                history: state.history,
+                knowledgeOptions
             });
         } catch (error) {
             state.history = [{
@@ -1152,6 +1400,29 @@ supabase functions deploy ai-assistant</pre>
             updateSendState();
             renderContextPreview('general');
         }
+    };
+
+    const toggleAnswerSettingsPanel = () => {
+        state.answerSettingsOpen = !state.answerSettingsOpen;
+        renderAnswerSettings();
+    };
+
+    const toggleAnswerSource = (sourceKey) => {
+        if (sourceKey !== 'siteKnowledge' && sourceKey !== 'modelKnowledge') return;
+
+        const nextOptions = {
+            ...normalizeKnowledgeOptions(state.answerSources),
+            [sourceKey]: !state.answerSources[sourceKey]
+        };
+
+        if (!nextOptions.siteKnowledge && !nextOptions.modelKnowledge) {
+            window.alert('至少保留一种回答来源。');
+            return;
+        }
+
+        state.answerSources = normalizeKnowledgeOptions(nextOptions);
+        persistKnowledgeOptions();
+        renderAnswerSettings();
     };
 
     const renderQuickActions = () => {
@@ -1177,6 +1448,8 @@ supabase functions deploy ai-assistant</pre>
     };
 
     const closePanel = () => {
+        state.answerSettingsOpen = false;
+        renderAnswerSettings();
         state.refs?.shell.classList.remove('open');
     };
 
@@ -1184,6 +1457,7 @@ supabase functions deploy ai-assistant</pre>
         if (!state.refs || !state.config) return;
 
         state.settingsOpen = false;
+        state.answerSettingsOpen = false;
         renderShellMode();
         state.refs.shell.classList.add('open');
         if (options.prompt) {
@@ -1217,7 +1491,14 @@ supabase functions deploy ai-assistant</pre>
         refs.close.addEventListener('click', closePanel);
         refs.overlay.addEventListener('click', closePanel);
         refs.settingsBtn.addEventListener('click', () => toggleSettingsPanel());
+        refs.answerSettingsBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            toggleAnswerSettingsPanel();
+        });
         refs.sendBtn.addEventListener('click', () => sendQuestion({ actionMode: 'general' }));
+        refs.answerSettingsPopover.addEventListener('click', (event) => {
+            event.stopPropagation();
+        });
         refs.historyList.addEventListener('click', (event) => {
             if (!(event.target instanceof Element)) return;
             const trigger = event.target.closest('[data-action="delete-history"]');
@@ -1226,6 +1507,13 @@ supabase functions deploy ai-assistant</pre>
             const historyId = Number(trigger.dataset.historyId || 0);
             if (!historyId) return;
             deleteHistoryEntry(historyId);
+        });
+        refs.answerSettingsPopover.addEventListener('click', (event) => {
+            if (!(event.target instanceof Element)) return;
+            const trigger = event.target.closest('[data-action="toggle-answer-source"]');
+            if (!trigger) return;
+
+            toggleAnswerSource(trigger.dataset.sourceKey || '');
         });
         refs.input.addEventListener('keydown', (event) => {
             if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
@@ -1238,7 +1526,21 @@ supabase functions deploy ai-assistant</pre>
             renderHistory();
         });
         window.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') closePanel();
+            if (event.key === 'Escape') {
+                if (state.answerSettingsOpen) {
+                    state.answerSettingsOpen = false;
+                    renderAnswerSettings();
+                    return;
+                }
+                closePanel();
+            }
+        });
+        document.addEventListener('click', (event) => {
+            if (!state.answerSettingsOpen || !state.refs?.answerSettings) return;
+            if (state.refs.answerSettings.contains(event.target)) return;
+
+            state.answerSettingsOpen = false;
+            renderAnswerSettings();
         });
     };
 
@@ -1262,6 +1564,8 @@ supabase functions deploy ai-assistant</pre>
         state.settingsOpen = false;
         state.settingsLoading = false;
         state.deletingHistoryId = null;
+        state.answerSources = readStoredKnowledgeOptions();
+        state.answerSettingsOpen = false;
         state.refs = createShell(state.config);
 
         renderContextPreview('general');
@@ -1304,7 +1608,9 @@ supabase functions deploy ai-assistant</pre>
                 history: state.history.slice(),
                 serviceStatus: state.serviceStatus,
                 initialized: state.initialized,
-                deletingHistoryId: state.deletingHistoryId
+                deletingHistoryId: state.deletingHistoryId,
+                answerSources: { ...state.answerSources },
+                answerSettingsOpen: state.answerSettingsOpen
             };
         }
     };
