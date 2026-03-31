@@ -367,11 +367,18 @@
         let currentCloudCards = [];
         let currentChapterView = null;
         let currentAITopicId = null;
-        const visibleAnswerTopicIds = new Set();
+        const visibleTopicKnowledgeIds = new Set();
         const interviewDrillState = {
             topicId: null,
             loading: false,
-            answer: '',
+            question: '',
+            focus: '',
+            hint: '',
+            followupDirection: '',
+            referenceAnswer: '',
+            strength: '',
+            gap: '',
+            answerVisible: false,
             userReply: '',
             error: ''
         };
@@ -502,16 +509,16 @@
             }
         };
 
-        const isAnswerVisible = (topicId) => visibleAnswerTopicIds.has(String(topicId));
+        const isTopicKnowledgeVisible = (topicId) => visibleTopicKnowledgeIds.has(String(topicId));
 
-        const toggleTopicAnswer = (topicId, forceVisible = null) => {
+        const toggleTopicKnowledge = (topicId, forceVisible = null) => {
             const key = String(topicId);
-            const nextVisible = typeof forceVisible === 'boolean' ? forceVisible : !visibleAnswerTopicIds.has(key);
+            const nextVisible = typeof forceVisible === 'boolean' ? forceVisible : !visibleTopicKnowledgeIds.has(key);
 
             if (nextVisible) {
-                visibleAnswerTopicIds.add(key);
+                visibleTopicKnowledgeIds.add(key);
             } else {
-                visibleAnswerTopicIds.delete(key);
+                visibleTopicKnowledgeIds.delete(key);
             }
         };
 
@@ -520,9 +527,28 @@
         const resetInterviewDrill = () => {
             interviewDrillState.topicId = null;
             interviewDrillState.loading = false;
-            interviewDrillState.answer = '';
+            interviewDrillState.question = '';
+            interviewDrillState.focus = '';
+            interviewDrillState.hint = '';
+            interviewDrillState.followupDirection = '';
+            interviewDrillState.referenceAnswer = '';
+            interviewDrillState.strength = '';
+            interviewDrillState.gap = '';
+            interviewDrillState.answerVisible = false;
             interviewDrillState.userReply = '';
             interviewDrillState.error = '';
+        };
+
+        const applyInterviewDrillResponse = (data) => {
+            const structured = data?.structuredData || {};
+            interviewDrillState.question = structured.question || data?.answer || '';
+            interviewDrillState.focus = structured.focus || '';
+            interviewDrillState.hint = structured.hint || '';
+            interviewDrillState.followupDirection = structured.followupDirection || '';
+            interviewDrillState.referenceAnswer = structured.referenceAnswer || '';
+            interviewDrillState.strength = structured.strength || '';
+            interviewDrillState.gap = structured.gap || '';
+            interviewDrillState.answerVisible = false;
         };
 
         const rerenderCurrentChapterDetail = () => {
@@ -683,9 +709,26 @@
             const errorHtml = interviewDrillState.error
                 ? `<div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-600">${escapeHtml(interviewDrillState.error)}</div>`
                 : '';
-            const answerHtml = interviewDrillState.answer
-                ? `<div class="rounded-2xl border border-indigo-200 bg-white px-4 py-4 text-sm text-slate-700 whitespace-pre-wrap leading-7">${escapeHtml(interviewDrillState.answer)}</div>`
+            const questionHtml = interviewDrillState.question
+                ? `
+                    <div class="rounded-2xl border border-indigo-200 bg-white px-4 py-4 text-sm text-slate-700 leading-7 space-y-2">
+                        <div><span class="font-semibold text-indigo-900">追问：</span>${escapeHtml(interviewDrillState.question)}</div>
+                        ${interviewDrillState.focus ? `<div><span class="font-semibold text-indigo-900">考察点：</span>${escapeHtml(interviewDrillState.focus)}</div>` : ''}
+                        ${interviewDrillState.hint ? `<div><span class="font-semibold text-indigo-900">答题提示：</span>${escapeHtml(interviewDrillState.hint)}</div>` : ''}
+                        ${interviewDrillState.strength ? `<div><span class="font-semibold text-emerald-700">亮点：</span>${escapeHtml(interviewDrillState.strength)}</div>` : ''}
+                        ${interviewDrillState.gap ? `<div><span class="font-semibold text-amber-700">待补点：</span>${escapeHtml(interviewDrillState.gap)}</div>` : ''}
+                        ${interviewDrillState.followupDirection ? `<div><span class="font-semibold text-indigo-900">继续深挖：</span>${escapeHtml(interviewDrillState.followupDirection)}</div>` : ''}
+                    </div>
+                `
                 : '<div class="rounded-2xl border border-dashed border-indigo-200 bg-white px-4 py-4 text-sm text-slate-500">点击“AI 面试官追问”后，这里会出现第一问。</div>';
+            const referenceAnswerHtml = interviewDrillState.answerVisible
+                ? `
+                    <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-slate-700 whitespace-pre-wrap leading-7">
+                        <div class="text-xs uppercase tracking-[0.2em] text-emerald-600 mb-2">Reference Answer</div>
+                        ${escapeHtml(interviewDrillState.referenceAnswer || 'AI 这次还没有返回参考答案。')}
+                    </div>
+                `
+                : '';
 
             return `
                 <section class="mt-4 rounded-3xl border border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-blue-50 p-5 shadow-sm">
@@ -696,7 +739,7 @@
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <button class="action-interview-answer-btn px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium transition-colors" data-id="${card.id}">
-                                ${isAnswerVisible(card.id) ? '收起答案' : '查看答案'}
+                                ${interviewDrillState.answerVisible ? '收起答案' : '查看答案'}
                             </button>
                             <button class="action-close-interview-btn px-3 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 text-sm font-medium transition-colors" data-id="${card.id}">
                                 结束模拟
@@ -706,7 +749,8 @@
                     <div class="space-y-3">
                         ${loadingHtml}
                         ${errorHtml}
-                        ${answerHtml}
+                        ${questionHtml}
+                        ${referenceAnswerHtml}
                         <div>
                             <label class="block text-sm font-medium text-indigo-900 mb-2">你的回答（可选，继续追问时会带给 AI）</label>
                             <textarea
@@ -738,7 +782,7 @@
             const summaryHtml = card.summary
                 ? `<p class="text-sm text-slate-600 leading-relaxed mb-4">${escapeHtml(card.summary)}</p>`
                 : '';
-            const answerVisible = isAnswerVisible(card.id);
+            const knowledgeVisible = isTopicKnowledgeVisible(card.id);
             const interviewActive = isInterviewDrillActive(card.id);
 
             return `
@@ -766,11 +810,11 @@
                             <button class="action-start-interview-btn px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors" data-id="${card.id}">
                                 ${interviewActive ? '继续当前模拟' : 'AI 面试官追问'}
                             </button>
-                            <button class="action-toggle-answer-btn px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium transition-colors" data-id="${card.id}">
-                                ${answerVisible ? '收起答案' : '查看答案'}
+                            <button class="action-toggle-knowledge-btn px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium transition-colors" data-id="${card.id}">
+                                ${knowledgeVisible ? '收起原题笔记' : '查看原题笔记'}
                             </button>
                         </div>
-                        ${answerVisible ? `
+                        ${knowledgeVisible ? `
                             <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700 whitespace-pre-wrap leading-7">${escapeHtml(card.content || '')}</div>
                         ` : ''}
                         ${buildInterviewPanelHtml(card)}
@@ -1056,14 +1100,21 @@
                 refreshAITopicSelection();
                 interviewDrillState.topicId = topic.id;
                 interviewDrillState.loading = true;
-                interviewDrillState.answer = '';
+                interviewDrillState.question = '';
+                interviewDrillState.focus = '';
+                interviewDrillState.hint = '';
+                interviewDrillState.followupDirection = '';
+                interviewDrillState.referenceAnswer = '';
+                interviewDrillState.strength = '';
+                interviewDrillState.gap = '';
+                interviewDrillState.answerVisible = false;
                 interviewDrillState.userReply = '';
                 interviewDrillState.error = '';
                 rerenderCurrentChapterDetail();
 
                 try {
                     const data = await requestInterviewDrill({ topic, continueAsking: false });
-                    interviewDrillState.answer = data.answer || 'AI 面试官暂时没有返回内容。';
+                    applyInterviewDrillResponse(data);
                 } catch (error) {
                     interviewDrillState.error = error.message || 'AI 面试官暂时不可用，请稍后重试。';
                 } finally {
@@ -1087,7 +1138,7 @@
 
                 try {
                     const data = await requestInterviewDrill({ topic, continueAsking: true });
-                    interviewDrillState.answer = data.answer || 'AI 面试官暂时没有返回新的追问。';
+                    applyInterviewDrillResponse(data);
                 } catch (error) {
                     interviewDrillState.error = error.message || '继续追问失败，请稍后再试。';
                 } finally {
@@ -1106,14 +1157,21 @@
                 refreshAITopicSelection();
                 interviewDrillState.topicId = topic.id;
                 interviewDrillState.loading = true;
-                interviewDrillState.answer = '';
+                interviewDrillState.question = '';
+                interviewDrillState.focus = '';
+                interviewDrillState.hint = '';
+                interviewDrillState.followupDirection = '';
+                interviewDrillState.referenceAnswer = '';
+                interviewDrillState.strength = '';
+                interviewDrillState.gap = '';
+                interviewDrillState.answerVisible = false;
                 interviewDrillState.userReply = '';
                 interviewDrillState.error = '';
                 rerenderCurrentChapterDetail();
 
                 try {
                     const data = await requestInterviewDrill({ topic, continueAsking: false });
-                    interviewDrillState.answer = data.answer || 'AI 面试官暂时没有返回内容。';
+                    applyInterviewDrillResponse(data);
                 } catch (error) {
                     interviewDrillState.error = error.message || '重新开始模拟失败，请稍后重试。';
                 } finally {
@@ -1132,16 +1190,17 @@
                 return;
             }
 
-            const toggleAnswerBtn = event.target.closest('.action-toggle-answer-btn');
-            if (toggleAnswerBtn) {
-                toggleTopicAnswer(toggleAnswerBtn.dataset.id);
+            const toggleKnowledgeBtn = event.target.closest('.action-toggle-knowledge-btn');
+            if (toggleKnowledgeBtn) {
+                toggleTopicKnowledge(toggleKnowledgeBtn.dataset.id);
                 rerenderCurrentChapterDetail();
                 return;
             }
 
             const interviewAnswerBtn = event.target.closest('.action-interview-answer-btn');
             if (interviewAnswerBtn) {
-                toggleTopicAnswer(interviewAnswerBtn.dataset.id);
+                if (String(interviewDrillState.topicId) !== String(interviewAnswerBtn.dataset.id)) return;
+                interviewDrillState.answerVisible = !interviewDrillState.answerVisible;
                 rerenderCurrentChapterDetail();
                 return;
             }

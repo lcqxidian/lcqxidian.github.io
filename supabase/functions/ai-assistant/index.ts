@@ -1104,14 +1104,19 @@ const buildUserPrompt = ({
       currentContextBlock,
       retrievalBlock,
       `用户需求：${question}`,
-      "你现在要扮演真实技术面试官，围绕当前公开题目只提出 1 个最值得继续深挖的追问题目。",
-      "如果用户附带了自己的回答，请先用 1 句指出这段回答的一个亮点，再用 1 句指出一个待补点，然后给出下一问。",
-      "输出格式固定为：",
-      "追问：...",
-      "考察点：...",
-      "答题提示：...",
-      "继续深挖：...",
-      "要求：不要一次给很多问题；不要直接给完整标准答案；始终紧扣当前题目，不要跳题。",
+      "你现在要扮演真实技术面试官，围绕当前公开题目只提出 1 个最值得继续深挖的追问题目，并同时准备这道追问题的参考答案。",
+      "如果用户附带了自己的回答，请先判断这段回答的一个亮点和一个待补点，再给出下一问和对应参考答案。",
+      "只返回 JSON，不要添加任何解释说明。",
+      "JSON 结构必须严格为：",
+      '{"question":"","focus":"","hint":"","followup_direction":"","reference_answer":"","strength":"","gap":""}',
+      "要求：",
+      "- question 只写 1 个追问题目，像真实技术面试官发问。",
+      "- focus 写这道追问主要考察什么。",
+      "- hint 写 1 到 2 句简短答题提醒。",
+      "- followup_direction 写如果继续往下深挖，下一轮可能会追到哪里。",
+      "- reference_answer 写这道追问题的参考答案，要结构清晰、可直接学习。",
+      "- strength 和 gap 只有在用户已经给出回答时才填写；否则留空字符串。",
+      "- 不要一次给很多问题；始终紧扣当前题目，不要跳题。",
     ].join("\n\n");
   }
 
@@ -1256,6 +1261,16 @@ const normalizeWeeklySummary = (raw: Record<string, unknown>) => ({
   nextActions: toBulletLines(raw.next_actions),
 });
 
+const normalizeInterviewMock = (raw: Record<string, unknown>) => ({
+  question: compactText(raw.question),
+  focus: compactText(raw.focus),
+  hint: compactText(raw.hint),
+  followupDirection: compactText(raw.followup_direction),
+  referenceAnswer: compactText(raw.reference_answer),
+  strength: compactText(raw.strength),
+  gap: compactText(raw.gap),
+});
+
 const formatDailyPlanAnswer = (dailyPlan: ReturnType<typeof normalizeDailyPlan>["dailyPlan"]) => {
   const labelMap: Record<string, string> = {
     monday: "周一",
@@ -1329,6 +1344,18 @@ const formatWeeklySummaryAnswer = (summary: ReturnType<typeof normalizeWeeklySum
     "下周延续建议：",
     nextActions,
   ].join("\n");
+};
+
+const formatInterviewMockAnswer = (mock: ReturnType<typeof normalizeInterviewMock>) => {
+  return [
+    `追问：${mock.question || "请基于当前题目继续展开说明。"}`,
+    mock.focus ? `考察点：${mock.focus}` : "",
+    mock.hint ? `答题提示：${mock.hint}` : "",
+    mock.strength ? `亮点：${mock.strength}` : "",
+    mock.gap ? `待补点：${mock.gap}` : "",
+    mock.followupDirection ? `继续深挖：${mock.followupDirection}` : "",
+    mock.referenceAnswer ? `参考答案：${mock.referenceAnswer}` : "",
+  ].filter(Boolean).join("\n");
 };
 
 const fetchHistory = async (supabase: ReturnType<typeof createServiceClient>) => {
@@ -1527,7 +1554,7 @@ Deno.serve(async (request) => {
 
     const rawContent = await callDeepSeek({
       prompt,
-      structured: actionMode === "weekly_plan" || actionMode === "weekly_summary",
+      structured: actionMode === "weekly_plan" || actionMode === "weekly_summary" || actionMode === "interview_mock",
       knowledgeOptions,
     });
 
@@ -1544,6 +1571,11 @@ Deno.serve(async (request) => {
       const normalized = normalizeWeeklySummary(parsed);
       structuredData = normalized;
       answer = sanitizeAssistantAnswer(formatWeeklySummaryAnswer(normalized));
+    } else if (actionMode === "interview_mock") {
+      const parsed = extractJson(rawContent);
+      const normalized = normalizeInterviewMock(parsed);
+      structuredData = normalized;
+      answer = sanitizeAssistantAnswer(formatInterviewMockAnswer(normalized));
     }
 
     await insertHistory(serviceClient, {
