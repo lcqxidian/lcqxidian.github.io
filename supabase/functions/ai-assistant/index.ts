@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
 
-type ActionMode = "general" | "weekly_plan" | "weekly_summary" | "interview_followup";
+type ActionMode = "general" | "weekly_plan" | "weekly_summary" | "interview_followup" | "interview_mock";
 type PageType = "index_home" | "cpp_thread" | "interview_guide" | "weekly_plans";
 
 type HistoryRow = {
@@ -96,6 +96,7 @@ const ACTION_RETRIEVAL_CHUNK_LIMITS: Record<ActionMode, number> = {
   weekly_plan: 8,
   weekly_summary: 8,
   interview_followup: 6,
+  interview_mock: 6,
 };
 const SEARCH_STOP_WORDS = new Set([
   "a",
@@ -201,7 +202,7 @@ const normalizeHistoryId = (value: unknown) => {
 
 const normalizeActionMode = (value: unknown): ActionMode => {
   const mode = String(value || "").trim() as ActionMode;
-  if (mode === "weekly_plan" || mode === "weekly_summary" || mode === "interview_followup") {
+  if (mode === "weekly_plan" || mode === "weekly_summary" || mode === "interview_followup" || mode === "interview_mock") {
     return mode;
   }
   return "general";
@@ -720,7 +721,7 @@ const rankChunks = ({
     if (pageType === "weekly_plans" && chunk.sourceType === "weekly_plan") sourceBoost += 8;
     if ((actionMode === "weekly_plan" || actionMode === "weekly_summary") && chunk.sourceType === "weekly_plan") sourceBoost += 10;
     if ((actionMode === "weekly_plan" || actionMode === "weekly_summary") && chunk.sourceType === "page_context") sourceBoost += 12;
-    if (actionMode === "interview_followup" && (chunk.sourceType === "interview_topic" || chunk.sourceType === "page_context")) {
+    if ((actionMode === "interview_followup" || actionMode === "interview_mock") && (chunk.sourceType === "interview_topic" || chunk.sourceType === "page_context")) {
       sourceBoost += 10;
     }
 
@@ -751,7 +752,7 @@ const buildFallbackPool = ({
     return rankedChunks.filter((item) => item.sourceType === "page_context" || item.sourceType === "weekly_plan");
   }
 
-  if (actionMode === "interview_followup" || pageType === "interview_guide") {
+  if (actionMode === "interview_followup" || actionMode === "interview_mock" || pageType === "interview_guide") {
     return rankedChunks.filter((item) => item.sourceType === "page_context" || item.sourceType === "interview_topic");
   }
 
@@ -1090,6 +1091,27 @@ const buildUserPrompt = ({
       "请以面试官身份继续追问，默认输出 5 个循序渐进的问题。",
       "每个问题后补一句“考察点”，最后再给 3 条答题提醒。",
       "所有追问都必须基于当前公开题目上下文，不要跳出题目范围。",
+    ].join("\n\n");
+  }
+
+  if (actionMode === "interview_mock") {
+    return [
+      pageLine,
+      contextLine,
+      titleLine,
+      knowledgeBlock,
+      historyBlock,
+      currentContextBlock,
+      retrievalBlock,
+      `用户需求：${question}`,
+      "你现在要扮演真实技术面试官，围绕当前公开题目只提出 1 个最值得继续深挖的追问题目。",
+      "如果用户附带了自己的回答，请先用 1 句指出这段回答的一个亮点，再用 1 句指出一个待补点，然后给出下一问。",
+      "输出格式固定为：",
+      "追问：...",
+      "考察点：...",
+      "答题提示：...",
+      "继续深挖：...",
+      "要求：不要一次给很多问题；不要直接给完整标准答案；始终紧扣当前题目，不要跳题。",
     ].join("\n\n");
   }
 
